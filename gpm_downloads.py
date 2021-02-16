@@ -34,7 +34,14 @@ def create_GPMGOES_dataset(gpm_start_time, gpm_end_time):
 	datasets_gpm = gpm_data_processing(gpm_file_time)
 	
 	# TODO: rewrite this	
-	common_dir = settings.path_to_store_processed_data + '/GPMGOES-' + 'oS' + str(gpm_file_time[0]).replace(" ", "T") + '-c' + str(settings.channels).replace(" ", "") + '-p' + str(settings.number_of_pixels) 
+	parent_dir = settings.path_to_store_processed_data + '/' + settings.linkfile.replace(".txt", "")
+	common_dir = parent_dir + '/GPMGOES-' + 'oS' + str(gpm_file_time[0]).replace(" ", "T") + '-c' + str(settings.channels).replace(" ", "") + '-p' + str(settings.number_of_pixels) 
+	
+	if not Path(settings.path_to_store_processed_data).exists():
+		os.mkdir(settings.path_to_store_processed_data)
+		
+	if not Path(parent_dir).exists():
+		os.mkdir(parent_dir)
 	
 	if not Path(common_dir).exists():
 		os.mkdir(common_dir) 
@@ -65,7 +72,7 @@ start_timing = time.time()
 	
 parse_arguments()
 
-link_file = open(settings.linkfile, "r") 
+link_file = open('linkfiles/' + settings.linkfile, "r") 
 link_list = link_file.readlines()
 link_file.close()
 		
@@ -75,8 +82,8 @@ initial_load()
 
 
 
-N = 2 # len(link_list)
-for j in range(0,N,2):
+N = len(link_list)
+for j in range(0,N):
 	gpm_file_time = gpm_extract_datetime(link_list[j])
 	create_GPMGOES_dataset(gpm_file_time[0], gpm_file_time[1])
 	

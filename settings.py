@@ -29,7 +29,7 @@ def parse_arguments():
 		"--linkfile",
 		help="Path to Earth data search link file.",
 		type=str,
-		default="link_file_test.txt",
+		default="linkfile464113.txt",
 	)
 	parser.add_argument(
 		"-s",
@@ -47,7 +47,7 @@ def parse_arguments():
 	global linkfile
 	linkfile = args.linkfile
 	global path_to_store_processed_data
-	path_to_store_processed_data = args.storage_path
+	path_to_store_processed_data = args.storage_path 
 	
 
 def initial_load():
