@@ -1,9 +1,13 @@
-import settings
+
 import numpy as np
-import cartopy
-import cartopy.crs as ccrs
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
+
+import cartopy
+import cartopy.crs as ccrs
+
+import settings
+
 
 def region_plot(dataset, feature, filename):
 	'''

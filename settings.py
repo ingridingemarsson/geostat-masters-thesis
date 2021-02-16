@@ -1,6 +1,7 @@
-from pyresample import load_area
 import yaml
 import argparse
+
+from pyresample import load_area
 
 
 def parse_arguments():
@@ -48,6 +49,8 @@ def parse_arguments():
 	linkfile = args.linkfile
 	global path_to_store_processed_data
 	path_to_store_processed_data = args.storage_path 
+	global path_to_store_goes_data
+	path_to_store_goes_data = "GOES-16"
 	
 
 def initial_load():

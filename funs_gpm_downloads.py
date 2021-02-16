@@ -1,16 +1,18 @@
-from goes_downloads_with_cache import download_cached
-from pansat.products.satellite.gpm import l2b_gpm_cmb
-from pansat.products.satellite.goes import GOES16L1BRadiances
-import settings
-
+import numpy as np
 import datetime
 import re
+import warnings
+import os
+
 import pyproj
-import numpy as np
 import xarray as xr
 from pyresample import kd_tree, geometry, load_area
 from satpy import Scene
-import warnings
+
+from pansat.products.satellite.gpm import l2b_gpm_cmb
+from pansat.products.satellite.goes import GOES16L1BRadiances
+from goes_downloads_with_cache import download_cached
+import settings
 
 
 
@@ -26,6 +28,7 @@ def gpm_extract_datetime(mystr):
 		start: datetime for measurement start
 		end: datetime for measurement end
 	'''
+	
 	datematch = re.findall(r'(?:\.\d{8})', mystr)[0]
 	startmatch = re.findall(r'(?:S\d{6})', mystr)[0]
 	endmatch = re.findall(r'(?:E\d{6})', mystr)[0]
@@ -151,6 +154,14 @@ def gpm_data_processing(gpm_file_time):
 	for box_num in box_nums:
 		dataset_box = create_box_dataset(box_num, gpm_transformed_data, files_gpm)
 		datasets.append(dataset_box)
+		
+	for files in files_gpm:	
+		if os.path.exists(files):
+  			os.remove(files)
+		else:
+  			pass
+	
+	
 	return(datasets)
 	
 	
@@ -185,6 +196,7 @@ def get_box_num():
 	'''
 	TODO
 	'''
+	
 	projvec = settings.area_def.get_proj_vectors() #tuple (X,Y)
 	projcoords_y = projvec[1]
 	h0 = np.argmin(np.abs(projcoords_y-settings.region_corners[1]))
