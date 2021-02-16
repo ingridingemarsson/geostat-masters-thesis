@@ -13,8 +13,7 @@ full_disk:
         x_0: 0
         y_0: 0
     proj_id: abi_fixed_grid
-    width: 2712
-    height: 2712
+    shape: [2712, 2712]
     area_extent: [-5434894.8851, -5434894.8851, 5434894.8851, 5434894.8851]
 
 

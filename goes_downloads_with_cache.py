@@ -8,8 +8,9 @@ from pansat.products.satellite.goes import GOES16L1BRadiances
 
 def download_cached(start_time, end_time, CHANNELS, no_cache=False):
 	"""
-	Download all files from the GOES satellite products in PRODUCTS in a given
-	time range but avoid redownloading files that are already present.
+	Download all files from the GOES satellite combined product with
+	channels in CHANNELS in a given time range but avoid redownloading
+	files that are already present.
 
 	Args:
 	start_time: datetime object specifying the start of the time range
@@ -22,7 +23,7 @@ def download_cached(start_time, end_time, CHANNELS, no_cache=False):
 	List of pathlib.Path object pointing to the available data files
 	in the request time range.
 	"""
-	global CACHE
+	#global CACHE
 
 	files = []
 	for channel in CHANNELS:
