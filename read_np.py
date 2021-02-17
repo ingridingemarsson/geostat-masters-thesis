@@ -4,9 +4,13 @@ import matplotlib.pyplot as plt
 X = np.load('datasetX.npy')
 y = np.load('datasety.npy')
 
+print(X.shape)
+
 frac = 0.046
 pad = 0.04
 im = 18
+
+'''
 
 fig, axs = plt.subplots(ncols = 3, sharex=True, sharey=True)
 
@@ -24,4 +28,4 @@ fig.colorbar(pos2, ax=axs[2], fraction=frac, pad=pad)
 
 plt.show()
 
-
+'''
