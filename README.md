@@ -7,6 +7,17 @@ TODO
 - [X] Create new linkfile
 - [X] Remove used files 
 
+># Workflow
+>- Read link from linkfile and convert to start, end date
+>- Download gpm product for start, end date
+>- Transform gpm data into goes data coordinates
+>- Divide interesting data into NxN pixel boxes
+>- Extract in, out time for gpm passing box region
+>- Download goes file matching box time
+>- Combine gpm and goes box data into Dataset
+>
+>1 GPM file --> number of boxes Datasets
+
 
 ```python
 <xarray.Dataset>
