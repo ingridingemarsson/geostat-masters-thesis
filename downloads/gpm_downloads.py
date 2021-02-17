@@ -54,17 +54,16 @@ def create_GPMGOES_dataset(gpm_start_time, gpm_end_time):
 		dataset_goes = goes_data_processing([time_in, time_out], ind_extent)
 		
 		dataset = xr.merge([datasets_gpm[i], dataset_goes], combine_attrs = "no_conflicts")
-		dataset = dataset.where(np.isnan(dataset['gpm_precipitation'].values) == False) 
-		
+		dataset = dataset.astype(np.float32)
 		dataset_filename = common_dir + common_filename + '-nS' + datasets_gpm[i].attrs['gpm_time_in']+ '-b' + str(i) + filetype
 		dataset.to_netcdf(dataset_filename)
 		dataset.close()
 
 		
-	## This is a warning regarding loss of projection information when converting to a PROJ string
-	#with warnings.catch_warnings():
-	#	warnings.simplefilter('ignore')
-	#	region_plot2(datasets_gpm,'gpm_precipitation', common_dir + common_filename+'image'+'.pdf')
+	# This is a warning regarding loss of projection information when converting to a PROJ string
+	with warnings.catch_warnings():
+		warnings.simplefilter('ignore')
+		region_plot2(datasets_gpm,'gpm_precipitation', common_dir + common_filename+'image'+'.pdf')
 		
 		
 start_timing = time.time()
@@ -81,7 +80,7 @@ initial_load()
 
 
 
-N = len(link_list)
+N = 2# len(link_list)
 for j in range(0,N):
 	gpm_file_time = gpm_extract_datetime(link_list[j])
 	create_GPMGOES_dataset(gpm_file_time[0], gpm_file_time[1])

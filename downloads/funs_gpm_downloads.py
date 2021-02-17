@@ -100,9 +100,9 @@ def create_box_dataset(box_num, gpm_transformed_data, files_gpm):
 	box_area_extent = [projcoords_x[box_idx_le], projcoords_y[box_idy_up], projcoords_x[box_idx_ri], projcoords_y[box_idy_do]]
 
 	dataset = xr.Dataset(
-			coords = dict(
-				y = (["y"], projcoords_y[box_idy_do:box_idy_up]), 
-				x = (["x"], projcoords_x[box_idx_le:box_idx_ri])),
+			#coords = dict(
+			#	y = (["y"], projcoords_y[box_idy_do:box_idy_up]), 
+			#	x = (["x"], projcoords_x[box_idx_le:box_idx_ri])),
 			data_vars = dict(gpm_precipitation = (["y","x"], box_data)), 
 			attrs = dict(
 				ind_extent = box_ind_extent,
@@ -252,9 +252,9 @@ def goes_data_processing(time, ind_extent):
 
 
 		dataset = xr.Dataset(
-					coords = dict(
-						y = (["y"], projcoords_y[box_idy_do:box_idy_up]), 
-						x = (["x"], projcoords_x[box_idx_le:box_idx_ri])),
+					#coords = dict(
+					#	y = (["y"], projcoords_y[box_idy_do:box_idy_up]), 
+					#	x = (["x"], projcoords_x[box_idx_le:box_idx_ri])),
 					data_vars = data_vars_dict, 
 					attrs = dict(
 						goes_time_in = str(goes_scn[av_dat_names[0]].attrs['start_time']), 

@@ -22,23 +22,21 @@ TODO
 ```python
 <xarray.Dataset>
 Dimensions:            (x: 256, y: 256)
-Coordinates:
-  * y                  (y) float64 -2.427e+06 -2.431e+06 ... -3.449e+06
-  * x                  (x) float64 1.998e+06 2.002e+06 ... 3.016e+06 3.02e+06
+Dimensions without coordinates: x, y
 Data variables:
-    gpm_precipitation  (y, x) float64 ...
-    C08                (y, x) float64 ...
-    C13                (y, x) float64 ...
+    gpm_precipitation  (y, x) float32 nan nan nan nan nan ... nan nan nan nan
+    C08                (y, x) float32 234.1 234.2 234.6 ... 231.5 230.5 228.6
+    C13                (y, x) float32 292.3 292.9 293.7 ... 280.0 276.9 272.4
 Attributes:
-    ind_extent:      [1854 2217 2110 1961]
-    area_extent:     [ 1998005.23615217 -3452921.78725195  3024062.08761648 -...
+    ind_extent:      [1570 1449 1826 1193]
+    area_extent:     [ 859723.41655896 -374751.23285903 1885780.26802327  651...
     shape:           [256 256]
-    gpm_time_in:     2018-11-19T18:47:14.728000000
-    gpm_time_out:    2018-11-19T18:50:49.628000000
-    filename_gpm:    GPM/2B.GPM.DPRGMI.2HCSHv4-1.20181119-S183413-E200647.026...
-    goes_time_in:    2018-11-19 18:45:34.200000
-    goes_time_out:   2018-11-19 18:56:10.900000
-    filenames_goes:  ['GOES-16/GOES-16-ABI-L1b-RadF/OR_ABI-L1b-RadF-M3C08_G16...
+    gpm_time_in:     2018-10-31T14:25:30.382000128
+    gpm_time_out:    2018-10-31T14:28:24.681999872
+    filename_gpm:    GPM/2B.GPM.DPRGMI.2HCSHv4-1.20181031-S131753-E145026.026...
+    goes_time_in:    2018-10-31 14:15:37
+    goes_time_out:   2018-10-31 14:26:13.700000
+    filenames_goes:  ['GOES-16/linkfile464113/OR_ABI-L1b-RadF-M3C08_G16_s2018...
 ```
 
 ![](plots/exregionplotp.png)
