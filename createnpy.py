@@ -3,8 +3,8 @@ import os
 
 import xarray as xr
 
-linkdir = "linkfile464113"
-rootdir = "Dataset/" + linkdir
+#linkdir = "linkfile464113"
+rootdir = "downloads/Dataset/"# + linkdir
 channels = [8,13]
 number_of_pixels = 256
 
@@ -28,5 +28,8 @@ for i in range(len(filename_list)):
 
 
 
-np.save(linkdir+'X'+'.npy', X)
-np.save(linkdir+'y'+'.npy', y)
+#np.save(linkdir+'X'+'.npy', X)
+#np.save(linkdir+'y'+'.npy', y)
+
+np.save('dataset'+'X'+'.npy', X)
+np.save('dataset'+'y'+'.npy', y)

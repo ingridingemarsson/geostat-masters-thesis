@@ -2,10 +2,10 @@
 ## Spring 2020
 
 TODO 
-- [ ] Handle case with non-existing files in time range
+- [ ] Issue: The program uses the first file that matches the time interval, always. Edit: Uses the file with start time closest to interval start time.
+- [ ] Handle case with eventual non-existing files in time range
 - [X] Create new linkfile
 - [X] Remove used files 
-- [X] Issue: The program uses the first file that matches the time interval, always. Edit: Uses the file with start time closest to interval start time.
 
 
 ```python
@@ -30,5 +30,6 @@ Attributes:
     filenames_goes:  ['GOES-16/GOES-16-ABI-L1b-RadF/OR_ABI-L1b-RadF-M3C08_G16...
 ```
 
-![](exregionplotp.png)
-![](wholeexregionplotp.png)
+![](plots/exregionplotp.png)
+![](plots/wholeexregionplotp.png)
+![](plots/Xy42.png)

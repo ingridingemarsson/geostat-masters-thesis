@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-X = np.load('linkfile464113X.npy')
-y = np.load('linkfile464113y.npy')
+X = np.load('datasetX.npy')
+y = np.load('datasety.npy')
 
 frac = 0.046
 pad = 0.04

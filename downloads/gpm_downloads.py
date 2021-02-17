@@ -81,7 +81,7 @@ initial_load()
 
 
 
-N = 2 #len(link_list)
+N = len(link_list)
 for j in range(0,N):
 	gpm_file_time = gpm_extract_datetime(link_list[j])
 	create_GPMGOES_dataset(gpm_file_time[0], gpm_file_time[1])
