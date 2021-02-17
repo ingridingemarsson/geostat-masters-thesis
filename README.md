@@ -1,8 +1,10 @@
 # Master's Thesis in Space, earth and environment
 ## Spring 2020
 
+Downloading data for rain retrievals over Brazil.
+
 TODO 
-- [ ] Issue: The program uses the first file that matches the time interval, always. Edit: Uses the file with start time closest to interval start time.
+- [X] Issue: The program uses the first file that matches the time interval, always. Edit: Uses the file with start time closest to interval start time.
 - [ ] Handle case with eventual non-existing files in time range
 - [X] Create new linkfile
 - [X] Remove used files 
@@ -41,4 +43,4 @@ Attributes:
 
 ![](plots/exregionplotp.png)
 ![](plots/wholeexregionplotp.png)
-![](plots/Xy42.png)
+
