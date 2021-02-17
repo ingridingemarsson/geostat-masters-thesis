@@ -26,7 +26,7 @@ def create_GPMGOES_dataset(gpm_start_time, gpm_end_time):
 	TODO
 	'''
 
-	latlon_limits = extract_latlon_limits_from_region()
+	#latlon_limits = extract_latlon_limits_from_region()
 	datasets_gpm = gpm_data_processing(gpm_file_time)
 	
 	# TODO: rewrite this	
@@ -59,12 +59,12 @@ def create_GPMGOES_dataset(gpm_start_time, gpm_end_time):
 		dataset.to_netcdf(dataset_filename)
 		dataset.close()
 
-		
+	'''	
 	# This is a warning regarding loss of projection information when converting to a PROJ string
 	with warnings.catch_warnings():
 		warnings.simplefilter('ignore')
 		region_plot2(datasets_gpm,'gpm_precipitation', common_dir + common_filename+'image'+'.pdf')
-		
+	'''	
 		
 start_timing = time.time()
 	

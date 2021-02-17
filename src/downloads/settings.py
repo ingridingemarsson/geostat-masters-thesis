@@ -39,6 +39,18 @@ def parse_arguments():
 		type=str,
 		default="Dataset",
 	)
+	parser.add_argument(
+	"--plot",
+	help="Make plot of box datasets",
+	type=bool,
+	default=False,
+	)
+	parser.add_argument(
+	"--rem",
+	help="Remove used GPM and GOES files",
+	type=bool,
+	default=False,
+	)
 	args = parser.parse_args()
 	
 	global channels
@@ -51,7 +63,10 @@ def parse_arguments():
 	path_to_store_processed_data = args.storage_path 
 	global path_to_store_goes_data
 	path_to_store_goes_data = "GOES-16"
-	
+	global make_box_plot
+	make_box_plot = args.plot
+	global used_remove
+	used_remove = args.rem
 
 def initial_load():
 	'''
@@ -73,6 +88,7 @@ def initial_load():
 	projection = area_dict_full_disk['projection']
 	region_corners = area_dict_region['area_extent']
 	shape_full_disk = area_dict_full_disk['shape']
+
 	
 	
 

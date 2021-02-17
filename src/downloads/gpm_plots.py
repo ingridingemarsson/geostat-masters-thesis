@@ -5,6 +5,7 @@ from matplotlib.patches import Rectangle
 
 import cartopy
 import cartopy.crs as ccrs
+from pyresample import geometry, load_area
 
 import settings
 
@@ -54,4 +55,22 @@ def region_plot2(datasets, feature, filename):
 	ax.set_ylim(new_area_ext[1], new_area_ext[3])
 
 	plt.savefig(filename)
+	
+	
+	
+	
+	
+def region_plot3(dataset):
+	'''
+	Plots TODO 
+	'''
+	re_area_def = load_area('areas.yaml', 'region')
+	crs = re_area_def.to_cartopy_crs()
+	ax = plt.axes(projection=crs)
+	ax.coastlines()
+	ax.gridlines(draw_labels=True)
+	ax.add_feature(cartopy.feature.BORDERS)
+	plt.imshow(dataset, transform=crs, extent=crs.bounds, origin='upper')
+	plt.show()
+	#plt.savefig(filename)
 	

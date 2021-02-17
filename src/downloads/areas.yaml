@@ -16,7 +16,6 @@ full_disk:
     shape: [2712, 2712]
     area_extent: [-5434894.8851, -5434894.8851, 5434894.8851, 5434894.8851]
 
-
 region:
     area_id: GOES-East
     description: 2km at nadir
