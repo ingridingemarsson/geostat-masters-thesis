@@ -58,6 +58,13 @@ def parse_arguments():
 		type=bool,
 		default=False,
 	)
+	parser.add_argument(
+		"-b",
+		"--run_with_bash",
+		help="True if the program is run within a bash script loop",
+		type=bool,
+		default=False,
+	)
 	args = parser.parse_args()
 	
 	global channels
@@ -76,6 +83,8 @@ def parse_arguments():
 	used_remove = args.rem
 	global test
 	test = args.test
+	global run_with_bash
+	run_with_bash = args.run_with_bash
 
 def initial_load():
 	'''

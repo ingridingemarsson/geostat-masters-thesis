@@ -14,7 +14,15 @@ import settings
 
 # Clock the program
 start_timing = time.time()
+
 settings.parse_arguments()
+
+if(settings.run_with_bash == True):
+	wordfile = "word.txt"
+	f = open(wordfile, "r")
+	os.environ["PANSAT_PASSWORD"] = f.read()
+	f.close()
+
 settings.initial_load()
 
 # Get list of Earth data search gpm product links from file
@@ -27,7 +35,9 @@ if (settings.test == True):
 	N = 2
 
 # For each gpm product link
-for j in range(0,N):		
+for j in range(0,N):	
+	
+	print('start # ' + str(j))
 			
 	label_file_link = link_list[j]
 
@@ -88,12 +98,15 @@ for j in range(0,N):
 			else:
 				pass
 			
+	print('end # ' + str(j))
+			
 if (settings.used_remove == True):	
 	dir_path = Path(settings.path_to_store_goes_data) / Path(settings.linkfile.replace(".txt", ""))
 	try:
 	    shutil.rmtree(dir_path)
 	except OSError as e:
 	    print("Error: %s : %s" % (dir_path, e.strerror))
+	    
 
 end_timing = time.time()
 total_timing = end_timing-start_timing
