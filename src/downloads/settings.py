@@ -30,7 +30,7 @@ def parse_arguments():
 		"--linkfile",
 		help="Path to Earth data search link file.",
 		type=str,
-		default="linkfile464113.txt",
+		default="linkfile2017-12.txt",
 	)
 	parser.add_argument(
 		"-s",

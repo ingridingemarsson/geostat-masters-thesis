@@ -1,7 +1,8 @@
 import datetime
 import re
+import numpy as np
 
-link_file = open("linkfiles/download20210216.txt", "r") 
+link_file = open("../searchfiles/download20210216.txt", "r") 
 link_list = link_file.readlines()
 link_file.close()
 
@@ -23,26 +24,36 @@ def gpm_extract_startdate(mystr):
 
 	return(startdate)
 
-start_inds = []
-month_tmp_old = 0
+yearmonth = []
+years = []
+months = []
 for i in range(len(link_list)):
 	year_tmp = gpm_extract_startdate(link_list[i]).year
-	month_tmp_new = gpm_extract_startdate(link_list[i]).month
+	month_tmp = gpm_extract_startdate(link_list[i]).month
+	years.append(year_tmp)
+	months.append(month_tmp)
+	yearmonth.append(year_tmp*month_tmp)
 	
-	if(month_tmp_new != month_tmp_old):
-		start_inds.append(i)
-	
-	month_tmp_old = month_tmp_new
-	
-start_inds.append(len(link_list)+1)
+yearmonth_arr = np.array(yearmonth)	
+unique_years = np.unique(years)
+unique_months = np.unique(months)
 
-link_list_months = [link_list[start_inds[i]:start_inds[i+1]] for i in range(len(start_inds)-1)]
-
+filenames = []
 directory = 'linkfiles/'
-for i in range(len(link_list_months)):
-	filename_tmp = directory + 'linkfile' + str(i).zfill(2) + str(start_inds[i]).zfill(3) + '.txt'
-	with open(filename_tmp, 'w') as f:
-		for item in link_list_months[i]:
-			f.write("%s" % item)
-	print(i)
+for year in unique_years:
+	for month in unique_months:
+		inds_tmp = np.where(yearmonth_arr == year*month)
+		link_list_uniquemonth = [link_list[ind] for ind in inds_tmp[0]]
+		
+		if(len(link_list_uniquemonth) > 0):
+			filename_tmp = directory + 'linkfile' + str(year) + '-' + str(month).zfill(2) + '.txt'
+			filenames.append(filename_tmp)
+			with open(filename_tmp, 'w') as f:
+				for item in link_list_uniquemonth:
+					f.write("%s" % item)
+					
+					
+with open("linkfilenames.txt", 'w') as f:
+	for item in filenames:
+		f.write("%s\n" % item)
 
