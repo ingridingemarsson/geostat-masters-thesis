@@ -1,38 +1,39 @@
 import numpy as np
-import matplotlib.pyplot as plt #
-from pathlib import Path
 import warnings
 import shutil
+import time
 import os
+from pathlib import Path
 
 import xarray as xr
 
 from pansat.products.satellite.gpm import l2b_gpm_cmb
-import settings
 from make_dataset_funs import gpm_link_extract_datetime, label_data_transform, label_data_crop, calculate_boxes, input_data_process, get_dataset_filename
 from goes_downloads_with_cache import download_cached
-from gpm_plots import region_plot2
+import settings
 
-
+# Clock the program
+start_timing = time.time()
 settings.parse_arguments()
 settings.initial_load()
 
-
+# Get list of Earth data search gpm product links from file
 link_file = open('links/linkfiles/' + settings.linkfile, "r") 
 link_list = link_file.readlines()
 link_file.close()
 
-	
 N = len(link_list)
+if (settings.test == True):
+	N = 2
+
+# For each gpm product link
 for j in range(0,N):		
 			
 	label_file_link = link_list[j]
 
-
 	label_file_start, label_file_end = gpm_link_extract_datetime(label_file_link) #FUN
 
 	label_files = l2b_gpm_cmb.download(label_file_start, label_file_end)
-	#label_files =  [Path('GPM/2B.GPM.DPRGMI.2HCSHv4-1.20181031-S131753-E145026.026554.V06A.HDF5')]
 	label_dataset = l2b_gpm_cmb.open(label_files[0])
 
 
@@ -94,7 +95,9 @@ if (settings.used_remove == True):
 	except OSError as e:
 	    print("Error: %s : %s" % (dir_path, e.strerror))
 
-			
+end_timing = time.time()
+total_timing = end_timing-start_timing
+print('total time: ' + str(total_timing)+ ' seconds')		
 
 
 

@@ -40,16 +40,23 @@ def parse_arguments():
 		default="Dataset",
 	)
 	parser.add_argument(
-	"--plot",
-	help="Make plot of box datasets",
-	type=bool,
-	default=False,
+		"--plot",
+		help="Make plot of box datasets",
+		type=bool,
+		default=False,
 	)
 	parser.add_argument(
-	"--rem",
-	help="Remove used GPM and GOES files",
-	type=bool,
-	default=False,
+		"--rem",
+		help="Remove used GPM and GOES files",
+		type=bool,
+		default=False,
+	)
+	parser.add_argument(
+		"-t",
+		"--test",
+		help="Test run",
+		type=bool,
+		default=False,
 	)
 	args = parser.parse_args()
 	
@@ -67,6 +74,8 @@ def parse_arguments():
 	make_box_plot = args.plot
 	global used_remove
 	used_remove = args.rem
+	global test
+	test = args.test
 
 def initial_load():
 	'''
