@@ -3,24 +3,19 @@
 
 Downloading data for rain retrievals over Brazil.
 
-TODO 
-- [X] Issue: The program uses the first file that matches the time interval, always. Edit: Uses the file with start time closest to interval start time.
-- [ ] Handle case with eventual non-existing files in time range
-- [X] Create new linkfile
-- [X] Remove used files 
 
-># Workflow
->- Read link from linkfile and convert to start, end date
->- Download gpm product for start, end date
->- Transform gpm data into goes data coordinates
->- Divide interesting data into NxN pixel boxes
->- Extract in, out time for gpm passing box region
->- Download goes file matching box time
->- Combine gpm and goes box data into Dataset
->
->1 GPM file --> number of boxes Datasets
+### Workflow preprocessing
+- Read link from linkfile and convert to start, end date
+- Download gpm product for start, end date
+- Transform gpm data into goes data coordinates
+- Divide interesting data into NxN pixel boxes along swath
+- Extract in, out time for gpm passing box region
+- Download goes file matching box time
+- Combine gpm and goes box data into Dataset
 
 
+
+### Dataset storage format
 ```python
 <xarray.Dataset>
 Dimensions:            (x: 256, y: 256)
@@ -40,7 +35,11 @@ Attributes:
     goes_time_out:   2018-10-31 14:26:13.700000
     filenames_goes:  ['GOES-16/linkfile464113/OR_ABI-L1b-RadF-M3C08_G16_s2018...
 ```
+### 
 
-![](plots/exregionplotp.png)
-![](plots/wholeexregionplotp.png)
+<p float="left">
+<img src="plots/regionplot1.png" width="400">
+<img src="plots/regionplot2.png" width="400">
+</p>
+
 
