@@ -3,6 +3,7 @@ import datetime
 import re
 import warnings
 from pathlib import Path
+import os
 
 from pyresample import kd_tree, geometry, load_area
 from satpy import Scene

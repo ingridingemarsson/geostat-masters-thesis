@@ -53,7 +53,6 @@ def download_cached(start_time, end_time, CHANNELS, no_cache=False):
 			if (timediff0 < timediff1):
 				f_ind = 1
 				
-			print([timediff0, timediff1, f_ind])
 		
 		
 		f = filenames[f_ind]

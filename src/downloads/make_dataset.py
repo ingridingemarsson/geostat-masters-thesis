@@ -18,7 +18,7 @@ settings.parse_arguments()
 settings.initial_load()
 
 
-link_file = open('linkfiles/' + settings.linkfile, "r") 
+link_file = open('links/linkfiles/' + settings.linkfile, "r") 
 link_list = link_file.readlines()
 link_file.close()
 
