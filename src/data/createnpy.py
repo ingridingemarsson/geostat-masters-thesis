@@ -4,7 +4,7 @@ import os
 import xarray as xr
 
 linkdir = "linkfile454004"
-rootdir = "downloads/Dataset/" + linkdir
+rootdir = "../downloads/Dataset/" + linkdir
 channels = [8,13]
 number_of_pixels = 256
 
