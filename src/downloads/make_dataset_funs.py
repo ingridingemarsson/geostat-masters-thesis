@@ -14,7 +14,7 @@ import settings
 
 def gpm_link_extract_datetime(mystr):
 	'''
-	Extracting start and end datetime from Earth data search GPM downloading link.
+	Extracting start and end datetime from Earth data search 2BCMB downloading link.
 	
 	Args:
 		mystr: link for GPM product download
@@ -58,65 +58,68 @@ def label_data_transform(label_dataset):
 	return(label_transformed_data)
 	
 	
-	
-def label_data_crop(box_idy_do_center, box_number, label_transformed_data):
-	'''
-	TODO
-	'''
-
-	box_idy_do = box_idy_do_center + box_number*settings.number_of_pixels
-	box_idy_up = box_idy_do + settings.number_of_pixels 
-
-	swath_idx_up = np.where(np.isnan(label_transformed_data[box_idy_up,:,0]) == False)[0]
-	swath_idx_do = np.where(np.isnan(label_transformed_data[box_idy_do,:,0]) == False)[0]
-
-	box_middle_x = int(np.mean([min(min(swath_idx_up), min(swath_idx_do)), max(max(swath_idx_up), max(swath_idx_do))]))
-	box_idx_le = box_middle_x-int(0.5*settings.number_of_pixels)
-	box_idx_ri = box_middle_x+int(0.5*settings.number_of_pixels)
-	
-	box_data = label_transformed_data[box_idy_do:box_idy_up, box_idx_le:box_idx_ri,0]
-	label_time_in = np.nanmin(label_transformed_data[box_idy_do:box_idy_up, box_idx_le:box_idx_ri,1]).astype('datetime64[ns]')
-	label_time_in = datetime.datetime.strptime(str(label_time_in)[:-3],"%Y-%m-%dT%H:%M:%S.%f")
-	label_time_out = np.nanmax(label_transformed_data[box_idy_do:box_idy_up, box_idx_le:box_idx_ri,1]).astype('datetime64[ns]')
-	label_time_out = datetime.datetime.strptime(str(label_time_out)[:-3],"%Y-%m-%dT%H:%M:%S.%f")
-
-	box_ind_extent = [box_idx_le, box_idy_up, box_idx_ri, box_idy_do]
-	return([box_data, box_ind_extent, label_time_in, label_time_out])
-
-	
-	
+		
 def calculate_boxes(projcoords_y):
 	'''
 	TODO
 	'''
        
-	region_center_y = np.mean([settings.region_corners[1], settings.region_corners[3]])
+	region_center_y = np.mean([settings.region_corners[1], settings.region_corners[3]]) # lower left y coordinate (SW), upper right y coordinate (NE)
 	projcoords_y_diff = np.abs(projcoords_y - region_center_y)
 	region_center_y_idy = np.argmin(projcoords_y_diff)
 
-	region_min_y = np.argmin(np.abs(projcoords_y-settings.region_corners[1]))
-	region_max_y = np.argmin(np.abs(projcoords_y-settings.region_corners[3])) 
-	box_height = np.abs(region_max_y-region_min_y)
+	region_min_y = np.argmin(np.abs(projcoords_y-settings.region_corners[1])) #lowest y-index in region (Northmost)
+	region_max_y = np.argmin(np.abs(projcoords_y-settings.region_corners[3])) #highest y-index in region (Southmost)
+	region_height = np.abs(region_max_y-region_min_y) #y extent of region in pixels
 
-	number_of_boxes = np.int(np.round(box_height/settings.number_of_pixels-1))
+	number_of_boxes = np.int(np.round(region_height/settings.number_of_pixels-1))
 	
-	offset_range = box_height-number_of_boxes*settings.number_of_pixels
-	offset = np.random.randint(offset_range)-np.int(offset_range/2)
-
+	offset_range = region_height-number_of_boxes*settings.number_of_pixels #how much extra y extent is there to play with
+	offset = np.random.randint(offset_range)-np.int(offset_range/2) #how much to shift the region center y index
 	region_center_y_idy += offset
 	
-	box_numbers = np.array(range(number_of_boxes))-int(number_of_boxes/2)
+	box_numbers = np.array(range(number_of_boxes))-int(number_of_boxes/2) #for iteration
 
 	box_shift = 0
 	if ((number_of_boxes % 2) != 0):
-		box_shift = np.int(settings.number_of_pixels/2)
+		box_shift = np.int(settings.number_of_pixels/2) #correction for region center y index for odd number of boxes
 
-	box_idy_do_center = region_center_y_idy-box_shift
+	box_idy_low_center = region_center_y_idy-box_shift #The lowest y-index border of the 'middle' box (Northmost border)
 	
-	return([box_idy_do_center, box_numbers])
+	return([box_idy_low_center, box_numbers])
 	
 	
 	
+def label_data_crop(box_idy_low_center, box_number, label_transformed_data):
+	'''
+	TODO
+	'''
+
+	box_idy_low = box_idy_low_center + box_number*settings.number_of_pixels #The lowest y-index border of the current box (Northmost border)
+	box_idy_high = box_idy_low + settings.number_of_pixels #The highest y-index border of the current box (Southmost border)
+
+	#Check which x-indices is in the swath at the North and South box border
+	swath_idx_low = np.where(np.isnan(label_transformed_data[box_idy_low,:,0]) == False)[0]
+	swath_idx_high = np.where(np.isnan(label_transformed_data[box_idy_high,:,0]) == False)[0]
+
+	box_idx_low_swath = min(min(swath_idx_high), min(swath_idx_low)) #The lowest x-index in the swath (Westmost)
+	box_idx_high_swath = max(max(swath_idx_high), max(swath_idx_low)) #The highest x-index in the swath (Eastmost)
+	box_middle_x = int(np.mean([box_idx_low_swath, box_idx_high_swath])) # Center of swath in x direction
+	box_idx_low = box_middle_x-int(0.5*settings.number_of_pixels) #The lowest x-index of the current box (Westmost border)
+	box_idx_high = box_middle_x+int(0.5*settings.number_of_pixels) #The highest x-index of the current box (Eastmost border)
+	
+	box_data = label_transformed_data[box_idy_low:box_idy_high, box_idx_low:box_idx_high,0] #Cropping the whole data to the current box
+	label_time_in = np.nanmin(label_transformed_data[box_idy_low:box_idy_high, box_idx_low:box_idx_high,1]).astype('datetime64[ns]')
+	label_time_in = datetime.datetime.strptime(str(label_time_in)[:-3],"%Y-%m-%dT%H:%M:%S.%f")
+	label_time_out = np.nanmax(label_transformed_data[box_idy_low:box_idy_high, box_idx_low:box_idx_high,1]).astype('datetime64[ns]')
+	label_time_out = datetime.datetime.strptime(str(label_time_out)[:-3],"%Y-%m-%dT%H:%M:%S.%f")
+
+	box_ind_extent = [box_idx_low, box_idy_high, box_idx_high, box_idy_low] # In form of area extent: lower left x, lower left y, upper right x, upper right y --> West, South, East, North
+	
+	return([box_data, box_ind_extent, label_time_in, label_time_out])
+
+	
+
 def input_data_process(box_ind_extent, filenames_goes):
 	'''
 	TODO
@@ -130,6 +133,7 @@ def input_data_process(box_ind_extent, filenames_goes):
 	with warnings.catch_warnings():
 		warnings.simplefilter('ignore')
 		goes_scn.load((av_dat_names))
+
 		
 	input_time_in = str(goes_scn[av_dat_names[0]].attrs['start_time'])
 	input_time_out = str(goes_scn[av_dat_names[0]].attrs['end_time'])
@@ -148,13 +152,13 @@ def input_data_process(box_ind_extent, filenames_goes):
 	goes_scn = goes_scn.aggregate(x=np.int(ref_width/width), y=np.int(ref_height/height), func='mean')
 
 	keys = av_dat_names
-	box_idx_le, box_idy_up, box_idx_ri, box_idy_do = box_ind_extent
+	box_idx_low, box_idy_high, box_idx_high, box_idy_low = box_ind_extent
 	
 	# RuntimeWarning: invalid value encountered in true_divide x = np.divide(x1, x2, out)
 	# Caused by doing mean of nan-values in aggregate
 	with warnings.catch_warnings():
 		warnings.simplefilter('ignore')
-		values = [(["y", "x"], goes_scn[av_dat_name].values[box_idy_do:box_idy_up, box_idx_le:box_idx_ri]) for av_dat_name in av_dat_names]
+		values = [(["y", "x"], goes_scn[av_dat_name].values[box_idy_low:box_idy_high, box_idx_low:box_idx_high]) for av_dat_name in av_dat_names]
 		
 		
 	return([keys, values, input_time_in, input_time_out])
