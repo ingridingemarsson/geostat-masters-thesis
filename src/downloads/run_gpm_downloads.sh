@@ -1,13 +1,17 @@
 #!/usr/bin/bash
 
-python get_word.py
+echo "Please enter your pansat user password:"
+echo "Password: "
+
+read -s password
+
+export PANSAT_PASSWORD=$password
 
 for file in ./links/linkfiles/*
 do
     echo "$file"
-    python make_dataset.py -lf $(basename $file) -t True -b True -rem True
+    python make_dataset.py -lf $(basename $file) -t True --rem True
     echo "$file done"
 done
 
-python remove_word.py
 

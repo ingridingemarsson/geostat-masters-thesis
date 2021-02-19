@@ -16,13 +16,6 @@ import settings
 start_timing = time.time()
 
 settings.parse_arguments()
-
-if(settings.run_with_bash == True):
-	wordfile = "word.txt"
-	f = open(wordfile, "r")
-	os.environ["PANSAT_PASSWORD"] = f.read()
-	f.close()
-
 settings.initial_load()
 
 # Get list of Earth data search gpm product links from file
