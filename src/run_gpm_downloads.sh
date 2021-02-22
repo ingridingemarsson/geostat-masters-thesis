@@ -7,10 +7,10 @@ read -s password
 
 export PANSAT_PASSWORD=$password
 
-for file in ./links/linkfiles/*
+for file in ./downloads/links/linkfiles/*
 do
     echo "$file"
-    python make_dataset.py -lf $(basename $file) -t True --rem True
+    python make_dataset.py -lf $(basename $file) --rem True -s ~/Dendrite/UserAreas/Ingrid/Dataset
     echo "$file done"
 done
 
