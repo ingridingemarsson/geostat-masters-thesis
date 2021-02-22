@@ -7,7 +7,7 @@ import datetime
 
 from pansat.download.providers.goes_aws import GOESAWSProvider
 from pansat.products.satellite.goes import GOES16L1BRadiances
-import settings
+import downloads.settings as st
 
 #CHANNELS = [8, 13]
 
@@ -35,7 +35,7 @@ def download_cached(start_time, end_time, CHANNELS, no_cache=False):
 	for channel in CHANNELS:
 
 		p = GOES16L1BRadiances("F", channel)
-		dest = Path(settings.path_to_store_goes_data)
+		dest = Path(st.path_to_store_goes_data)
 		dest.mkdir(parents=True, exist_ok=True)
 
 		provider = GOESAWSProvider(p)
@@ -56,7 +56,7 @@ def download_cached(start_time, end_time, CHANNELS, no_cache=False):
 		
 		
 		f = filenames[f_ind]
-		parent_dir = dest / Path(settings.linkfile.replace(".txt", ""))
+		parent_dir = dest / Path(st.linkfile.replace(".txt", ""))
 		path = parent_dir / f
 		
 			

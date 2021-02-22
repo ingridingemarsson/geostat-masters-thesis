@@ -8,24 +8,24 @@ from pathlib import Path
 import xarray as xr
 
 from pansat.products.satellite.gpm import l2b_gpm_cmb
-from make_dataset_funs import gpm_link_extract_datetime, label_data_transform, label_data_crop, calculate_boxes, input_data_process, get_dataset_filename
-from goes_downloads_with_cache import download_cached
-from gpm_plots import region_plot
-import settings
+from downloads.make_dataset_funs import gpm_link_extract_datetime, label_data_transform, label_data_crop, calculate_boxes, input_data_process, get_dataset_filename
+from downloads.goes_downloads_with_cache import download_cached
+from visualize.data_plots import region_plot
+import downloads.settings as st
 
 # Clock the program
 start_timing = time.time()
 
-settings.parse_arguments()
-settings.initial_load()
+st.parse_arguments()
+st.initial_load('downloads/areas.yaml')
 
 # Get list of Earth data search gpm product links from file
-link_file = open('links/linkfiles/' + settings.linkfile, "r") 
+link_file = open('downloads/links/linkfiles/' + st.linkfile, "r") 
 link_list = link_file.readlines()
 link_file.close()
 
 N = len(link_list)
-if (settings.test == True):
+if (st.test == True):
 	N = 2
 
 # For each gpm product link
@@ -37,11 +37,11 @@ for j in range(0,N):
 
 	label_file_start, label_file_end = gpm_link_extract_datetime(label_file_link) #FUN
 
-	label_files = l2b_gpm_cmb.download(label_file_start, label_file_end)
+	label_files = l2b_gpm_cmb.download(label_file_start, label_file_end, destination=st.path_to_store_gpm_data)
 	label_dataset = l2b_gpm_cmb.open(label_files[0])
 
 	label_transformed_data = label_data_transform(label_dataset)  #FUN
-	projcoords_x, projcoords_y = settings.area_def.get_proj_vectors() 
+	projcoords_x, projcoords_y = st.area_def.get_proj_vectors() 
 	box_idy_low_center, box_numbers = calculate_boxes(projcoords_y)  #FUN
 
 	box_datasets = []
@@ -49,9 +49,9 @@ for j in range(0,N):
 
 		label_box_data, box_ind_extent, label_time_in, label_time_out = label_data_crop(box_idy_low_center, box_number, label_transformed_data)  #FUN
 		box_area_extent = [projcoords_x[box_ind_extent[0]], projcoords_y[box_ind_extent[1]], projcoords_x[box_ind_extent[2]], projcoords_y[box_ind_extent[3]]]
-		if not (box_area_extent[0] < settings.region_corners[0] or box_area_extent[2] > settings.region_corners[2]):
+		if not (box_area_extent[0] < st.region_corners[0] or box_area_extent[2] > st.region_corners[2]):
 		
-			filenames_goes = download_cached(label_time_in, label_time_out, settings.channels)
+			filenames_goes = download_cached(label_time_in, label_time_out, st.channels)
 			keys, values, input_time_in, input_time_out = input_data_process(box_ind_extent, filenames_goes)
 			keys.append('gpm_precipitation')
 			values.append((["y","x"], label_box_data))
@@ -62,7 +62,7 @@ for j in range(0,N):
 						attrs = dict(
 								ind_extent = box_ind_extent,
 								area_extent = box_area_extent,
-								shape = [settings.number_of_pixels, settings.number_of_pixels],
+								shape = [st.number_of_pixels, st.number_of_pixels],
 								gpm_time_in = str(label_time_in), 
 								gpm_time_out = str(label_time_out),
 								goes_time_in = str(input_time_in),
@@ -78,14 +78,15 @@ for j in range(0,N):
 
 
 
-	if (settings.make_box_plot == True and len(box_datasets) > 0):
+	if (st.make_box_plot == True and len(box_datasets) > 0):
 		# This is a warning regarding loss of projection information when converting to a PROJ string
 		with warnings.catch_warnings():
 			warnings.simplefilter('ignore')
 			for key in keys:
-				region_plot(box_datasets, key, get_dataset_filename(box_number, label_file_start, str(key)+'.png'))
+				region_plot(box_datasets, key, get_dataset_filename(box_number, label_file_start, str(key)+'.png'), st.region_corners, 
+					st.number_of_pixels, st.area_def)
 		
-	if (settings.used_remove == True):
+	if (st.used_remove == True):
 		for files in label_files:	
 			if os.path.exists(files):
 				os.remove(files)
@@ -94,8 +95,8 @@ for j in range(0,N):
 			
 	print('end # ' + str(j))
 			
-if (settings.used_remove == True):	
-	dir_path = Path(settings.path_to_store_goes_data) / Path(settings.linkfile.replace(".txt", ""))
+if (st.used_remove == True):	
+	dir_path = Path(st.path_to_store_goes_data) / Path(st.linkfile.replace(".txt", ""))
 	try:
 	    shutil.rmtree(dir_path)
 	except OSError as e:

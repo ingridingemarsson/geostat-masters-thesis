@@ -8,7 +8,7 @@ import os
 from pyresample import kd_tree, geometry, load_area
 from satpy import Scene
 
-import settings
+import downloads.settings as st
 
 
 
@@ -51,7 +51,7 @@ def label_data_transform(label_dataset):
 	label_data = np.stack((precip, repeted_times), axis = 2)
 
 	swath_def = geometry.SwathDefinition(lons=label_dataset['longitude'], lats=label_dataset['latitude'])
-	label_transformed_data = kd_tree.resample_nearest(swath_def, label_data, settings.area_def,
+	label_transformed_data = kd_tree.resample_nearest(swath_def, label_data, st.area_def,
 		                                        radius_of_influence=3700, epsilon=0, 
 		                                        fill_value=np.nan)
 		                                        
@@ -64,17 +64,17 @@ def calculate_boxes(projcoords_y):
 	TODO
 	'''
        
-	region_center_y = np.mean([settings.region_corners[1], settings.region_corners[3]]) # lower left y coordinate (SW), upper right y coordinate (NE)
+	region_center_y = np.mean([st.region_corners[1], st.region_corners[3]]) # lower left y coordinate (SW), upper right y coordinate (NE)
 	projcoords_y_diff = np.abs(projcoords_y - region_center_y)
 	region_center_y_idy = np.argmin(projcoords_y_diff)
 
-	region_min_y = np.argmin(np.abs(projcoords_y-settings.region_corners[1])) #lowest y-index in region (Northmost)
-	region_max_y = np.argmin(np.abs(projcoords_y-settings.region_corners[3])) #highest y-index in region (Southmost)
+	region_min_y = np.argmin(np.abs(projcoords_y-st.region_corners[1])) #lowest y-index in region (Northmost)
+	region_max_y = np.argmin(np.abs(projcoords_y-st.region_corners[3])) #highest y-index in region (Southmost)
 	region_height = np.abs(region_max_y-region_min_y) #y extent of region in pixels
 
-	number_of_boxes = np.int(np.round(region_height/settings.number_of_pixels-1))
+	number_of_boxes = np.int(np.round(region_height/st.number_of_pixels-1))
 	
-	offset_range = region_height-number_of_boxes*settings.number_of_pixels #how much extra y extent is there to play with
+	offset_range = region_height-number_of_boxes*st.number_of_pixels #how much extra y extent is there to play with
 	offset = np.random.randint(offset_range)-np.int(offset_range/2) #how much to shift the region center y index
 	region_center_y_idy += offset
 	
@@ -82,7 +82,7 @@ def calculate_boxes(projcoords_y):
 
 	box_shift = 0
 	if ((number_of_boxes % 2) != 0):
-		box_shift = np.int(settings.number_of_pixels/2) #correction for region center y index for odd number of boxes
+		box_shift = np.int(st.number_of_pixels/2) #correction for region center y index for odd number of boxes
 
 	box_idy_low_center = region_center_y_idy-box_shift #The lowest y-index border of the 'middle' box (Northmost border)
 	
@@ -95,8 +95,8 @@ def label_data_crop(box_idy_low_center, box_number, label_transformed_data):
 	TODO
 	'''
 
-	box_idy_low = box_idy_low_center + box_number*settings.number_of_pixels #The lowest y-index border of the current box (Northmost border)
-	box_idy_high = box_idy_low + settings.number_of_pixels #The highest y-index border of the current box (Southmost border)
+	box_idy_low = box_idy_low_center + box_number*st.number_of_pixels #The lowest y-index border of the current box (Northmost border)
+	box_idy_high = box_idy_low + st.number_of_pixels #The highest y-index border of the current box (Southmost border)
 
 	#Check which x-indices is in the swath at the North and South box border
 	swath_idx_low = np.where(np.isnan(label_transformed_data[box_idy_low,:,0]) == False)[0]
@@ -105,8 +105,8 @@ def label_data_crop(box_idy_low_center, box_number, label_transformed_data):
 	box_idx_low_swath = min(min(swath_idx_high), min(swath_idx_low)) #The lowest x-index in the swath (Westmost)
 	box_idx_high_swath = max(max(swath_idx_high), max(swath_idx_low)) #The highest x-index in the swath (Eastmost)
 	box_middle_x = int(np.mean([box_idx_low_swath, box_idx_high_swath])) # Center of swath in x direction
-	box_idx_low = box_middle_x-int(0.5*settings.number_of_pixels) #The lowest x-index of the current box (Westmost border)
-	box_idx_high = box_middle_x+int(0.5*settings.number_of_pixels) #The highest x-index of the current box (Eastmost border)
+	box_idx_low = box_middle_x-int(0.5*st.number_of_pixels) #The lowest x-index of the current box (Westmost border)
+	box_idx_high = box_middle_x+int(0.5*st.number_of_pixels) #The highest x-index of the current box (Eastmost border)
 	
 	box_data = label_transformed_data[box_idy_low:box_idy_high, box_idx_low:box_idx_high,0] #Cropping the whole data to the current box
 	label_time_in = np.nanmin(label_transformed_data[box_idy_low:box_idy_high, box_idx_low:box_idx_high,1]).astype('datetime64[ns]')
@@ -144,7 +144,7 @@ def input_data_process(box_ind_extent, filenames_goes):
 		warnings.simplefilter('ignore')	
 		goes_scn = goes_scn.resample(goes_scn.min_area(), resampler = 'native')
 		
-	height, width = settings.shape_full_disk
+	height, width = st.shape_full_disk
 	ref_height = goes_scn[av_dat_names[0]].y.shape[0]
 	ref_width = goes_scn[av_dat_names[0]].x.shape[0]
 
@@ -170,21 +170,25 @@ def get_dataset_filename(box_number, label_file_start, filetype):
 	TODO
 	'''
 
-	parent_dir = settings.path_to_store_processed_data + '/' + settings.linkfile.replace(".txt", "")
+	parent_dir = st.path_to_store_processed_data + '/' + st.linkfile.replace(".txt", "")
 	
-	if not Path(settings.path_to_store_processed_data).exists():
-		os.mkdir(settings.path_to_store_processed_data)
+	if not Path(st.path_to_store_processed_data).exists():
+		os.mkdir(st.path_to_store_processed_data)
 		
 	if not Path(parent_dir).exists():
 		os.mkdir(parent_dir)
 	
 	common_filename = '/GPMGOES-' 
 	common_filename += 'oS' + str(label_file_start).replace(" ", "T") 
-	common_filename += '-c' + str(settings.channels).replace(" ", "") 
-	common_filename += '-p' + str(settings.number_of_pixels) 
+	common_filename += '-c' + str(st.channels).replace(" ", "") 
+	common_filename += '-p' + str(st.number_of_pixels) 
 
+	common_dir = parent_dir + common_filename
 
-	total_path = parent_dir + common_filename + '-b' + str(box_number) + filetype
+	if not Path(common_dir).exists():
+		os.mkdir(common_dir)
+	
+	total_path = common_dir + common_filename + '-b' + str(box_number) + filetype
 	return(total_path)
 
 

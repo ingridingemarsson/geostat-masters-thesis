@@ -37,7 +37,7 @@ def parse_arguments():
 		"--storage_path",
 		help="Path to folder for final storage of dataset",
 		type=str,
-		default="Dataset",
+		default="downloads/Dataset",
 	)
 	parser.add_argument(
 		"--plot",
@@ -69,7 +69,9 @@ def parse_arguments():
 	global path_to_store_processed_data
 	path_to_store_processed_data = args.storage_path 
 	global path_to_store_goes_data
-	path_to_store_goes_data = "GOES-16"
+	path_to_store_goes_data = "downloads/GOES-16"
+	global path_to_store_gpm_data
+	path_to_store_gpm_data = "downloads/GPM"
 	global make_box_plot
 	make_box_plot = args.plot
 	global used_remove
@@ -77,7 +79,7 @@ def parse_arguments():
 	global test
 	test = args.test
 
-def initial_load():
+def initial_load(area_path):
 	'''
 	Loading projection information from file an passing
 	to global variables.
@@ -86,9 +88,9 @@ def initial_load():
 	global projection 
 	global region_corners
 	global shape_full_disk
-	area_def = load_area('areas.yaml', 'full_disk')
+	area_def = load_area(area_path, 'full_disk')
 
-	area_file = open('areas.yaml')
+	area_file = open(area_path)
 	parsed_area_file = yaml.load(area_file, Loader=yaml.FullLoader)
 	area_dict_full_disk = parsed_area_file['full_disk']
 	area_dict_region = parsed_area_file['region']
