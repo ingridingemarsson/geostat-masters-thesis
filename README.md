@@ -38,8 +38,9 @@ Attributes:
 ### 
 
 <p float="left">
-<img src="plots/regionplot1.png" width="400">
-<img src="plots/regionplot2.png" width="400">
+<img src="plots/C08af.png" width="400">
+<img src="plots/C13af.png" width="400">
+<img src="plots/gpmaf.png" width="400">
 </p>
 
 
