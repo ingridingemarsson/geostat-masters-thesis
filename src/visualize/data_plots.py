@@ -47,6 +47,8 @@ def region_plot(datasets, feature, filename, region_corners, number_of_pixels, a
 	ax.set_xlabel('x')
 	ax.set_ylabel('y')
 	plt.savefig(filename)
+	fig.clear()
+	plt.close(fig)
 	
 	
 	

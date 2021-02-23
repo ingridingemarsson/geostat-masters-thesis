@@ -41,7 +41,7 @@ args = parser.parse_args()
 areas_filepath =  'downloads/areas.yaml'
 initial_load(areas_filepath)
 
-linkfile = 'linkfile2017-12/'
+linkfile = 'linkfile2018-07/'
 parentdir = args.filepath + linkfile
 storeagedir = 'visualize/images/'+linkfile
 

@@ -165,22 +165,21 @@ def input_data_process(box_ind_extent, filenames_goes):
 	
 	
 	
-def get_dataset_filename(box_number, label_file_start, filetype):
+def get_dataset_filename(box_number, label_file_start, filetype, channels_old = [], ext=''):
 	'''
 	TODO
 	'''
-
-	parent_dir = st.path_to_store_processed_data + '/' + st.linkfile.replace(".txt", "")
+	parent_dir = st.path_to_store_processed_data +ext+ '/' + st.linkfile.replace(".txt", "")
 	
-	if not Path(st.path_to_store_processed_data).exists():
-		os.mkdir(st.path_to_store_processed_data)
+	if not Path(st.path_to_store_processed_data+ext).exists():
+		os.mkdir(st.path_to_store_processed_data+ext)
 		
 	if not Path(parent_dir).exists():
 		os.mkdir(parent_dir)
 	
 	common_filename = '/GPMGOES-' 
 	common_filename += 'oS' + str(label_file_start).replace(" ", "T") 
-	common_filename += '-c' + str(st.channels).replace(" ", "") 
+	common_filename += '-c' + str(st.channels+channels_old).replace(" ", "") 
 	common_filename += '-p' + str(st.number_of_pixels) 
 
 	common_dir = parent_dir + common_filename
