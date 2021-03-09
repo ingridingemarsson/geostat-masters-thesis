@@ -60,9 +60,10 @@ class Standardize(object):
 	def __call__(self, sample):
 		box, label = sample['box'], sample['label']
 		
-		standardized_box = np.stack([(box[i]- self.stats[0, i])/self.stats[1, i] for i in range(self.stats.shape[0])])
+		filled_box = np.stack([np.where(np.isnan(box[i]), -1, box[i]) for i in range(box.shape[0])])
 		
-		#label = label*0.01
+		standardized_box = np.stack([(filled_box[i]- self.stats[0, i])/self.stats[1, i] for i in range(self.stats.shape[0])])
+		
 		filled_label = np.where(np.isnan(label), -1, label)
 
 		return {'box': standardized_box, 'label': filled_label}
@@ -158,9 +159,13 @@ class GOESRETRIEVALSDataset(Dataset):
 		
 		sample = {'box': box, 'label': label}
 		
+		mask = np.where(np.isnan(label), 0, np.ones(label.shape))
+		
 		if (self.transform != None):
 			sample = self.transform(sample)
 
+		sample['mask'] = mask		
+		
 		return(sample)
 		
 	def getfilename(self, idx):
