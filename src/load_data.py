@@ -51,7 +51,7 @@ class Standardize(object):
 			for file in os.listdir(path_to_data):
 				if file.endswith('.npy'):
 					data = np.load(os.path.join(path_to_data,file))
-					box = data['box']
+					box = data[:-1]
 					tmp_mean = np.array([np.nanmean(box[c]) for c in range(box.shape[0])])
 					tmp_std = np.array([np.nanstd(box[c]) for c in range(box.shape[0])])
 					glob_mean = (glob_mean*(i-1)+tmp_mean)/i

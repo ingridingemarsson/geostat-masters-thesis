@@ -4,7 +4,7 @@ from matplotlib.colors import LogNorm
 from matplotlib.gridspec import GridSpec
 import torch
 
-def plotRandomSample(dataset, net = None, quantile_num = 0):
+def plotRandomSample(dataset, net = None, quantile_num = 0, device='cpu'):
     ncols = 3
     if not net == None:
         ncols = 4
@@ -39,7 +39,7 @@ def plotRandomSample(dataset, net = None, quantile_num = 0):
 
     if not net == None:
         ax = plt.subplot(gs[0, 3])
-        m = ax.imshow(torch.squeeze(net(dataset[index]['box'].unsqueeze(0))[:,quantile_num]).detach().numpy(),
+        m = ax.imshow(torch.squeeze(net(dataset[index]['box'].unsqueeze(0).to(device))[:,quantile_num]).detach().cpu().numpy(),
                       norm=precip_norm, cmap=plt.get_cmap('GnBu'))
         ax.imshow(dataset[index]['label']!=-1,  cmap=plt.get_cmap('binary_r'), alpha = 0.02)
         ax.grid(False)
@@ -49,4 +49,4 @@ def plotRandomSample(dataset, net = None, quantile_num = 0):
 
 
     plt.tight_layout()
-    
+    return(index)
