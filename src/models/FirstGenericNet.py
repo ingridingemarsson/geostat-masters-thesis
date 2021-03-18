@@ -2,13 +2,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class Net(nn.Module):
-    def __init__(self, num_quantiles, num_channels, kernel_size):
+    def __init__(self, num_quantiles, num_channels):
     		
         super(Net, self).__init__()
     
-        self.c1 = nn.Conv2d(num_channels, 128, kernel_size)
-        self.c2 = nn.Conv2d(128, 128, kernel_size)
-        self.c3 = nn.Conv2d(128, num_quantiles, kernel_size)
+        self.c1 = nn.Conv2d(num_channels, 128, 1)
+        self.c2 = nn.Conv2d(128, 128, 1)
+        self.c3 = nn.Conv2d(128, num_quantiles, 1)
         self.b = nn.BatchNorm2d(128)
     
     

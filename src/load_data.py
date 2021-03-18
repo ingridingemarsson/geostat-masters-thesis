@@ -62,12 +62,12 @@ class Standardize(object):
 
 			if not np.isnan(np.sum(stats)):
 				np.save(path_to_stats, stats)
+				print('mean, std:')
 				print(stats)
 			else:
 				print('Array contains NaN')
 		else:
 			stats = np.load(path_to_stats)
-			print(stats)
 
 		self.stats = stats
 		
