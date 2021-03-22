@@ -1,5 +1,5 @@
 # Master's Thesis in Space, earth and environment
-## Spring 2020
+## Spring 2021
 
 Downloading data for rain retrievals over Brazil.
 
