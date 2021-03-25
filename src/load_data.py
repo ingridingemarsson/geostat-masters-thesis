@@ -6,7 +6,30 @@ from pathlib import Path
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 
-
+class RandomCrop(object):
+	'''
+	Random crop of the sample.
+	
+	Args:
+		output_size (int): Desired output size. 
+	'''
+	
+	def __init__(self, output_size):
+		self.output_size = output_size
+	
+	def __call__(self, sample):
+		box, label = sample['box'], sample['label']
+		
+		h, w = label.shape
+		new_d = self.output_size
+		
+		top = np.random.randint(0, h - new_d)
+		left = np.random.randint(0, w - new_d)
+		
+		cropped_box = np.stack([box[i, top: top + new_d, left: left + new_d] for i in range(box.shape[0])])
+		cropped_label = label[top: top + new_d, left: left + new_d]
+		
+		return {'box': cropped_box, 'label': cropped_label}
 
 class Mask(object):
 	'''
