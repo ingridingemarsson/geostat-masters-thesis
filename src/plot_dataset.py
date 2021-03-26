@@ -14,7 +14,7 @@ import cartopy
 import cartopy.crs as ccrs
 from pyresample import geometry, load_area
 
-from visualize.data_plots import region_plot
+from visualize.data_plots import region_plot, region_plot_overlay
 import visualize.plot_dataset_funs
 from visualize.plot_dataset_funs import initial_load, pars_dataset_filename
 
@@ -41,7 +41,7 @@ args = parser.parse_args()
 areas_filepath =  'downloads/areas.yaml'
 initial_load(areas_filepath)
 
-linkfile = 'linkfile2018-07/'
+linkfile = 'linkfile2017-12/'
 parentdir = args.filepath + linkfile
 storeagedir = 'visualize/images/'+linkfile
 
@@ -81,6 +81,8 @@ for subdir in [f.name for f in os.scandir(parentdir) if f.is_dir()]:
 					warnings.simplefilter('ignore')
 					region_plot(datasets, 'C'+str(channel).zfill(2), storeagedir + subdir +'/'+ str('C'+str(channel).zfill(2))+'af.png',
 						visualize.plot_dataset_funs.region_corners, number_of_pixels, visualize.plot_dataset_funs.area_def)
+					region_plot_overlay(datasets, 'C'+str(channel).zfill(2), storeagedir + subdir +'/'+ str('C'+str(channel).zfill(2))+'overlay_af.png',
+						visualize.plot_dataset_funs.region_corners, number_of_pixels, visualize.plot_dataset_funs.area_def)                    
 					
 			with warnings.catch_warnings():
 				warnings.simplefilter('ignore')
