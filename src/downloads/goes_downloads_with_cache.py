@@ -12,7 +12,7 @@ import downloads.settings as st
 #CHANNELS = [8, 13]
 
 
-def download_cached(start_time, end_time, CHANNELS, no_cache=False):
+def download_cached(start_time, end_time, CHANNELS, no_cache=False, time_tol = 480):
 	"""
 	Download all files from the GOES satellite combined product with
 	channels in CHANNELS in a given time range but avoid redownloading
@@ -40,21 +40,29 @@ def download_cached(start_time, end_time, CHANNELS, no_cache=False):
 
 		provider = GOESAWSProvider(p)
 		filenames = provider.get_files_in_range(start_time, end_time, start_inclusive=True)
-		
+		print('start_time', start_time)
+		print('end_time', end_time)
 		f_ind = 0
 		if (len(filenames) == 2):
 		
-			__, times0end = goes_filename_extract_datetime(filenames[0])
-			timediff0 = np.abs((start_time-times0end).total_seconds())
-			
-			times1start, __ = goes_filename_extract_datetime(filenames[1])
-			timediff1 = np.abs((times1start-end_time).total_seconds())
-			
-			if (timediff0 < timediff1):
+			times0start, times0end = goes_filename_extract_datetime(filenames[0])
+			timediff0 = min(np.abs((start_time-times0start).total_seconds()), np.abs((end_time-times0end).total_seconds()))
+			print(timediff0)
+			times1start, times1end = goes_filename_extract_datetime(filenames[1])
+			timediff1 = min(np.abs((start_time-times1start).total_seconds()), np.abs((end_time-times1end).total_seconds()))
+			print(timediff1)
+			if (timediff0 > timediff1):
 				f_ind = 1
-				
-		
-		
+		print(f_ind)
+		timesstart, timesend = goes_filename_extract_datetime(filenames[f_ind])
+		print('timesstart', timesstart)
+		print('timesend', timesend)
+		timesmid_goes = timesstart + datetime.timedelta(seconds=int((timesend-timesstart).total_seconds()/2)) 
+		print('timesmid_goes', timesmid_goes)
+		timesmid_label = start_time + datetime.timedelta(seconds=int((end_time-start_time).total_seconds()/2))                       
+		if(np.abs((timesmid_goes-timesmid_label).total_seconds()) > time_tol):
+		    return None
+		                       
 		f = filenames[f_ind]
 		parent_dir = dest / Path(st.linkfile.replace(".txt", ""))
 		path = parent_dir / f

@@ -52,29 +52,32 @@ for j in range(0,N):
 		if not (box_area_extent[0] < st.region_corners[0] or box_area_extent[2] > st.region_corners[2]):
 		
 			filenames_goes = download_cached(label_time_in, label_time_out, st.channels)
-			keys, values, input_time_in, input_time_out = input_data_process(box_ind_extent, filenames_goes)
-			keys.append('gpm_precipitation')
-			values.append((["y","x"], label_box_data))
-			data_vars_dict = dict(zip(keys, values))
-
-			box_dataset = xr.Dataset(
-						data_vars = data_vars_dict, 
+			if(filenames_goes==None): 
+				pass
+			else:
+				keys, values, input_time_in, input_time_out = input_data_process(box_ind_extent, filenames_goes)
+				keys.append('gpm_precipitation')
+				values.append((["y","x"], label_box_data))
+				data_vars_dict = dict(zip(keys, values))
+				
+				box_dataset = xr.Dataset(
+					data_vars = data_vars_dict, 
 						attrs = dict(
-								ind_extent = box_ind_extent,
-								area_extent = box_area_extent,
-								shape = [st.number_of_pixels, st.number_of_pixels],
-								gpm_time_in = str(label_time_in), 
-								gpm_time_out = str(label_time_out),
-								goes_time_in = str(input_time_in),
-								goes_time_out = str(input_time_out),
-								filename_gpm = str(label_files[0]),
-								filenames_goes = [str(filename_goes) for filename_goes in filenames_goes]))
-			box_dataset = box_dataset.astype(np.float32)
-			box_dataset_filename = get_dataset_filename(box_number, label_file_start,'.nc')
-			box_dataset.to_netcdf(box_dataset_filename)
-			box_dataset.close()
-
-			box_datasets.append(box_dataset)
+							ind_extent = box_ind_extent,
+							area_extent = box_area_extent,
+							shape = [st.number_of_pixels, st.number_of_pixels],
+							gpm_time_in = str(label_time_in), 
+							gpm_time_out = str(label_time_out),
+							goes_time_in = str(input_time_in),
+							goes_time_out = str(input_time_out),
+							filename_gpm = str(label_files[0]),
+							filenames_goes = [str(filename_goes) for filename_goes in filenames_goes]))
+				box_dataset = box_dataset.astype(np.float32)
+				box_dataset_filename = get_dataset_filename(box_number, label_file_start,'.nc')
+				box_dataset.to_netcdf(box_dataset_filename)
+				box_dataset.close()
+				
+				box_datasets.append(box_dataset)
 
 
 
