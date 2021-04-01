@@ -33,15 +33,15 @@ parser.add_argument(
 		"--filepath",
 		help="Path to dataset",
 		type=str,
-		default='Dataset/',
+		default='dataset/data/',
 	)
 args = parser.parse_args()
 
 
-areas_filepath =  'downloads/areas.yaml'
+areas_filepath =  'dataset/downloads/files/areas.yaml'
 initial_load(areas_filepath)
 
-linkfile = 'linkfile2017-12/'
+linkfile = 'linkfileYYYY-MM/'
 parentdir = args.filepath + linkfile
 storeagedir = 'visualize/images/'+linkfile
 
