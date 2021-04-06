@@ -19,7 +19,7 @@ from pansat.download.providers.goes_aws import GOESAWSProvider
 from pansat.products.satellite.goes import GOES16L1BRadiances
 
 
-# GLOBAL VARIABLES ###################
+# GLOBAL VARIABLES ################################################################################################################################################################
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -34,7 +34,10 @@ global link_file_path
 link_file_path = args.linkfile
 
 global used_remove
-used_remove = True
+used_remove = False #True
+
+global check_for_nans
+check_for_nans = True
 
 global storage_path_temp
 storage_path_temp = '../temp'
@@ -47,7 +50,8 @@ if not Path(storage_path_final).exists():
 	os.mkdir(storage_path_final)
 
 global channels
-channels = [8,13]
+channels = list(range(8,17))
+channels.remove(12)
 
 global number_of_pixels
 number_of_pixels = 256
@@ -75,9 +79,17 @@ global projection
 projection = area_dict_full_disk['projection']
 
 
-#############################################################################################################################################
+# FRAMEWORK SETUP #################################################################################################################################################################
 
 def box_setup():
+	'''
+	From the information on the region and the number of pixels compute the y (North-South) placement of the cropped boxes (before random shift).
+	
+	Returns:
+		offset_range: region height minus boxes height, i.e. the remaining part of the region in which the boxes can be shifted in the y direction
+		box_idy_low_center: The lowest y-index border of the 'middle' box (Northmost border)
+		box_numbers: array of box indices
+	'''
 
 	# Create image boxes
 	__, projcoords_y = area_def.get_proj_vectors()
@@ -104,40 +116,9 @@ def box_setup():
 	
 	return(offset_range, box_idy_low_center, box_numbers)
 
-#############################################################################################################################################
-
-offset_range, box_idy_low_center, box_numbers = box_setup()
 
 
-#####################################################################
-
-def goes_filename_extract_datetime(mystr):
-	'''
-	Extracting start and end datetime from GOES combined product filename.
-	
-	Args:
-		mystr: filename for GOES combined product
-		
-	Returns:
-		start: datetime for measurement start
-		end: datetime for measurement end
-	'''
-	
-	
-	startmatch = re.findall(r'(?:s\d{14})', mystr)[0]
-	endmatch = re.findall(r'(?:e\d{14})', mystr)[0]
-	
-	start = datetime.datetime.strptime(startmatch[1:-1],"%Y%j%H%M%S")
-	end = datetime.datetime.strptime(endmatch[1:-1],"%Y%j%H%M%S")
-	
-	if(start.hour > end.hour):
-		end += datetime.timedelta(days=1)
-
-	return([start, end])
-
-
-#####################################################################
-
+# CLASS FOR DOWNLOADING AND PREPROCESSING #########################################################################################################################################
 
 class MakeOverpass():
 	"""
@@ -229,9 +210,10 @@ class MakeOverpass():
 			if not (box_area_extent[0] < region_corners[0] or box_area_extent[2] > region_corners[2]): # Check that current box lies well inside region border
 				filenames_goes = self.box.download_cached()
 				if not filenames_goes==None: # Check that there exists matching goes files
-					self.box.goes_data_process()
-					self.box.get_dataset_filename()
-					self.box.save_combined_dataset()
+					cont = self.box.goes_data_process()
+					if cont:
+						self.box.get_dataset_filename()
+						self.box.save_combined_dataset()
 			
 	
 	
@@ -295,6 +277,31 @@ class MakeOverpass():
 				projcoords_x[self.box_ind_extent[2]], projcoords_y[self.box_ind_extent[3]]]				
 
 			return(self.box_area_extent)
+		
+
+		def goes_filename_extract_datetime(self, mystr):
+			'''
+			Extracting start and end datetime from GOES combined product filename.
+			
+			Args:
+				mystr: filename for GOES combined product
+				
+			Returns:
+				start: datetime for measurement start
+				end: datetime for measurement end
+			'''
+			
+			
+			startmatch = re.findall(r'(?:s\d{14})', mystr)[0]
+			endmatch = re.findall(r'(?:e\d{14})', mystr)[0]
+			
+			start = datetime.datetime.strptime(startmatch[1:-1],"%Y%j%H%M%S")
+			end = datetime.datetime.strptime(endmatch[1:-1],"%Y%j%H%M%S")
+			
+			if(start.hour > end.hour):
+				end += datetime.timedelta(days=1)
+
+			return([start, end])		
 									
 						
 		def download_cached(self, no_cache=False, time_tol = 480):
@@ -319,43 +326,60 @@ class MakeOverpass():
 
 
 			files = []
-			for channel in channels:
+			
+			#
+			channel = channels[0]
 
+			p = GOES16L1BRadiances("F", channel)
+			dest = Path(storage_path_temp)
+			dest.mkdir(parents=True, exist_ok=True)
+
+			provider = GOESAWSProvider(p)
+			filenames = provider.get_files_in_range(self.gpm_time_in, self.gpm_time_out, start_inclusive=True)
+
+			f_ind = 0
+			if (len(filenames) == 2):
+				timediff = []
+				for filename in filenames:
+					goes_start, goes_end = self.goes_filename_extract_datetime(filename)
+					timediff.append(min(np.abs((self.gpm_time_in-goes_start).total_seconds()), np.abs((self.gpm_time_out-goes_end).total_seconds())))
+
+				if (timediff[0] > timediff[1]):
+					f_ind = 1
+
+			goes_start, goes_end = self.goes_filename_extract_datetime(filenames[f_ind])
+			timesmid_goes = goes_start + datetime.timedelta(seconds=int((goes_end-goes_start).total_seconds()/2)) 
+			timesmid_gpm = self.gpm_time_in + datetime.timedelta(seconds=int((self.gpm_time_out-self.gpm_time_in).total_seconds()/2))            
+			           
+			if(np.abs((timesmid_goes-timesmid_gpm).total_seconds()) > time_tol):
+			    return None
+					       
+			f = filenames[f_ind]
+			path = dest / f
+			
+			if not path.exists() or no_cache:
+				data = provider.download_file(f, path)
+			files.append(path)
+			
+			for channel in channels[1:]:
 				p = GOES16L1BRadiances("F", channel)
 				dest = Path(storage_path_temp)
 				dest.mkdir(parents=True, exist_ok=True)
 
 				provider = GOESAWSProvider(p)
-				filenames = provider.get_files_in_range(self.gpm_time_in, self.gpm_time_out, start_inclusive=True)
-
-				f_ind = 0
-				if (len(filenames) == 2):
+				filenames = provider.get_files_in_range(goes_start, goes_end, start_inclusive=True)
 				
-					times0start, times0end = goes_filename_extract_datetime(filenames[0])
-					timediff0 = min(np.abs((self.gpm_time_in-times0start).total_seconds()), np.abs((self.gpm_time_out-times0end).total_seconds()))
-
-					times1start, times1end = goes_filename_extract_datetime(filenames[1])
-					timediff1 = min(np.abs((self.gpm_time_in-times1start).total_seconds()), np.abs((self.gpm_time_out-times1end).total_seconds()))
-
-					if (timediff0 > timediff1):
-						f_ind = 1
-				print(f_ind)
-				timesstart, timesend = goes_filename_extract_datetime(filenames[f_ind])
-				print('timesstart', timesstart)
-				print('timesend', timesend)
-				timesmid_goes = timesstart + datetime.timedelta(seconds=int((timesend-timesstart).total_seconds()/2)) 
-				print('timesmid_goes', timesmid_goes)
-				timesmid_label = self.gpm_time_in + datetime.timedelta(seconds=int((self.gpm_time_out-self.gpm_time_in).total_seconds()/2))                       
-				if(np.abs((timesmid_goes-timesmid_label).total_seconds()) > time_tol):
-				    return None
-						       
-				f = filenames[f_ind]
+				goes_start_new, __ = self.goes_filename_extract_datetime(filenames[0])	
+				if(np.abs((goes_start_new - goes_start).total_seconds())>60):
+					return None	
+					
+				f = filenames[0]
 				path = dest / f
 				
 				if not path.exists() or no_cache:
 					data = provider.download_file(f, path)
-				files.append(path)
-				
+				files.append(path)				
+					
 			self.filenames_goes = files				
 			return(self.filenames_goes)			
 			
@@ -375,8 +399,8 @@ class MakeOverpass():
 				goes_scn.load((av_dat_names))
 
 				
-			self.goes_time_in = str(goes_scn[av_dat_names[0]].attrs['start_time'])
-			self.goes_time_out = str(goes_scn[av_dat_names[0]].attrs['end_time'])
+			self.goes_time_in = [str(goes_scn[av_dat_name].attrs['start_time']) for av_dat_name in av_dat_names]
+			self.goes_time_out = [str(goes_scn[av_dat_name].attrs['end_time']) for av_dat_name in av_dat_names]
 
 
 			# This is a warning regarding loss of projection information when converting to a PROJ string
@@ -388,7 +412,6 @@ class MakeOverpass():
 			ref_height = goes_scn[av_dat_names[0]].y.shape[0]
 			ref_width = goes_scn[av_dat_names[0]].x.shape[0]
 
-			
 			goes_scn = goes_scn.aggregate(x=np.int(ref_width/width), y=np.int(ref_height/height), func='mean')
 
 			keys = av_dat_names
@@ -398,10 +421,18 @@ class MakeOverpass():
 			# Caused by doing mean of nan-values in aggregate
 			with warnings.catch_warnings():
 				warnings.simplefilter('ignore')
-				values = [(["y", "x"], goes_scn[av_dat_name].values[box_idy_low:box_idy_high, box_idx_low:box_idx_high]) for av_dat_name in av_dat_names]
+				values = []
+				for av_dat_name in av_dat_names:
+					av_dat_vals = goes_scn[av_dat_name].values[box_idy_low:box_idy_high, box_idx_low:box_idx_high]
+					if(np.isnan(np.sum(av_dat_vals)) and check_for_nans):
+						return False
+					values.append((["y", "x"], av_dat_vals)) 
+
 				
 			self.keys = keys
 			self.values = values
+			
+			return True
 			
 			
 		def get_dataset_filename(self):
@@ -445,10 +476,10 @@ class MakeOverpass():
 						shape = [number_of_pixels, number_of_pixels],
 						gpm_time_in = str(self.gpm_time_in), 
 						gpm_time_out = str(self.gpm_time_out),
-						goes_time_in = str(self.goes_time_in),
-						goes_time_out = str(self.goes_time_out),
-						filename_gpm = str(self.gpm_file),
-						filenames_goes = [str(filename_goes) for filename_goes in self.filenames_goes]))
+						goes_time_in = self.goes_time_in,
+						goes_time_out = self.goes_time_out,
+						filename_gpm = str(os.path.basename(self.gpm_file)),
+						filenames_goes = [str(os.path.basename(filename_goes)) for filename_goes in self.filenames_goes]))
 			box_dataset = box_dataset.astype(np.float32)
 			
 			
@@ -458,12 +489,17 @@ class MakeOverpass():
 			
 			
 
-############################################
+# EXECUTE #########################################################################################################################################################################
 
+# Calculate box info
+offset_range, box_idy_low_center, box_numbers = box_setup()
+
+# Load list of links
 link_file = open(link_file_path, "r") 
 link_list = link_file.readlines()
 link_file.close()
 
+# Download and process the data
 for link in link_list:
 	overpass = MakeOverpass(link)
 	overpass.gpm_link_extract_datetime()
@@ -472,6 +508,7 @@ for link in link_list:
 	overpass.randomize_boxes_offset(offset_range, box_idy_low_center)
 	overpass.process_boxes(box_numbers)
 
+# Remove temporary files
 if (used_remove == True):	
 	dir_path = Path(storage_path_temp) 
 	try:

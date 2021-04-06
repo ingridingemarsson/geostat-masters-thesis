@@ -14,9 +14,8 @@ import cartopy
 import cartopy.crs as ccrs
 from pyresample import geometry, load_area
 
-from data_plots import region_plot, region_plot_overlay
 import plot_dataset_funs
-from plot_dataset_funs import initial_load, pars_dataset_filename
+from plot_dataset_funs import initial_load, pars_dataset_filename, region_plot, region_plot_overlay
 
 
 
