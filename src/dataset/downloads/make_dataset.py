@@ -42,7 +42,7 @@ if not Path(storage_path_temp).exists():
 	os.mkdir(storage_path_temp)
 
 global storage_path_final
-storage_path_final='../data'
+storage_path_final='../origin'
 if not Path(storage_path_final).exists():
 	os.mkdir(storage_path_final)
 
@@ -263,6 +263,9 @@ class MakeOverpass():
 		def gpm_data_crop(self):
 			'''
 			Crop gpm data to current box shape.
+			
+			Returns:
+				box_area_extent: list of projection coordinates specifying box borders (lower left x, lower left y, upper right x, upper right y)
 			'''
 
 			box_idy_low = self.box_idy_low_center + self.box_number*number_of_pixels #The lowest y-index border of the current box (Northmost border)
@@ -299,6 +302,10 @@ class MakeOverpass():
 			Download all files from the GOES satellite combined product with
 			channels in channels in a given time range but avoid redownloading
 			files that are already present.
+			
+			Does two checks: i) If there are two availible files for download, choose the file with smallest time
+				difference compared to gpm time between either start or end timestamps.
+				ii) If the time difference between center timestamps are greater than tolerance, return no files.
 
 			Args:
 				no_cache: If this is set to True, it forces a re-download of files even 
