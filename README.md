@@ -21,19 +21,19 @@ Downloading data for rain retrievals over Brazil.
 Dimensions:            (x: 256, y: 256)
 Dimensions without coordinates: x, y
 Data variables:
+    C08                (y, x) float32 234.3 234.7 234.5 ... 239.5 239.8 239.9
+    C13                (y, x) float32 281.8 284.8 285.5 ... 288.3 288.6 288.7
     gpm_precipitation  (y, x) float32 nan nan nan nan nan ... nan nan nan nan
-    C08                (y, x) float32 234.1 234.2 234.6 ... 231.5 230.5 228.6
-    C13                (y, x) float32 292.3 292.9 293.7 ... 280.0 276.9 272.4
 Attributes:
-    ind_extent:      [1570 1449 1826 1193]
-    area_extent:     [ 859723.41655896 -374751.23285903 1885780.26802327  651...
+    ind_extent:      [1816 2185 2072 1929]
+    area_extent:     [ 1845699.92226294 -3324664.68081892  2871756.77372725 -...
     shape:           [256 256]
-    gpm_time_in:     2018-10-31T14:25:30.382000128
-    gpm_time_out:    2018-10-31T14:28:24.681999872
-    filename_gpm:    GPM/2B.GPM.DPRGMI.2HCSHv4-1.20181031-S131753-E145026.026...
-    goes_time_in:    2018-10-31 14:15:37
-    goes_time_out:   2018-10-31 14:26:13.700000
-    filenames_goes:  ['GOES-16/linkfile464113/OR_ABI-L1b-RadF-M3C08_G16_s2018...
+    gpm_time_in:     2017-12-29 08:03:23.862000
+    gpm_time_out:    2017-12-29 08:07:07.161999
+    goes_time_in:    2017-12-29 08:00:45.500000
+    goes_time_out:   2017-12-29 08:11:22.200000
+    filename_gpm:    2B.GPM.DPRGMI.2HCSHv4-1.20171229-S064753-E082028.021790....
+    filenames_goes:  ['OR_ABI-L1b-RadF-M3C08_G16_s20173630800455_e20173630811...
 ```
 ### 
 
