@@ -97,7 +97,7 @@ class Standardize(object):
 	    
 	def __call__(self, sample):
 		box, label = sample['box'], sample['label']
-		standardized_box = np.stack([(box[i]- self.stats[0, i])/self.stats[1, i] for i in range(self.stats.shape[0])])
+		standardized_box = np.stack([(box[i]- self.stats[0, i])/self.stats[1, i] for i in range(self.stats.shape[1])])
 		
 		return {'box': standardized_box, 'label': label}
 

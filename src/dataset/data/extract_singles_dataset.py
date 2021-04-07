@@ -50,22 +50,26 @@ def ConvertDatasetToSingles(channels, path_to_data_list, path_to_storage, max_nu
     np.save(path_to_storage + 'X_singles_stats.npy', stats)
 
 
-channels = [8,13]
+channels = list(range(8,17))
+channels.remove(12)
+
 path_to_data = '../origin/'
 path_to_storage = 'dataset-singles/' 
 
 
-traindirlist = CreateListOfLinkfilesInSpan(17, 12, 19, 2)
+traindirlist = CreateListOfLinkfilesInSpan(17, 12, 17, 12)
 traindirlist = [path_to_data+elem for elem in traindirlist]
 dattype = 'train/'
 ConvertDatasetToSingles(channels, traindirlist, path_to_storage+dattype)
 
-valdirlist = CreateListOfLinkfilesInSpan(19, 3, 19, 5)
+valdirlist = CreateListOfLinkfilesInSpan(18, 1, 18, 1)
 valdirlist = [path_to_data+elem for elem in valdirlist]
 dattype = 'validation/'
 ConvertDatasetToSingles(channels, valdirlist, path_to_storage+dattype)
 
+'''
 testdirlist = CreateListOfLinkfilesInSpan(19, 6, 19, 8)
 testdirlist = [path_to_data+elem for elem in testdirlist]
 dattype = 'test/'
 ConvertDatasetToSingles(channels, testdirlist, path_to_storage+dattype)
+'''

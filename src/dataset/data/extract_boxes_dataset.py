@@ -60,12 +60,15 @@ def ComputeStatsFromNumpyFiles(path_to_stats, channels, path_to_data):
 
 
 
-channels = [8,13]
+channels = list(range(8,17))
+channels.remove(12)
+
+
 path_to_data = '../origin/'
 path_to_storage = 'dataset-boxes/' 
 
 
-traindirlist = CreateListOfLinkfilesInSpan(17, 12, 18, 4)
+traindirlist = CreateListOfLinkfilesInSpan(17, 12, 17, 12)
 traindirlist = [path_to_data+elem for elem in traindirlist]
 dattype = 'train/'
 for elem in traindirlist:
@@ -74,14 +77,16 @@ for elem in traindirlist:
 ComputeStatsFromNumpyFiles(path_to_stats = path_to_storage+dattype, channels=channels, 
                            path_to_data=path_to_storage+dattype+'npy_files/')
 
-valdirlist = CreateListOfLinkfilesInSpan(18, 5, 18, 5)
+valdirlist = CreateListOfLinkfilesInSpan(18, 1, 18, 1)
 valdirlist = [path_to_data+elem for elem in valdirlist]
 dattype = 'validation/'
 for elem in valdirlist:
     ConvertDatasetToNumpy(path_to_load_data = elem, path_to_save_data = path_to_storage+dattype+'npy_files/')
 
+'''
 testdirlist = CreateListOfLinkfilesInSpan(18, 6, 18, 6)
 testdirlist = [path_to_data+elem for elem in testdirlist]
 dattype = 'test/'
 for elem in testdirlist:
     ConvertDatasetToNumpy(path_to_load_data = elem, path_to_save_data = path_to_storage+dattype+'npy_files/')
+'''

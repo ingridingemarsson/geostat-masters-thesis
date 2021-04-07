@@ -33,8 +33,12 @@ args = parser.parse_args()
 global link_file_path
 link_file_path = args.linkfile
 
+global channels
+channels = list(range(8,17))
+channels.remove(12)
+
 global used_remove
-used_remove = False #True
+used_remove = True
 
 global check_for_nans
 check_for_nans = True
@@ -49,12 +53,9 @@ storage_path_final='../origin'
 if not Path(storage_path_final).exists():
 	os.mkdir(storage_path_final)
 
-global channels
-channels = list(range(8,17))
-channels.remove(12)
-
 global number_of_pixels
 number_of_pixels = 256
+
 
 
 area_path='files/areas.yaml'
@@ -67,7 +68,6 @@ parsed_area_file = yaml.load(area_file, Loader=yaml.FullLoader)
 area_dict_full_disk = parsed_area_file['full_disk']
 area_dict_region = parsed_area_file['region']
 area_file.close()
-
 
 global region_corners
 region_corners = area_dict_region['area_extent']
@@ -103,9 +103,7 @@ def box_setup():
 	region_height = np.abs(region_max_y-region_min_y) #y extent of region in pixels
 
 	number_of_boxes = np.int(np.round(region_height/number_of_pixels-1))
-	
 	offset_range = region_height-number_of_boxes*number_of_pixels #how much extra y extent is there to play with
-
 	box_numbers = np.array(range(number_of_boxes))-int(number_of_boxes/2) #for iteration
 
 	box_shift = 0
@@ -126,13 +124,15 @@ class MakeOverpass():
 
 	"""
 	
-	def __init__(self, link):
+	def __init__(self, link, offset_range, box_idy_low_center, box_numbers):
 		"""
 		Args:
 			link: Link from Earth data search specifying the gpm combined product file.
 		"""
 		self.link = link
-
+		self.offset_range = offset_range
+		self.box_idy_low_center = box_idy_low_center
+		self.box_numbers = box_numbers
 		
 	def gpm_link_extract_datetime(self):
 		'''
@@ -174,16 +174,13 @@ class MakeOverpass():
 		precip = self.gpm_data['surface_precipitation'].values
 		label_data = np.stack((precip, repeted_times), axis = 2)
 
-		swath_def = geometry.SwathDefinition(lons=self.gpm_data['longitude'],
-			lats=self.gpm_data['latitude'])
-		gpm_transformed_data = kd_tree.resample_nearest(swath_def, label_data, area_def,
-					                        radius_of_influence=3700, epsilon=0, 
-					                        fill_value=np.nan)
+		swath_def = geometry.SwathDefinition(lons=self.gpm_data['longitude'], lats=self.gpm_data['latitude'])
+		gpm_transformed_data = kd_tree.resample_nearest(swath_def, label_data, area_def, radius_of_influence=3700, epsilon=0, fill_value=np.nan)
 					                        
 		self.gpm_transformed_data = gpm_transformed_data
 		
 		
-	def randomize_boxes_offset(self, offset_range, box_idy_low_center):
+	def randomize_boxes_offset(self):
 		"""
 		Adds random offset in offset_range to box_idy_low_center.
 		
@@ -191,12 +188,11 @@ class MakeOverpass():
 			offset_range: Range for possible y-shift of boxes
 			box_idy_low_center: The lowest y-index border of the 'middle' box (Northmost border)
 		"""
-		offset = np.random.randint(offset_range)-np.int(offset_range/2) #how much to shift the region center y index
-		box_idy_low_center_shifted = box_idy_low_center + offset
-		self.box_idy_low_center_shifted = box_idy_low_center_shifted
+		offset = np.random.randint(self.offset_range)-np.int(self.offset_range/2) #how much to shift the region center y index
+		self.box_idy_low_center = box_idy_low_center + offset
 		
 		
-	def process_boxes(self, box_numbers):
+	def process_boxes(self):
 		"""
 		For each box in the overpass, create an instance of the MakeBox class, download goes data, process and store.
 		
@@ -204,16 +200,16 @@ class MakeOverpass():
 			box_numbers: indices to iterate over the boxes.
 		"""
 		
-		for box_number in box_numbers:
-			self.box = self.MakeBox(box_number, self.box_idy_low_center_shifted, self.gpm_transformed_data, self.gpm_file, self.gpm_file_start)
-			box_area_extent = self.box.gpm_data_crop()
-			if not (box_area_extent[0] < region_corners[0] or box_area_extent[2] > region_corners[2]): # Check that current box lies well inside region border
-				filenames_goes = self.box.download_cached()
-				if not filenames_goes==None: # Check that there exists matching goes files
-					cont = self.box.goes_data_process()
+		boxes = [self.MakeBox(box_number, self.gpm_transformed_data, self.gpm_file, self.gpm_file_start) for box_number in self.box_numbers]
+		for box in boxes:
+			box.gpm_data_crop(self.box_idy_low_center)
+			if not (box.box_area_extent[0] < region_corners[0] or box.box_area_extent[2] > region_corners[2]): # Check that current box lies well inside region border
+				files = box.download_cached()
+				if not files==None: # Check that there exists matching goes files
+					cont = box.goes_data_process()
 					if cont:
-						self.box.get_dataset_filename()
-						self.box.save_combined_dataset()
+						box.get_dataset_filename()
+						box.save_combined_dataset()
 			
 	
 	
@@ -224,33 +220,30 @@ class MakeOverpass():
 	
 		def __init__(self, 
 			box_number,
-			box_idy_low_center,
 			gpm_transformed_data,
 			gpm_file,
 			gpm_file_start):
 			"""
 			Args:
 				box_number: index of current box
-				box_idy_low_center: The lowest y-index border of the 'middle' box (Northmost border) NOW WITH OFFSET
+				box_idy_low_center_shifted: The lowest y-index border of the 'middle' box (Northmost border) 
 				gpm_transformed_data: the transformed gpm combined product data
 				gpm_file: filename of gpm data file
 				gpm_file_start: start datetime for whole gpm file 
 			"""
 			self.box_number = box_number
-			self.box_idy_low_center = box_idy_low_center
 			self.gpm_transformed_data = gpm_transformed_data
 			self.gpm_file = gpm_file
 			self.gpm_file_start = gpm_file_start
 			
-		def gpm_data_crop(self):
+		def gpm_data_crop(self, box_idy_low_center):
 			'''
 			Crop gpm data to current box shape.
+			box_area_extent: list of projection coordinates specifying box borders (lower left x, lower left y, upper right x, upper right y)
 			
-			Returns:
-				box_area_extent: list of projection coordinates specifying box borders (lower left x, lower left y, upper right x, upper right y)
 			'''
 
-			box_idy_low = self.box_idy_low_center + self.box_number*number_of_pixels #The lowest y-index border of the current box (Northmost border)
+			box_idy_low = box_idy_low_center + self.box_number*number_of_pixels #The lowest y-index border of the current box (Northmost border)
 			box_idy_high = box_idy_low + number_of_pixels #The highest y-index border of the current box (Southmost border)
 
 			#Check which x-indices is in the swath at the North and South box border
@@ -260,6 +253,7 @@ class MakeOverpass():
 			box_idx_low_swath = min(min(swath_idx_high), min(swath_idx_low)) #The lowest x-index in the swath (Westmost)
 			box_idx_high_swath = max(max(swath_idx_high), max(swath_idx_low)) #The highest x-index in the swath (Eastmost)
 			box_middle_x = int(np.mean([box_idx_low_swath, box_idx_high_swath])) # Center of swath in x direction
+			
 			box_idx_low = box_middle_x-int(0.5*number_of_pixels) #The lowest x-index of the current box (Westmost border)
 			box_idx_high = box_middle_x+int(0.5*number_of_pixels) #The highest x-index of the current box (Eastmost border)
 			
@@ -273,10 +267,8 @@ class MakeOverpass():
 
 			self.box_ind_extent = [box_idx_low, box_idy_high, box_idx_high, box_idy_low] # In form of area extent: lower left x, lower left y, upper right x, upper right y --> West, South, East, North
 			projcoords_x, projcoords_y = area_def.get_proj_vectors()
-			self.box_area_extent = [projcoords_x[self.box_ind_extent[0]], projcoords_y[self.box_ind_extent[1]],
-				projcoords_x[self.box_ind_extent[2]], projcoords_y[self.box_ind_extent[3]]]				
+			self.box_area_extent = [projcoords_x[self.box_ind_extent[0]], projcoords_y[self.box_ind_extent[1]], projcoords_x[self.box_ind_extent[2]], projcoords_y[self.box_ind_extent[3]]]				
 
-			return(self.box_area_extent)
 		
 
 		def goes_filename_extract_datetime(self, mystr):
@@ -369,8 +361,8 @@ class MakeOverpass():
 				provider = GOESAWSProvider(p)
 				filenames = provider.get_files_in_range(goes_start, goes_end, start_inclusive=True)
 				
-				goes_start_new, __ = self.goes_filename_extract_datetime(filenames[0])	
-				if(np.abs((goes_start_new - goes_start).total_seconds())>60):
+				goes_start_new, goes_end_new = self.goes_filename_extract_datetime(filenames[0])	
+				if(np.abs((goes_start_new - goes_start).total_seconds())>60 or np.abs((goes_end_new - goes_end).total_seconds())>60):
 					return None	
 					
 				f = filenames[0]
@@ -381,13 +373,14 @@ class MakeOverpass():
 				files.append(path)				
 					
 			self.filenames_goes = files				
-			return(self.filenames_goes)			
+			return(files)			
 			
 		
 		def goes_data_process(self):
 			'''
 			Read and resample goes data.
 			'''
+			
 			
 			files_goes = map(str, self.filenames_goes)
 			goes_scn = Scene(reader='abi_l1b', filenames=files_goes)
@@ -500,13 +493,16 @@ link_list = link_file.readlines()
 link_file.close()
 
 # Download and process the data
+i = 0
 for link in link_list:
-	overpass = MakeOverpass(link)
+	print(i)
+	i+=1
+	overpass = MakeOverpass(link, offset_range, box_idy_low_center, box_numbers)
 	overpass.gpm_link_extract_datetime()
 	overpass.gpm_download()
 	overpass.gpm_transform()
-	overpass.randomize_boxes_offset(offset_range, box_idy_low_center)
-	overpass.process_boxes(box_numbers)
+	overpass.randomize_boxes_offset()
+	overpass.process_boxes()
 
 # Remove temporary files
 if (used_remove == True):	

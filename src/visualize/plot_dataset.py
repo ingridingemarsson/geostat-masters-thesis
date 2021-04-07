@@ -34,13 +34,20 @@ parser.add_argument(
 		type=str,
 		default='../dataset/origin/',
 	)
+parser.add_argument(
+		"-l",
+		"--linkfile",
+		help="Path to dataset",
+		type=str,
+		default='linkfileYYYY-MM.txt',
+	)
 args = parser.parse_args()
 
 
 areas_filepath =  '../dataset/downloads/files/areas.yaml'
 initial_load(areas_filepath)
 
-linkfile = 'linkfileYYYY-MM/'
+linkfile = args.linkfile[:-4]+'/'
 parentdir = args.filepath + linkfile
 storeagedir = 'images/'+linkfile
 

@@ -4,7 +4,7 @@ from matplotlib.colors import LogNorm
 from matplotlib.gridspec import GridSpec
 import torch
 
-def plotRandomSample(dataset, net = None, quantile_num = 0, device='cpu'):
+def plotRandomSample(dataset, net = None, quantile_num = 0, device='cpu', c=[0,4]):
     ncols = 3
     if not net == None:
         ncols = 4
@@ -16,16 +16,16 @@ def plotRandomSample(dataset, net = None, quantile_num = 0, device='cpu'):
     precip_norm = LogNorm(1e-2, 1e2)
 
     ax = plt.subplot(gs[0, 0])
-    m = ax.imshow(data['box'].numpy()[0], cmap=plt.get_cmap('inferno'))
+    m = ax.imshow(data['box'].numpy()[c[0]], cmap=plt.get_cmap('inferno'))
     ax.grid(False)
-    ax.set_title("(a) channel 8", loc="left")
+    ax.set_title("(a) channel c[0]", loc="left")
     ax = plt.subplot(gs[1, 0])
     plt.colorbar(m, cax=ax, orientation="horizontal", label="Normalized brightness temperature")
 
     ax = plt.subplot(gs[0, 1])
-    m = ax.imshow(data['box'].numpy()[1], cmap=plt.get_cmap('inferno'))
+    m = ax.imshow(data['box'].numpy()[c[1]], cmap=plt.get_cmap('inferno'))
     ax.grid(False)
-    ax.set_title("(b) channel 13", loc="left")
+    ax.set_title("(b) channel c[1]", loc="left")
     ax = plt.subplot(gs[1, 1])
     plt.colorbar(m, cax=ax, orientation="horizontal", label="Normalized brightness temperature")
 
