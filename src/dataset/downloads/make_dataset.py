@@ -504,17 +504,15 @@ for link in link_list:
 	overpass.randomize_boxes_offset()
 	overpass.process_boxes()
 
+	# Remove temporary files
 	if(i%10==0):
-		# Remove temporary files
-		if (used_remove == True):	
-			dir_path = Path(storage_path_temp) 
-			try:
-			    shutil.rmtree(dir_path)
-			except OSError as e:
-			    print("Error: %s : %s" % (dir_path, e.strerror))
-						
-				
-
+		if (used_remove == True):			
+			for f in os.listdir(storage_path_temp):
+			    os.remove(os.path.join(storage_path_temp, f))			
+							
+if (used_remove == True):			
+	for f in os.listdir(storage_path_temp):
+	    os.remove(os.path.join(storage_path_temp, f))	
 
 
 
