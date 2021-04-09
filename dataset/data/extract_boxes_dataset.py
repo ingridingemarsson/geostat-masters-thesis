@@ -68,7 +68,7 @@ path_to_data = '../origin/'
 path_to_storage = 'dataset-boxes/' 
 
 
-traindirlist = CreateListOfLinkfilesInSpan(17, 12, 17, 12)
+traindirlist = CreateListOfLinkfilesInSpan(17, 12, 18, 3)
 traindirlist = [path_to_data+elem for elem in traindirlist]
 dattype = 'train/'
 for elem in traindirlist:
@@ -77,14 +77,14 @@ for elem in traindirlist:
 ComputeStatsFromNumpyFiles(path_to_stats = path_to_storage+dattype, channels=channels, 
                            path_to_data=path_to_storage+dattype+'npy_files/')
 
-valdirlist = CreateListOfLinkfilesInSpan(18, 1, 18, 1)
+valdirlist = CreateListOfLinkfilesInSpan(18, 4, 18, 4)
 valdirlist = [path_to_data+elem for elem in valdirlist]
 dattype = 'validation/'
 for elem in valdirlist:
     ConvertDatasetToNumpy(path_to_load_data = elem, path_to_save_data = path_to_storage+dattype+'npy_files/')
 
 '''
-testdirlist = CreateListOfLinkfilesInSpan(18, 6, 18, 6)
+testdirlist = CreateListOfLinkfilesInSpan(18, 4, 18, 4)
 testdirlist = [path_to_data+elem for elem in testdirlist]
 dattype = 'test/'
 for elem in testdirlist:

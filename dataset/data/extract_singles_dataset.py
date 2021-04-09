@@ -57,12 +57,12 @@ path_to_data = '../origin/'
 path_to_storage = 'dataset-singles/' 
 
 
-traindirlist = CreateListOfLinkfilesInSpan(17, 12, 17, 12)
+traindirlist = CreateListOfLinkfilesInSpan(17, 12, 18, 3)
 traindirlist = [path_to_data+elem for elem in traindirlist]
 dattype = 'train/'
 ConvertDatasetToSingles(channels, traindirlist, path_to_storage+dattype)
 
-valdirlist = CreateListOfLinkfilesInSpan(18, 1, 18, 1)
+valdirlist = CreateListOfLinkfilesInSpan(18, 4, 18, 4)
 valdirlist = [path_to_data+elem for elem in valdirlist]
 dattype = 'validation/'
 ConvertDatasetToSingles(channels, valdirlist, path_to_storage+dattype)

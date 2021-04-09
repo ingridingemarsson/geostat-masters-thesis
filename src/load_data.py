@@ -1,7 +1,6 @@
 import numpy as np
 import os
 import torch
-import matplotlib.pyplot as plt
 from pathlib import Path
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
