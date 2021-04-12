@@ -9,8 +9,10 @@ from plot_dataset_funs import initial_load, pars_dataset_filename, region_plot, 
 
 
 number_of_pixels = 128
-channels = list(range(8,17))
-channels.remove(12)
+#channels = list(range(8,17))
+#channels.remove(12)
+
+channels = [13]
 
 areas_filepath =  '../dataset/downloads/files/areas.yaml'
 initial_load(areas_filepath)
@@ -39,7 +41,7 @@ for subdir in [f.name for f in os.scandir(parentdir) if f.is_dir()]:
 				with warnings.catch_warnings():
 					warnings.simplefilter('ignore')
 					region_plot(datasets, 'C'+str(channel).zfill(2), storeagedir + subdir +'/'+ str('C'+str(channel).zfill(2))+'af.png',
-						plot_dataset_funs.region_corners, number_of_pixels, plot_dataset_funs.area_def)
+						plot_dataset_funs.region_corners, number_of_pixels, plot_dataset_funs.area_def, COLOR_ALL_BUT_BRAZIL = True)
 
 
 

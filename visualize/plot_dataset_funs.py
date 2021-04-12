@@ -63,17 +63,21 @@ def initial_load(areas_filepath):
 
 
 	
-def region_plot(datasets, feature, filename, region_corners, number_of_pixels, area_def):
+def region_plot(datasets, feature, filename, region_corners, number_of_pixels, area_def, COLOR_ALL_BUT_BRAZIL = False):
 	'''
 	TODO
 	'''
 	precip_norm = LogNorm(1e-2, 1e2)
-	ext0 = datasets[0].area_extent #area extent of first box
-	ext1 = datasets[-1].area_extent #area extent of last box
-	low_left_x = min(ext0[0],ext1[0], region_corners[0])
-	low_left_y = min(ext0[1],ext1[1], region_corners[1])
-	high_right_x = max(ext0[2],ext1[2], region_corners[2])
-	high_right_y = max(ext0[3],ext1[3], region_corners[3])
+	vmin = min([np.min(dataset[feature]) for dataset in datasets])
+	vmax = max([np.max(dataset[feature]) for dataset in datasets])
+	e0 = min([dataset.area_extent[0] for dataset in datasets]) 
+	e1 = min([dataset.area_extent[1] for dataset in datasets])
+	e2 = max([dataset.area_extent[2] for dataset in datasets])
+	e3 = max([dataset.area_extent[3] for dataset in datasets])
+	low_left_x = min(e0, region_corners[0])
+	low_left_y = min(e1, region_corners[1])
+	high_right_x = max(e2, region_corners[2])
+	high_right_y = max(e3, region_corners[3])
 	new_area_ext = [low_left_x, low_left_y, high_right_x, high_right_y] #area extent of region containing all boxes
 	new_height = len(datasets)*number_of_pixels
 	new_width = int(new_height/np.abs(new_area_ext[3]-new_area_ext[1])*np.abs(new_area_ext[2]-new_area_ext[0]))
@@ -100,10 +104,12 @@ def region_plot(datasets, feature, filename, region_corners, number_of_pixels, a
 			plt.imshow(np.isnan(datasets[i][feature]), transform=crs2, extent=crs2.bounds, origin='upper', cmap=plt.get_cmap('binary'), alpha = 0.1)
 			plt.imshow(datasets[i][feature], transform=crs2, extent=crs2.bounds, origin='upper', norm=precip_norm, cmap=plt.get_cmap('GnBu'))
 		else:
-			plt.imshow(datasets[i][feature], transform=crs2, extent=crs2.bounds, origin='upper', cmap=plt.get_cmap('inferno'))
+			plt.imshow(datasets[i][feature], transform=crs2, extent=crs2.bounds, origin='upper', cmap=plt.get_cmap('inferno'), vmin=vmin, vmax=vmax)
 		plot_title += ' (' + str(i) + ') x=' + str(round((datasets[i].area_extent[2]+datasets[i].area_extent[0])/2, 2)) + ', y=' + str(round((datasets[i].area_extent[3]+datasets[i].area_extent[1])/2, 2)) +'\n'
+	
 	ax.set_global()
-	ax.title.set_text(plot_title)
+	if (len(datasets) < 5):
+		ax.title.set_text(plot_title)
 	ax.set_xlabel('x')
 	ax.set_ylabel('y')
 	plt.savefig(filename)

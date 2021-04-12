@@ -73,11 +73,11 @@ def get_ind_extents_from_center_proj_coord(center_x, center_y, number_of_boxes_x
 	box_numbers_y = np.array(range(number_of_boxes_y))-int(number_of_boxes_y/2) #for iteration
 
 	box_shift_x = 0
-	if ((number_of_boxes_x % 2) == 0):
+	if ((number_of_boxes_x % 2) != 0):
 		box_shift_x = np.int(number_of_pixels/2) #correction for region center y index for odd number of boxes
 		
 	box_shift_y = 0
-	if ((number_of_boxes_y % 2) == 0):
+	if ((number_of_boxes_y % 2) != 0):
 		box_shift_y = np.int(number_of_pixels/2) #correction for region center y index for odd number of boxes
 
 	center_x_idx = center_x_idx-box_shift_x
@@ -87,8 +87,8 @@ def get_ind_extents_from_center_proj_coord(center_x, center_y, number_of_boxes_x
 	for box_y in box_numbers_y:
 		for box_x in box_numbers_x:
 	
-			box_ind_extent = [center_x_idx+(box_x-1)*int(number_of_pixels), center_y_idy+box_y*int(number_of_pixels),
-						center_x_idx+box_x*int(number_of_pixels), center_y_idy+(box_y-1)*int(number_of_pixels)]
+			box_ind_extent = [center_x_idx+box_x*int(number_of_pixels), center_y_idy+(box_y+1)*int(number_of_pixels),
+						center_x_idx+(box_x+1)*int(number_of_pixels), center_y_idy+box_y*int(number_of_pixels)]
 						
 			box_ind_extents.append(box_ind_extent)	
 	
@@ -244,7 +244,9 @@ files_in_range = download_cached(start_time, end_time, channels)
 
 region_center_x = (region_corners[0]+region_corners[2])/2
 region_center_y = (region_corners[1]+region_corners[3])/2
-inds = get_ind_extents_from_center_proj_coord(region_center_x, region_center_y, 5, 5)
+num_x = 8
+num_y = 8
+inds = get_ind_extents_from_center_proj_coord(region_center_x, region_center_y, num_x, num_y)
 
 for elem in files_in_range:
 	if (None in elem): 
@@ -252,9 +254,10 @@ for elem in files_in_range:
 	st = goes_filename_extract_datetime(str(elem[0]))[0].strftime('%Y%m%d-%H%M%S')
 	for ind_ext in inds:
 		print(ind_ext)
-		if not Path(storage_path_final+'GOES'+st).exists():
-			os.mkdir(storage_path_final+'GOES'+st)
+		parentdir = 'GOES'+st+'b'+str(num_x)+str(num_y)
+		if not Path(storage_path_final+parentdir).exists():
+			os.mkdir(storage_path_final+parentdir)
 	
-		goes_data_process_independent(elem, ind_ext, storage_path_final+'GOES'+st+'/'+'GOES'+st+'x'+str(ind_ext[0])+'y'+str(ind_ext[1])+'.nc')
+		goes_data_process_independent(elem, ind_ext, storage_path_final+parentdir+'/'+'GOES'+st+'x'+str(ind_ext[0])+'y'+str(ind_ext[1])+'b'+str(num_x)+str(num_y)+'.nc')
 		
 		
