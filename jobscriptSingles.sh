@@ -2,9 +2,9 @@
 
 #SBATCH -A C3SE508-19-3
 #SBATCH -p chair
-#SBATCH -t 0-00:10:00 # How long?
+#SBATCH -t 1-00:00:00 # How long?
 #SBATCH --gres=gpu:1
-#SBATCH --job-name=geostatrain
+#SBATCH --job-name=goesrain
 
 # Setup node
 ml purge
@@ -24,10 +24,7 @@ export PYTHONPATH=$PYTHONPATH:"${HOME}/geostat-masters-thesis/src"
 # Data #Copy data to node
 mydata="${HOME}/geostat-masters-thesis/dataset/data/dataset-singles/"
 
-# Move to script folder
-#cd "${HOME}/geostat-masters-thesis/src"
-
 # Execute this script in the node
-python train_singles.py -p "${mydata}" -s "${HOME}/geostat-masters-thesis/results/"
+python ${HOME}/geostat-masters-thesis/src/train_singles.py -p "${mydata}" -s "${HOME}/geostat-masters-thesis/results/"
 
 
