@@ -47,8 +47,9 @@ def ComputeStatsFromNumpyFiles(path_to_stats, channels, path_to_data):
             glob_mean = (glob_mean*(i-1)+tmp_mean)/i
             glob_std = (glob_std*(i-1)+tmp_std)/i
             i+=1
-
+            
     stats = np.stack([glob_mean, glob_std])
+    print(stats)
 
     if not np.isnan(np.sum(stats)):
         np.save(path_to_stats+'stats.npy', stats)
@@ -68,25 +69,28 @@ path_to_data = '../origin/'
 path_to_storage = 'dataset-boxes/' 
 
 
-traindirlist = CreateListOfLinkfilesInSpan(17, 12, 18, 3)
+traindirlist = CreateListOfLinkfilesInSpan(17, 12, 19, 12)
 traindirlist = [path_to_data+elem for elem in traindirlist]
 dattype = 'train/'
 for elem in traindirlist:
     ConvertDatasetToNumpy(path_to_load_data = elem, path_to_save_data = path_to_storage+dattype+'npy_files/')
+    print('elem', elem, 'in train done')
 
 ComputeStatsFromNumpyFiles(path_to_stats = path_to_storage+dattype, channels=channels, 
                            path_to_data=path_to_storage+dattype+'npy_files/')
 
-valdirlist = CreateListOfLinkfilesInSpan(18, 4, 18, 4)
+valdirlist = CreateListOfLinkfilesInSpan(20, 1, 20, 7)
 valdirlist = [path_to_data+elem for elem in valdirlist]
 dattype = 'validation/'
 for elem in valdirlist:
     ConvertDatasetToNumpy(path_to_load_data = elem, path_to_save_data = path_to_storage+dattype+'npy_files/')
+    print('elem', elem, 'in val done')
 
-'''
-testdirlist = CreateListOfLinkfilesInSpan(18, 4, 18, 4)
+
+testdirlist = CreateListOfLinkfilesInSpan(20, 8, 21, 3)
 testdirlist = [path_to_data+elem for elem in testdirlist]
 dattype = 'test/'
 for elem in testdirlist:
     ConvertDatasetToNumpy(path_to_load_data = elem, path_to_save_data = path_to_storage+dattype+'npy_files/')
-'''
+    print('elem', elem, 'in test done')
+

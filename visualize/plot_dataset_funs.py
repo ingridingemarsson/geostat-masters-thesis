@@ -9,6 +9,8 @@ from matplotlib.colors import LogNorm
 import xarray as xr
 import cartopy
 import cartopy.crs as ccrs
+import cartopy.io.shapereader as shpreader
+from shapely.geometry import Polygon, MultiPolygon
 from pyresample import geometry, load_area
 
 
@@ -86,9 +88,11 @@ def region_plot(datasets, feature, filename, region_corners, number_of_pixels, a
 	crs = area_def_region.to_cartopy_crs()
 	
 	fig, ax = plt.subplots(subplot_kw={'projection': crs}, figsize = (10,11))
-	ax.coastlines()
 	ax.gridlines(draw_labels=True)
-	ax.add_feature(cartopy.feature.BORDERS)
+	
+	
+				
+							
 	rect = Rectangle((region_corners[0], region_corners[1]), region_corners[2]-region_corners[0], region_corners[3]-region_corners[1], linewidth=0.7, edgecolor='red', facecolor='none')
 	ax.add_patch(rect)
 	
@@ -106,7 +110,36 @@ def region_plot(datasets, feature, filename, region_corners, number_of_pixels, a
 		else:
 			plt.imshow(datasets[i][feature], transform=crs2, extent=crs2.bounds, origin='upper', cmap=plt.get_cmap('inferno'), vmin=vmin, vmax=vmax)
 		plot_title += ' (' + str(i) + ') x=' + str(round((datasets[i].area_extent[2]+datasets[i].area_extent[0])/2, 2)) + ', y=' + str(round((datasets[i].area_extent[3]+datasets[i].area_extent[1])/2, 2)) +'\n'
+
+	if(COLOR_ALL_BUT_BRAZIL==True):
 	
+		# get country borders
+		resolution = '110m'
+		category = 'cultural'
+		name = 'admin_0_countries'
+		countries = shpreader.natural_earth(resolution, category, name)
+		# Find the China boundary polygon.
+		for country in shpreader.Reader(countries).records():
+			if country.attributes['ADM0_A3'] == 'BRA':
+				brazil = country.geometry
+				break
+		    
+		projected_brazil  = crs.project_geometry (brazil, ccrs.PlateCarree())
+		
+		def rect_from_bound(xmin, xmax, ymin, ymax):
+			"""Returns list of (x,y)'s for a rectangle"""
+			xs = [xmax, xmin, xmin, xmax, xmax]
+			ys = [ymax, ymax, ymin, ymin, ymax]
+			return [(x, y) for x, y in zip(xs, ys)]
+			
+		edges_projected_brazil = Polygon(rect_from_bound(new_area_ext[0], new_area_ext[2], new_area_ext[3], new_area_ext[1])).difference(projected_brazil)
+		ax.add_geometries([edges_projected_brazil], crs=crs, edgecolor='black', facecolor='white', alpha = 1)
+	else:
+		ax.coastlines()
+		ax.add_feature(cartopy.feature.BORDERS)
+				
+	
+
 	ax.set_global()
 	if (len(datasets) < 5):
 		ax.title.set_text(plot_title)

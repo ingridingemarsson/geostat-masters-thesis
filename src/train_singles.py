@@ -89,7 +89,7 @@ qrnn_fc.train(training_data=training_data,
               mask=-1,
               device=device);
 
-qrnn_fc.save(os.path.join(path_to_storage, 'saved_models', 'new_quantnn_test'))
+qrnn_fc.save(os.path.join(path_to_storage, 'saved_models', 'singles_fc'))
 
 
 '''
