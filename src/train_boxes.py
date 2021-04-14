@@ -37,7 +37,16 @@ parser.add_argument(
 	type=str,
 	default="../results/"
 	)
+parser.add_argument(
+	"-B",
+	"--BATCH_SIZE",
+	help="Batch size.",
+	type=str,
+	default=32
+	)
 args = parser.parse_args()
+
+BATCH_SIZE = args.BATCH_SIZE
 
 path_to_data = args.path_to_data
 path_to_storage = args.path_to_storage
@@ -55,7 +64,7 @@ channels.remove(12)
 
 fillvalue = -1
 
-BATCH_SIZE = 128
+#BATCH_SIZE = 128
 
 quantiles = np.linspace(0.01, 0.99, 99)
 
