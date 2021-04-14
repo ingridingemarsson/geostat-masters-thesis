@@ -41,7 +41,7 @@ parser.add_argument(
 	"-B",
 	"--BATCH_SIZE",
 	help="Batch size.",
-	type=str,
+	type=int,
 	default=32
 	)
 args = parser.parse_args()
