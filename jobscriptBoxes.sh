@@ -15,7 +15,7 @@ ml load foss/2019b Python/3.7.4 SciPy-bundle/2019.10-Python-3.7.4 matplotlib/3.1
 export PYTHONPATH=$PYTHONPATH:"${HOME}/geostat-masters-thesis/src"
 
 #Copy data to node
-rsync -r --progress "${HOME}/geostat-masters-thesis/dataset/data/dataset-boxes/" $TMPDIR
+rsync -rq --progress "${HOME}/geostat-masters-thesis/dataset/data/dataset-boxes/" $TMPDIR
 
 # Execute this script in the node
 python -u ${HOME}/geostat-masters-thesis/src/test_run_boxes.py -p "$TMPDIR/dataset-boxes/" -s "${HOME}/geostat-masters-thesis/results/" 
