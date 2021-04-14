@@ -14,11 +14,9 @@ ml load foss/2019b Python/3.7.4 SciPy-bundle/2019.10-Python-3.7.4 matplotlib/3.1
 # Add my files to python path 
 export PYTHONPATH=$PYTHONPATH:"${HOME}/geostat-masters-thesis/src"
 
-# Data #Copy data to node
-cp "${HOME}/geostat-masters-thesis/dataset/data/dataset-boxes/" $TMPDIR
-cd $TMPDIR
+#Copy data to node
+cp -rv "${HOME}/geostat-masters-thesis/dataset/data/dataset-boxes/" $TMPDIR
 
 # Execute this script in the node
-python test_run.py -p "$TMPDIR/dataset-boxes/" -s "$TMPDIR/results/" 
+python -u test_run_boxes.py -p "$TMPDIR/dataset-boxes/" -s "${HOME}/geostat-masters-thesis/results/" 
 
-cp "$TMPDIR/results/" "${HOME}/geostat-masters-thesis/results/"

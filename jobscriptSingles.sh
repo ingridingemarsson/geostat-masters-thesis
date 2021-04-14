@@ -21,10 +21,10 @@ ml load foss/2019b Python/3.7.4 SciPy-bundle/2019.10-Python-3.7.4 matplotlib/3.1
 # Here should be included: load_data.py, model.py and train.py
 export PYTHONPATH=$PYTHONPATH:"${HOME}/geostat-masters-thesis/src"
 
-# Data #Copy data to node
+# Data
 mydata="${HOME}/geostat-masters-thesis/dataset/data/dataset-singles/"
 
 # Execute this script in the node
-python ${HOME}/geostat-masters-thesis/src/train_singles.py -p "${mydata}" -s "${HOME}/geostat-masters-thesis/results/"
+python -u ${HOME}/geostat-masters-thesis/src/train_singles.py -p "${mydata}" -s "${HOME}/geostat-masters-thesis/results/"
 
 

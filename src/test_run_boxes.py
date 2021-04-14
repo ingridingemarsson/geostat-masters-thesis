@@ -26,3 +26,6 @@ path_to_storage = args.path_to_storage
 
 
 print('hej')
+
+duh = np.zeros((4))
+np.save(os.path.join(path_to_storage, 'test.npy'), duh)
