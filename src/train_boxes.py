@@ -69,7 +69,7 @@ def importData(channels, BATCH_SIZE, path_to_data, path_to_stats):
 				ToTensor()])
 	)
 
-	dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
+	dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
 	return(dataloader)
 
 training_data = importData(channels, BATCH_SIZE, path_to_train_data, path_to_stats)
