@@ -15,8 +15,8 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 from quantnn.qrnn import QRNN
 
 from load_data import GOESRETRIEVALSDataset, RandomCrop, Mask, Standardize, ToTensor
-from models.FirstGenericNet import Net 
-net_name = 'FirstGenericNet' 
+from models.FirstGenericNet import boxes_one 
+net_name = 'boxes_one' 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: ', device)

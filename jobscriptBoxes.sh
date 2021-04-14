@@ -2,7 +2,7 @@
 
 #SBATCH -A C3SE508-19-3
 #SBATCH -p chair
-#SBATCH -t 0-00:10:00 # How long?
+#SBATCH -t 1-00:00:00 # How long?
 #SBATCH --gres=gpu:1      
 #SBATCH --job-name=goesrain
 
