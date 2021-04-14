@@ -55,7 +55,7 @@ channels.remove(12)
 
 fillvalue = -1
 
-BATCH_SIZE = 512
+BATCH_SIZE = 256
 
 quantiles = np.linspace(0.01, 0.99, 99)
 
