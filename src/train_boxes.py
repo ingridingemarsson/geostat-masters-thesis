@@ -55,7 +55,7 @@ channels.remove(12)
 
 fillvalue = -1
 
-BATCH_SIZE = 64
+BATCH_SIZE = 512
 
 quantiles = np.linspace(0.01, 0.99, 99)
 
@@ -103,7 +103,6 @@ def plotPerformance(validation_data, qrnn, filename):
 	ax.set_yscale("log")
 	ax.set_xlabel("Reference rain rate [mm / h]")
 	ax.set_ylabel("Predicted rain rate [mm / h]")
-	ax.set_title("(a) Fully-connected", loc="left")
 	ax.plot(bins, bins, c="grey", ls="--")
 	f.colorbar(p, ax=ax, orientation="horizontal", label="Surface precipitation [mm / h]")
 	ax.set_aspect(1.0)
