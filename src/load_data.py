@@ -17,11 +17,13 @@ class RandomLog(object):
 	def __call__(self, sample):
 		box, label = sample['box'], sample['label']
 		
-		num_vals_to_replace = len(label == 0.0)
+		num_vals_to_replace = len(label==0.0)
 		new_rand_vals = np.random.uniform(1e-4, 1e-3, num_vals_to_replace)
-		replaced_label = np.where(label == 0.0, new_rand_vals, label)
+		logged_label = np.where(label==0.0, new_rand_vals, label)
 		
-		logged_label = np.where(replaced_label > 0.0, np.log(replaced_label), replaced_label)
+		#logged_label = np.where(replaced_label>0.0, np.log(replaced_label), replaced_label)
+		swath = np.where(logged_label>0.0)
+		logged_label[swath] = np.log(logged_label[swath])
 
 		return {'box': box, 'label': logged_label}
 
