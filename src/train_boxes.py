@@ -14,7 +14,7 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from quantnn.qrnn import QRNN
 
-from load_data import GOESRETRIEVALSDataset, RandomLog, Mask, RandomCrop, Standardize, ToTensor
+from load_data import GOESRETRIEVALSDataset, Mask, RandomLog, RandomCrop, Standardize, ToTensor
 from models.boxes_one import Net 
 net_name = 'boxes_one' 
 
@@ -81,8 +81,8 @@ def importData(channels, BATCH_SIZE, path_to_data, path_to_stats):
 		path_to_data = path_to_data,
 		channels = channels, 
 		transform = transforms.Compose([
+			Mask(),
 			RandomLog(), 
-			Mask(), 
 			RandomCrop(128),
 			Standardize(path_to_data, path_to_stats, channels),
 			ToTensor()])
