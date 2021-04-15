@@ -5,6 +5,48 @@ from pathlib import Path
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 
+class RandomLog(object):
+	'''
+	Log of labels, where zero vals are replaced by small random values.
+	
+	'''
+	
+	def __init__(self):
+		pass
+	
+	def __call__(self, sample):
+		box, label = sample['box'], sample['label']
+		
+		num_vals_to_replace = len(label == 0.0)
+		new_rand_vals = np.random.uniform(1e-4, 1e-3, num_vals_to_replace)
+		replaced_label = np.where(label == 0.0, new_rand_vals, label)
+		
+		logged_label = np.where(replaced_label > 0.0, np.log(replaced_label), replaced_label)
+
+		return {'box': box, 'label': logged_label}
+
+
+
+class Mask(object):
+	'''
+	TODO
+	'''
+	
+	def __init__(self, fillvalue = -1):
+		self.fillvalue = fillvalue
+		
+		
+	def __call__(self, sample):
+		box, label = sample['box'], sample['label']
+		
+		filled_box = np.stack([np.where(np.isnan(box[i]), self.fillvalue, box[i]) for i in range(box.shape[0])])
+		
+		filled_label = np.where(np.isnan(label), self.fillvalue, label)
+
+		return {'box': filled_box, 'label': filled_label}
+		
+
+
 class RandomCrop(object):
 	'''
 	Random crop of the sample.
@@ -29,25 +71,6 @@ class RandomCrop(object):
 		cropped_label = label[top: top + new_d, left: left + new_d]
 		
 		return {'box': cropped_box, 'label': cropped_label}
-
-class Mask(object):
-	'''
-	TODO
-	'''
-	
-	def __init__(self, fillvalue = -1):
-		self.fillvalue = fillvalue
-		
-		
-	def __call__(self, sample):
-		box, label = sample['box'], sample['label']
-		
-		filled_box = np.stack([np.where(np.isnan(box[i]), self.fillvalue, box[i]) for i in range(box.shape[0])])
-		
-		filled_label = np.where(np.isnan(label), self.fillvalue, label)
-
-		return {'box': filled_box, 'label': filled_label}
-		
 
 
 class Standardize(object):

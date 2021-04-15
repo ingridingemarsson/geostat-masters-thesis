@@ -4,9 +4,9 @@ from matplotlib.colors import LogNorm
 from matplotlib.gridspec import GridSpec
 import torch
 
-def plotRandomSample(dataset, net = None, quantile_num = 0, device='cpu', c=[0,4]):
+def plotRandomSample(dataset, qrnn = None, device='cpu', c=[0,4], uselog=False):
     ncols = 3
-    if not net == None:
+    if not qrnn == None:
         ncols = 4
     
     f = plt.figure(figsize=(15, 6))
@@ -30,18 +30,23 @@ def plotRandomSample(dataset, net = None, quantile_num = 0, device='cpu', c=[0,4
     plt.colorbar(m, cax=ax, orientation="horizontal", label="Normalized brightness temperature")
 
     ax = plt.subplot(gs[0, 2])
-    m = ax.imshow(data['label'].numpy(), norm=precip_norm, cmap=plt.get_cmap('GnBu'))
-    ax.imshow(data['label']!=-1,  cmap=plt.get_cmap('binary_r'), alpha = 0.02)
+    y_true = data['label'].numpy()
+    if uselog:
+    	y_true = np.where(y_true != -1, np.exp(y_true), y_true) 
+    m = ax.imshow(y_true, norm=precip_norm, cmap=plt.get_cmap('GnBu'))
+    ax.imshow(y_true!=-1,  cmap=plt.get_cmap('binary_r'), alpha = 0.02)
     ax.grid(False)
     ax.set_title("(c) Reference rain rate", loc="left")
     ax = plt.subplot(gs[1, 2])
     plt.colorbar(m, cax=ax, orientation="horizontal", label=r"Rain rate [mm/h]")
 
-    if not net == None:
+    if not qrnn == None:
+        y_pred = torch.squeeze(qrnn.posterior_mean(x=data['box'].unsqueeze(0).to(device))).cpu().detach().numpy()
+        if uselog:
+            y_pred = np.where(y_pred != -1, np.exp(y_pred), y_pred) 
         ax = plt.subplot(gs[0, 3])
-        m = ax.imshow(torch.squeeze(net(data['box'].unsqueeze(0).to(device))[:,quantile_num]).detach().cpu().numpy(),
-                      norm=precip_norm, cmap=plt.get_cmap('GnBu'))
-        ax.imshow(data['label']!=-1,  cmap=plt.get_cmap('binary_r'), alpha = 0.02)
+        m = ax.imshow(y_pred, norm=precip_norm, cmap=plt.get_cmap('GnBu'))
+        ax.imshow(y_true!=-1,  cmap=plt.get_cmap('binary_r'), alpha = 0.02)
         ax.grid(False)
         ax.set_title("(d) Model prediction rain rate", loc="left")
         ax = plt.subplot(gs[1, 3])

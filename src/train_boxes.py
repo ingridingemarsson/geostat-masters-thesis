@@ -13,9 +13,8 @@ from torch.optim import SGD
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from quantnn.qrnn import QRNN
-from quantnn.models.pytorch.logging import TensorBoardLogger
 
-from load_data import GOESRETRIEVALSDataset, RandomCrop, Mask, Standardize, ToTensor
+from load_data import GOESRETRIEVALSDataset, RandomLog, Mask, RandomCrop, Standardize, ToTensor
 from models.boxes_one import Net 
 net_name = 'boxes_one' 
 
@@ -58,9 +57,6 @@ path_to_stats = os.path.join(Path(path_to_train_data).parent, Path('stats.npy'))
 path_to_val_data = os.path.join(path_to_data, 'validation/npy_files')
 path_to_test_data = os.path.join(path_to_data, 'test/npy_files')
 
-log_directory = os.path.join(path_to_storage, 'runs')
-logger = TensorBoardLogger(n_epochs, log_directory=log_directory)
-
 # SETUP
 channels = list(range(8,17))
 channels.remove(12)
@@ -76,9 +72,12 @@ def importData(channels, BATCH_SIZE, path_to_data, path_to_stats):
 	dataset = GOESRETRIEVALSDataset(
 		path_to_data = path_to_data,
 		channels = channels, 
-		transform = transforms.Compose([Mask(), RandomCrop(128),
-				Standardize(path_to_data, path_to_stats, channels),
-				ToTensor()])
+		transform = transforms.Compose([
+			RandomLog(), 
+			Mask(), 
+			RandomCrop(128),
+			Standardize(path_to_data, path_to_stats, channels),
+			ToTensor()])
 	)
 
 	dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
@@ -131,17 +130,17 @@ optimizer = SGD(net.parameters(), lr=0.1, momentum=0.9)
 
 n_epochs = 10
 scheduler = CosineAnnealingLR(optimizer, n_epochs, 0.01)
-qrnn_model.train(training_data=training_data,
+errors = qrnn_model.train(training_data=training_data,
               validation_data=validation_data,
               keys=("box", "label"),
               n_epochs=n_epochs,
               optimizer=optimizer,
               scheduler=scheduler,
               mask=fillvalue,
-              device=device,
-              logger=logger);
+              device=device);
 
 qrnn_model.save(os.path.join(path_to_save_model, 'conv_1'))
+np.savetxt(os.path.join(path_to_storage,'errors1.txt'), np.transpose(np.stack((errors['training_errors'], errors['validation_errors']))))
 plotPerformance(validation_data, qrnn_model, 'conv_1.png')
 
 
@@ -154,10 +153,10 @@ qrnn_model.train(training_data=training_data,
               optimizer=optimizer,
               scheduler=scheduler,
               mask=fillvalue,
-              device=device,
-              logger=logger);
+              device=device);
 
 qrnn_model.save(os.path.join(path_to_save_model, 'conv_2'))
+np.savetxt(os.path.join(path_to_storage,'errors2.txt'), np.transpose(np.stack((errors['training_errors'], errors['validation_errors']))))
 plotPerformance(validation_data, qrnn_model, 'conv_2.png')
 
 n_epochs = 40
@@ -169,11 +168,11 @@ qrnn_model.train(training_data=training_data,
               optimizer=optimizer,
               scheduler=scheduler,
               mask=fillvalue,
-              device=device,
-              logger=logger);
+              device=device);
 
 
 qrnn_model.save(os.path.join(path_to_save_model, 'conv_3'))
+np.savetxt(os.path.join(path_to_storage,'errors3.txt'), np.transpose(np.stack((errors['training_errors'], errors['validation_errors']))))
 plotPerformance(validation_data, qrnn_model, 'conv_3.png')
 
 
