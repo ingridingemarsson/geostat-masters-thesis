@@ -18,6 +18,6 @@ export PYTHONPATH=$PYTHONPATH:"${HOME}/geostat-masters-thesis/src"
 rsync -rq "${HOME}/geostat-masters-thesis/dataset/data/dataset-boxes" $TMPDIR
 
 # Execute this script in the node
-# Batch size: write ex -B 128 
+# Batch size: write ex -B 128 -F 'network'
 python -u ${HOME}/geostat-masters-thesis/src/train_boxes.py -p "$TMPDIR/dataset-boxes/" -s "${HOME}/geostat-masters-thesis/results/" "$@"
 

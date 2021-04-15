@@ -44,9 +44,17 @@ parser.add_argument(
 	type=int,
 	default=32
 	)
+parser.add_argument(
+	"-F",
+	"--filename",
+	help="Naming of files.",
+	type=str,
+	default='network'
+	)
 args = parser.parse_args()
 
 BATCH_SIZE = args.BATCH_SIZE
+filename = args.filename
 
 path_to_data = args.path_to_data
 path_to_storage = args.path_to_storage
@@ -139,9 +147,9 @@ errors = qrnn_model.train(training_data=training_data,
               mask=fillvalue,
               device=device);
 
-qrnn_model.save(os.path.join(path_to_save_model, 'conv_1'))
-np.savetxt(os.path.join(path_to_storage,'errors1.txt'), np.transpose(np.stack((errors['training_errors'], errors['validation_errors']))))
-plotPerformance(validation_data, qrnn_model, 'conv_1.png')
+qrnn_model.save(os.path.join(path_to_save_model, filename+'_1'))
+np.savetxt(os.path.join(path_to_storage, filename+'_errors_1.txt'), np.transpose(np.stack((errors['training_errors'], errors['validation_errors']))))
+plotPerformance(validation_data, qrnn_model, filename+'_1.png')
 
 
 n_epochs = 20
@@ -155,9 +163,9 @@ qrnn_model.train(training_data=training_data,
               mask=fillvalue,
               device=device);
 
-qrnn_model.save(os.path.join(path_to_save_model, 'conv_2'))
-np.savetxt(os.path.join(path_to_storage,'errors2.txt'), np.transpose(np.stack((errors['training_errors'], errors['validation_errors']))))
-plotPerformance(validation_data, qrnn_model, 'conv_2.png')
+qrnn_model.save(os.path.join(path_to_save_model, filename+'_2'))
+np.savetxt(os.path.join(path_to_storage, filename+'_errors_2.txt'), np.transpose(np.stack((errors['training_errors'], errors['validation_errors']))))
+plotPerformance(validation_data, qrnn_model, filename+'_2.png')
 
 n_epochs = 40
 scheduler = CosineAnnealingLR(optimizer, n_epochs, 0.0001)
@@ -171,9 +179,9 @@ qrnn_model.train(training_data=training_data,
               device=device);
 
 
-qrnn_model.save(os.path.join(path_to_save_model, 'conv_3'))
-np.savetxt(os.path.join(path_to_storage,'errors3.txt'), np.transpose(np.stack((errors['training_errors'], errors['validation_errors']))))
-plotPerformance(validation_data, qrnn_model, 'conv_3.png')
+qrnn_model.save(os.path.join(path_to_save_model, filename+'_3'))
+np.savetxt(os.path.join(path_to_storage, filename+'_errors_3.txt'), np.transpose(np.stack((errors['training_errors'], errors['validation_errors']))))
+plotPerformance(validation_data, qrnn_model, filename+'_3.png')
 
 
 
