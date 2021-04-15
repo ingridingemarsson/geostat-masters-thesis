@@ -13,6 +13,7 @@ from torch.optim import SGD
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from quantnn.qrnn import QRNN
+from quantnn.models.pytorch.logging import TensorBoardLogger
 
 from load_data import GOESRETRIEVALSDataset, RandomCrop, Mask, Standardize, ToTensor
 from models.boxes_one import Net 
@@ -57,6 +58,8 @@ path_to_stats = os.path.join(Path(path_to_train_data).parent, Path('stats.npy'))
 path_to_val_data = os.path.join(path_to_data, 'validation/npy_files')
 path_to_test_data = os.path.join(path_to_data, 'test/npy_files')
 
+log_directory = os.path.join(path_to_storage, 'runs')
+logger = TensorBoardLogger(n_epochs, log_directory=log_directory)
 
 # SETUP
 channels = list(range(8,17))
@@ -135,7 +138,8 @@ qrnn_model.train(training_data=training_data,
               optimizer=optimizer,
               scheduler=scheduler,
               mask=fillvalue,
-              device=device);
+              device=device,
+              logger=logger);
 
 qrnn_model.save(os.path.join(path_to_save_model, 'conv_1'))
 plotPerformance(validation_data, qrnn_model, 'conv_1.png')
@@ -150,7 +154,8 @@ qrnn_model.train(training_data=training_data,
               optimizer=optimizer,
               scheduler=scheduler,
               mask=fillvalue,
-              device=device);
+              device=device,
+              logger=logger);
 
 qrnn_model.save(os.path.join(path_to_save_model, 'conv_2'))
 plotPerformance(validation_data, qrnn_model, 'conv_2.png')
@@ -164,7 +169,8 @@ qrnn_model.train(training_data=training_data,
               optimizer=optimizer,
               scheduler=scheduler,
               mask=fillvalue,
-              device=device);
+              device=device,
+              logger=logger);
 
 
 qrnn_model.save(os.path.join(path_to_save_model, 'conv_3'))

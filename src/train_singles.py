@@ -9,8 +9,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib.colors import Normalize
 
-#device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-device = 'gpu'
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: ', device)
 
 from quantnn.qrnn import QRNN
