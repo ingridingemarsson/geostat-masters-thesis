@@ -6,13 +6,13 @@ class Net(nn.Module):
     		
         super(Net, self).__init__()
     
-        self.c1 = nn.Conv2d(num_channels, 256, 1)
-        self.c2 = nn.Conv2d(256, 256, 1)
-        self.c3 = nn.Conv2d(256, 256, 1)
-        self.c4 = nn.Conv2d(256, num_quantiles, 1)
-        self.b1 = nn.BatchNorm2d(256)
-        self.b2 = nn.BatchNorm2d(256)
-        self.b3 = nn.BatchNorm2d(256)
+        self.c1 = nn.Conv2d(num_channels, 128, 1)
+        self.c2 = nn.Conv2d(128, 128, 1)
+        self.c3 = nn.Conv2d(128, 128, 1)
+        self.c4 = nn.Conv2d(128, num_quantiles, 1)
+        self.b1 = nn.BatchNorm2d(128)
+        self.b2 = nn.BatchNorm2d(128)
+        self.b3 = nn.BatchNorm2d(128)
     
     
     def forward(self, x):
