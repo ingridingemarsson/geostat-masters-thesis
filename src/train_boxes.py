@@ -129,7 +129,7 @@ validation_data  = importData(channels, BATCH_SIZE, path_to_val_data, path_to_st
 
 
 # PLOT PERFORMANCE
-def performance(validation_data, qrnn, filename):
+def performance(validation_data, qrnn, filename, fillvalue):
 
 	y_true = []
 	y_pred = []
@@ -142,7 +142,7 @@ def performance(validation_data, qrnn, filename):
 			y_pred += [qrnn.posterior_mean(x=X).cpu().detach().numpy()] 
 	y_true = np.concatenate(y_true, axis=0)
 	y_pred = np.concatenate(y_pred, axis=0)
-	indices = y_true >= 0.0
+	indices = (y_true != fillvalue)
 	np.savetxt(os.path.join(path_to_save_y, filename+'.txt'), np.transpose(np.stack((y_true[indices],  y_pred[indices]))))
 	
 
@@ -165,7 +165,7 @@ def runTrain(optimizer, qrnn_model, training_data, validation_data, filename, n_
 
 	qrnn_model.save(os.path.join(path_to_save_model, filename))
 	np.savetxt(os.path.join(path_to_save_errors, filename+'.txt'), np.transpose(np.stack((errors['training_errors'], errors['validation_errors']))))
-	performance(validation_data, qrnn_model, filename)
+	performance(validation_data, qrnn_model, filename, fillvalue)
 
 
 n_epochs_arr = [10, 20, 40]
