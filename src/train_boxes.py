@@ -15,8 +15,6 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 from quantnn.qrnn import QRNN
 
 from load_data import GOESRETRIEVALSDataset, Mask, RandomLog, RandomCrop, Standardize, ToTensor
-from models.boxes_one import Net 
-net_name = 'boxes_one' 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: ', device)
@@ -42,65 +40,101 @@ parser.add_argument(
 	"--BATCH_SIZE",
 	help="Batch size.",
 	type=int,
-	default=32
+	default=128
 	)
 parser.add_argument(
 	"-F",
-	"--filename",
-	help="Naming of files.",
+	"--filename_ext",
+	help="Naming of files, extra.",
 	type=str,
-	default='network'
+	default=''
+	)
+parser.add_argument(
+	"-L",
+	"--log",
+	help="Apply log transform to label data.",
+	type=bool,
+	default=False
+	)
+parser.add_argument(
+	"-m",
+	"--model",
+	help="Specify which model to use",
+	type=str,
+	default='boxes_one'
 	)
 args = parser.parse_args()
 
 BATCH_SIZE = args.BATCH_SIZE
-filename = args.filename
+filename_extension = args.filename_ext
+apply_log = args.log
+
+# SETUP
+channels = list(range(8,17))
+channels.remove(12)
+fillvalue = -1
+quantiles = np.linspace(0.01, 0.99, 99)
+
+net_name = args.model
+if (net_name == 'boxes_one'):
+	from models.boxes_one import Net
+	net = Net(len(quantiles), len(channels))
+elif (net_name == 'xception'):
+	from quantnn.models.pytorch.xception import XceptionFpn
+	net =  XceptionFpn(len(channels), quantiles.size, n_features=128)
+	
+filename = net_name + str(apply_log) + str(BATCH_SIZE) + filename_extension
 
 path_to_data = args.path_to_data
 path_to_storage = args.path_to_storage
-path_to_save_model = os.path.join(path_to_storage, 'saved_models')
+
+global path_to_save_model
+path_to_save_model = os.path.join(path_to_storage, 'saved_models', filename)
+if not Path(path_to_save_model).exists():
+	os.makedirs(path_to_save_model)
+global path_to_save_errors
+path_to_save_errors = os.path.join(path_to_storage, 'errors', filename)
+if not Path(path_to_save_errors).exists():
+	os.makedirs(path_to_save_errors)
+global path_to_save_y
+path_to_save_y = os.path.join(path_to_storage, 'preds', filename)
+if not Path(path_to_save_y).exists():
+	os.makedirs(path_to_save_y)
+	
 
 path_to_train_data = os.path.join(path_to_data, 'train/npy_files')
 path_to_stats = os.path.join(Path(path_to_train_data).parent, Path('stats.npy'))
 path_to_val_data = os.path.join(path_to_data, 'validation/npy_files')
 path_to_test_data = os.path.join(path_to_data, 'test/npy_files')
 
-# SETUP
-channels = list(range(8,17))
-channels.remove(12)
-
-fillvalue = -1
-
-#BATCH_SIZE = 128
-
-quantiles = np.linspace(0.01, 0.99, 99)
 
 # DATA
-def importData(channels, BATCH_SIZE, path_to_data, path_to_stats):
+def importData(channels, BATCH_SIZE, path_to_data, path_to_stats, apply_log=False):
+	transforms_list = [Mask()]
+	if apply_log:
+		transforms_list.append(RandomLog())
+	transforms_list.extend([RandomCrop(128), Standardize(path_to_data, path_to_stats, channels), ToTensor()])
 	dataset = GOESRETRIEVALSDataset(
 		path_to_data = path_to_data,
 		channels = channels, 
-		transform = transforms.Compose([
-			Mask(),
-			RandomLog(), 
-			RandomCrop(128),
-			Standardize(path_to_data, path_to_stats, channels),
-			ToTensor()])
-	)
+		transform = transforms.Compose(transforms_list))
+	print('number of samples:', len(dataset))
 
 	dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
 	return(dataloader)
 
-training_data = importData(channels, BATCH_SIZE, path_to_train_data, path_to_stats)
-validation_data  = importData(channels, BATCH_SIZE, path_to_val_data, path_to_stats)
+training_data = importData(channels, BATCH_SIZE, path_to_train_data, path_to_stats, apply_log=apply_log)
+validation_data  = importData(channels, BATCH_SIZE, path_to_val_data, path_to_stats, apply_log=apply_log)
 
 
 
 # PLOT PERFORMANCE
-def plotPerformance(validation_data, qrnn, filename):
+def performance(validation_data, qrnn, filename):
 
 	y_true = []
 	y_pred = []
+	
+	torch.cuda.empty_cache()
 	with torch.no_grad():
 		for batch_index, batch in enumerate(validation_data):
 			y_true += [batch['label'].detach().numpy()]
@@ -108,80 +142,36 @@ def plotPerformance(validation_data, qrnn, filename):
 			y_pred += [qrnn.posterior_mean(x=X).cpu().detach().numpy()] 
 	y_true = np.concatenate(y_true, axis=0)
 	y_pred = np.concatenate(y_pred, axis=0)
-
-	bins = np.logspace(-2, 2, 81)
 	indices = y_true >= 0.0
-	freqs, _, _ = np.histogram2d(y_true[indices], y_pred[indices], bins=bins)
-
-	f, ax = plt.subplots(figsize=(8, 9))
-
-	p = ax.pcolormesh(bins, bins, freqs.T)
-	ax.set_xlim([1e-2, 1e2])
-	ax.set_ylim([1e-2, 1e2])
-	ax.set_xscale("log")
-	ax.set_yscale("log")
-	ax.set_xlabel("Reference rain rate [mm / h]")
-	ax.set_ylabel("Predicted rain rate [mm / h]")
-	ax.plot(bins, bins, c="grey", ls="--")
-	f.colorbar(p, ax=ax, orientation="horizontal", label="Surface precipitation [mm / h]")
-	ax.set_aspect(1.0)
-
-	plt.tight_layout()
-	plt.savefig(os.path.join(path_to_storage, 'images', filename))
-	plt.close(f)
-
+	np.savetxt(os.path.join(path_to_save_y, filename+'.txt'), np.transpose(np.stack((y_true[indices],  y_pred[indices]))))
+	
 
 # TRAIN MODEL
-net = Net(len(quantiles), len(channels))
 qrnn_model = QRNN(quantiles=quantiles, model=net)
 optimizer = SGD(net.parameters(), lr=0.1, momentum=0.9)
 
-n_epochs = 10
-scheduler = CosineAnnealingLR(optimizer, n_epochs, 0.01)
-errors = qrnn_model.train(training_data=training_data,
-              validation_data=validation_data,
-              keys=("box", "label"),
-              n_epochs=n_epochs,
-              optimizer=optimizer,
-              scheduler=scheduler,
-              mask=fillvalue,
-              device=device);
-
-qrnn_model.save(os.path.join(path_to_save_model, filename+'_1'))
-np.savetxt(os.path.join(path_to_storage, filename+'_errors_1.txt'), np.transpose(np.stack((errors['training_errors'], errors['validation_errors']))))
-plotPerformance(validation_data, qrnn_model, filename+'_1.png')
 
 
-n_epochs = 20
-scheduler = CosineAnnealingLR(optimizer, n_epochs, 0.001)
-qrnn_model.train(training_data=training_data,
-              validation_data=validation_data,
-              keys=("box", "label"),
-              n_epochs=n_epochs,
-              optimizer=optimizer,
-              scheduler=scheduler,
-              mask=fillvalue,
-              device=device);
+def runTrain(optimizer, qrnn_model, training_data, validation_data, filename, n_epochs=10, lr=0.01):
+	scheduler = CosineAnnealingLR(optimizer, n_epochs, lr)
+	errors = qrnn_model.train(training_data=training_data,
+		      validation_data=validation_data,
+		      keys=("box", "label"),
+		      n_epochs=n_epochs,
+		      optimizer=optimizer,
+		      scheduler=scheduler,
+		      mask=fillvalue,
+		      device=device);
 
-qrnn_model.save(os.path.join(path_to_save_model, filename+'_2'))
-np.savetxt(os.path.join(path_to_storage, filename+'_errors_2.txt'), np.transpose(np.stack((errors['training_errors'], errors['validation_errors']))))
-plotPerformance(validation_data, qrnn_model, filename+'_2.png')
-
-n_epochs = 40
-scheduler = CosineAnnealingLR(optimizer, n_epochs, 0.0001)
-qrnn_model.train(training_data=training_data,
-              validation_data=validation_data,
-              keys=("box", "label"),
-              n_epochs=n_epochs,
-              optimizer=optimizer,
-              scheduler=scheduler,
-              mask=fillvalue,
-              device=device);
+	qrnn_model.save(os.path.join(path_to_save_model, filename))
+	np.savetxt(os.path.join(path_to_save_errors, filename+'.txt'), np.transpose(np.stack((errors['training_errors'], errors['validation_errors']))))
+	performance(validation_data, qrnn_model, filename)
 
 
-qrnn_model.save(os.path.join(path_to_save_model, filename+'_3'))
-np.savetxt(os.path.join(path_to_storage, filename+'_errors_3.txt'), np.transpose(np.stack((errors['training_errors'], errors['validation_errors']))))
-plotPerformance(validation_data, qrnn_model, filename+'_3.png')
-
+n_epochs_arr = [10, 20, 40]
+lrs = [0.01, 0.001, 0.0001]
+for i in range(len(n_epochs_arr)):
+	runTrain(optimizer, qrnn_model, training_data, validation_data, filename+str(i), n_epochs=n_epochs_arr[i], lr=lrs[i])
+	
 
 

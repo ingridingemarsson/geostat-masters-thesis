@@ -19,5 +19,7 @@ rsync -rq "${HOME}/geostat-masters-thesis/dataset/data/dataset-boxes" $TMPDIR
 
 # Execute this script in the node
 # Batch size: write ex -B 128 -F 'network'
-python -u ${HOME}/geostat-masters-thesis/src/train_boxes.py -p "$TMPDIR/dataset-boxes/" -s "${HOME}/geostat-masters-thesis/results/" "$@"
-
+python -u ${HOME}/geostat-masters-thesis/src/train_boxes.py -p "$TMPDIR/dataset-boxes/" -s "${HOME}/geostat-masters-thesis/results/" -B 128 -L False -m 'xception'
+python -u ${HOME}/geostat-masters-thesis/src/train_boxes.py -p "$TMPDIR/dataset-boxes/" -s "${HOME}/geostat-masters-thesis/results/" -B 128 -L True -m 'xception'
+python -u ${HOME}/geostat-masters-thesis/src/train_boxes.py -p "$TMPDIR/dataset-boxes/" -s "${HOME}/geostat-masters-thesis/results/" -B 128 -L False -m 'boxes_one'
+python -u ${HOME}/geostat-masters-thesis/src/train_boxes.py -p "$TMPDIR/dataset-boxes/" -s "${HOME}/geostat-masters-thesis/results/" -B 128 -L True -m 'boxes_one'
