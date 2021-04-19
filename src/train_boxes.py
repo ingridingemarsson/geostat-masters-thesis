@@ -68,6 +68,7 @@ args = parser.parse_args()
 BATCH_SIZE = args.BATCH_SIZE
 filename_extension = args.filename_ext
 apply_log = args.log
+print(apply_log)
 
 # SETUP
 channels = list(range(8,17))
