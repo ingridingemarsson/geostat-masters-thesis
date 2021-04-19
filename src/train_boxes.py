@@ -168,7 +168,7 @@ def runTrain(optimizer, qrnn_model, training_data, validation_data, filename, n_
 		      device=device);
 
 	qrnn_model.save(os.path.join(path_to_save_model, filename))
-	np.savetxt(os.path.join(path_to_save_errors, filename+'.txt'), loss)
+	np.savetxt(os.path.join(path_to_save_errors, filename+'.txt'), np.transpose(np.stack([loss['training_losses'], loss['validation_losses']])))
 	performance(validation_data, qrnn_model, filename, fillvalue)
 
 
