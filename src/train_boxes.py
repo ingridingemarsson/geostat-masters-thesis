@@ -80,6 +80,9 @@ net_name = args.model
 if (net_name == 'boxes_one'):
 	from models.boxes_one import Net
 	net = Net(len(quantiles), len(channels))
+elif (net_name == 'boxes_one_modified'):
+	from models.boxes_one_modified import Net
+	net = Net(len(quantiles), len(channels))
 elif (net_name == 'xception'):
 	from quantnn.models.pytorch.xception import XceptionFpn
 	net =  XceptionFpn(len(channels), quantiles.size, n_features=128)
