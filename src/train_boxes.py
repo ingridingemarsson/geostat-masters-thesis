@@ -36,21 +36,21 @@ parser.add_argument(
 	default="../results/"
 	)
 parser.add_argument(
-	"-B",
+	"-b",
 	"--BATCH_SIZE",
 	help="Batch size.",
 	type=int,
 	default=128
 	)
 parser.add_argument(
-	"-F",
+	"-f",
 	"--filename_ext",
 	help="Naming of files, extra.",
 	type=str,
 	default=''
 	)
 parser.add_argument(
-	"-L",
+	"-l",
 	"--log",
 	help="Apply log transform to label data.",
 	type=bool,
