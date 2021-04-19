@@ -158,7 +158,7 @@ optimizer = SGD(net.parameters(), lr=0.1, momentum=0.9)
 
 def runTrain(optimizer, qrnn_model, training_data, validation_data, filename, n_epochs=10, lr=0.01):
 	scheduler = CosineAnnealingLR(optimizer, n_epochs, lr)
-	errors = qrnn_model.train(training_data=training_data,
+	loss = qrnn_model.train(training_data=training_data,
 		      validation_data=validation_data,
 		      keys=("box", "label"),
 		      n_epochs=n_epochs,
@@ -168,7 +168,7 @@ def runTrain(optimizer, qrnn_model, training_data, validation_data, filename, n_
 		      device=device);
 
 	qrnn_model.save(os.path.join(path_to_save_model, filename))
-	np.savetxt(os.path.join(path_to_save_errors, filename+'.txt'), np.transpose(np.stack((errors['training_errors'], errors['validation_errors']))))
+	np.savetxt(os.path.join(path_to_save_errors, filename+'.txt'), loss))
 	performance(validation_data, qrnn_model, filename, fillvalue)
 
 
