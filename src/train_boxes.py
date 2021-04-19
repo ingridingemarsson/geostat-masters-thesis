@@ -89,15 +89,15 @@ path_to_data = args.path_to_data
 path_to_storage = args.path_to_storage
 
 global path_to_save_model
-path_to_save_model = os.path.join(path_to_storage, 'saved_models', filename)
+path_to_save_model = os.path.join(path_to_storage, filename, 'saved_models')
 if not Path(path_to_save_model).exists():
 	os.makedirs(path_to_save_model)
 global path_to_save_errors
-path_to_save_errors = os.path.join(path_to_storage, 'errors', filename)
+path_to_save_errors = os.path.join(path_to_storage, filename, 'errors')
 if not Path(path_to_save_errors).exists():
 	os.makedirs(path_to_save_errors)
 global path_to_save_y
-path_to_save_y = os.path.join(path_to_storage, 'preds', filename)
+path_to_save_y = os.path.join(path_to_storage, filename, 'preds')
 if not Path(path_to_save_y).exists():
 	os.makedirs(path_to_save_y)
 	
