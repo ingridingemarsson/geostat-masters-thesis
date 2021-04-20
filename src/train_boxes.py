@@ -193,7 +193,7 @@ def runTrain(net, training_data, validation_data, filename, n_epochs=10, lr=0.01
 		      metrics=metrics,
 		      logger=logger);
 
-	QRNN.save(qrnn, os.path.join(path_to_save_model, filename+'.pckl'))
+	qrnn.save(os.path.join(path_to_save_model, filename+'.pckl'))
 	performance(validation_data, qrnn, filename, fillvalue)
 
 metrics = ["MeanSquaredError", "Bias", "CRPS"]
