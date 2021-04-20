@@ -9,10 +9,12 @@ from matplotlib.colors import Normalize
 import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
-from torch.optim import SGD
+from torch.optim import SGD, Adam
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from quantnn.qrnn import QRNN
+from quantnn.models.pytorch.logging import TensorBoardLogger
+from quantnn.metrics import ScatterPlot
 
 from load_data import GOESRETRIEVALSDataset, Mask, RandomLog, RandomCrop, Standardize, ToTensor
 
@@ -63,12 +65,30 @@ parser.add_argument(
 	type=str,
 	default='boxes_one'
 	)
+parser.add_argument(
+	"-e",
+	"--epochs_list", 
+	help="List of number of epochs",
+	nargs="+", 
+	type=int,
+	default=[10, 20, 40])
+parser.add_argument(
+	"-lr",
+	"--lr_list", 
+	help="List of learning rates",
+	nargs="+", 
+	type=float,
+	default=[0.01, 0.001, 0.0001])
 args = parser.parse_args()
 
 BATCH_SIZE = args.BATCH_SIZE
 filename_extension = args.filename_ext
 apply_log = args.log
 print(apply_log)
+n_epochs_arr = args.epochs_list
+lrs = args.lr_list
+if (len(n_epochs_arr) != len(lrs)):
+	raise ValueError("list epochs_list and list lr_list must have the same length")
 
 # SETUP
 channels = list(range(8,17))
@@ -96,15 +116,16 @@ global path_to_save_model
 path_to_save_model = os.path.join(path_to_storage, filename, 'saved_models')
 if not Path(path_to_save_model).exists():
 	os.makedirs(path_to_save_model)
-global path_to_save_errors
-path_to_save_errors = os.path.join(path_to_storage, filename, 'errors')
-if not Path(path_to_save_errors).exists():
-	os.makedirs(path_to_save_errors)
 global path_to_save_y
 path_to_save_y = os.path.join(path_to_storage, filename, 'preds')
 if not Path(path_to_save_y).exists():
 	os.makedirs(path_to_save_y)
 	
+global log_directory
+log_directory = os.path.join(path_to_storage, filename, 'runs')
+if not Path(log_directory).exists():
+	os.makedirs(log_directory)
+
 
 path_to_train_data = os.path.join(path_to_data, 'train/npy_files')
 path_to_stats = os.path.join(Path(path_to_train_data).parent, Path('stats.npy'))
@@ -125,10 +146,10 @@ def importData(channels, BATCH_SIZE, path_to_data, path_to_stats, apply_log=Fals
 	print('number of samples:', len(dataset))
 
 	dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
-	return(dataloader)
+	return(dataset, dataloader)
 
-training_data = importData(channels, BATCH_SIZE, path_to_train_data, path_to_stats, apply_log=apply_log)
-validation_data  = importData(channels, BATCH_SIZE, path_to_val_data, path_to_stats, apply_log=apply_log)
+training_dataset, training_data = importData(channels, BATCH_SIZE, path_to_train_data, path_to_stats, apply_log=apply_log)
+validation_dataset, validation_data  = importData(channels, BATCH_SIZE, path_to_val_data, path_to_stats, apply_log=apply_log)
 
 
 
@@ -151,31 +172,34 @@ def performance(validation_data, qrnn, filename, fillvalue):
 	
 
 # TRAIN MODEL
-qrnn_model = QRNN(quantiles=quantiles, model=net)
-optimizer = SGD(net.parameters(), lr=0.1, momentum=0.9)
+#qrnn_model = QRNN(quantiles=quantiles, model=net)
+#optimizer = SGD(net.parameters(), lr=0.1, momentum=0.9)
 
 
-
-def runTrain(optimizer, qrnn_model, training_data, validation_data, filename, n_epochs=10, lr=0.01):
-	scheduler = CosineAnnealingLR(optimizer, n_epochs, lr)
-	loss = qrnn_model.train(training_data=training_data,
+def runTrain(net, training_data, validation_data, filename, n_epochs=10, lr=0.01, metrics=["MeanSquaredError"]):
+	qrnn = QRNN(quantiles=quantiles, model=net)
+	logger = TensorBoardLogger(n_epochs, log_directory=log_directory)
+	logger.set_attributes({"optimizer": "Adam", "learning_rate": lr}) 
+	optimizer = Adam(qrnn.model.parameters(), lr=lr)
+	#scheduler = CosineAnnealingLR(optimizer, n_epochs, lr)
+	qrnn.train(training_data=training_data,
 		      validation_data=validation_data,
 		      keys=("box", "label"),
 		      n_epochs=n_epochs,
 		      optimizer=optimizer,
-		      scheduler=scheduler,
+		      #scheduler=scheduler,
 		      mask=fillvalue,
-		      device=device);
+		      device=device,
+		      metrics=metrics,
+		      logger=logger);
 
-	qrnn_model.save(os.path.join(path_to_save_model, filename))
-	np.savetxt(os.path.join(path_to_save_errors, filename+'.txt'), np.transpose(np.stack([loss['training_losses'], loss['validation_losses']])))
-	performance(validation_data, qrnn_model, filename, fillvalue)
+	qrnn.save(os.path.join(path_to_save_model, filename+'.pckl'))
+	performance(validation_data, qrnn, filename, fillvalue)
 
+metrics = ["MeanSquaredError", "Bias", "CRPS"]
 
-n_epochs_arr = [10, 20, 40]
-lrs = [0.01, 0.001, 0.0001]
 for i in range(len(n_epochs_arr)):
-	runTrain(optimizer, qrnn_model, training_data, validation_data, filename+str(i), n_epochs=n_epochs_arr[i], lr=lrs[i])
+	runTrain(net, training_data, validation_data, filename+'_'+str(n_epochs_arr[i])+'_'+str(lrs[i]), n_epochs=n_epochs_arr[i], lr=lrs[i], metrics=metrics)
 	
 
 
