@@ -106,6 +106,12 @@ elif (net_name == 'boxes_one_modified'):
 elif (net_name == 'xception'):
 	from quantnn.models.pytorch.xception import XceptionFpn
 	net =  XceptionFpn(len(channels), quantiles.size, n_features=128)
+elif (net_name == 'ResNet'):
+	from from quantnn.models.pytorch.xception import ResNet
+	net = ResNet(len(channels), quantiles.size)
+elif (net_name == 'UNet'):
+	from from quantnn.models.pytorch.xception import UNet
+	net = UNet(len(channels), quantiles.size)	
 	
 filename = net_name + str(apply_log) + str(BATCH_SIZE) + filename_extension
 
