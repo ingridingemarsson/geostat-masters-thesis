@@ -21,6 +21,5 @@ rsync -rq "${HOME}/geostat-masters-thesis/dataset/data/dataset-boxes" $TMPDIR
 #python -u ${HOME}/geostat-masters-thesis/src/train_boxes.py -p "$TMPDIR/dataset-boxes/" -s "${HOME}/geostat-masters-thesis/results/" -b 256 --log True -m 'boxes_one_modified'
 #python -u ${HOME}/geostat-masters-thesis/src/train_boxes.py -p "$TMPDIR/dataset-boxes/" -s "${HOME}/geostat-masters-thesis/results/" -b 256 -m 'boxes_one'
 #python -u ${HOME}/geostat-masters-thesis/src/train_boxes.py -p "$TMPDIR/dataset-boxes/" -s "${HOME}/geostat-masters-thesis/results/" -b 256 --log True -m 'boxes_one' -e 10 -lr 0.001
-python -u ${HOME}/geostat-masters-thesis/src/train_boxes.py -p "$TMPDIR/dataset-boxes/" -s "${HOME}/geostat-masters-thesis/results/" -b 64 --log True -m 'UNet' -e 100 -lr 0.001
-python -u ${HOME}/geostat-masters-thesis/src/train_boxes.py -p "$TMPDIR/dataset-boxes/" -s "${HOME}/geostat-masters-thesis/results/" -b 64 --log True -m 'UNet' -e 100 -lr 0.0001
-python -u ${HOME}/geostat-masters-thesis/src/train_boxes.py -p "$TMPDIR/dataset-boxes/" -s "${HOME}/geostat-masters-thesis/results/" -b 64 --log True -m 'UNet' -e 100 -lr 0.00001
+python -u ${HOME}/geostat-masters-thesis/src/train_boxes.py -p "$TMPDIR/dataset-boxes/" -s "${HOME}/geostat-masters-thesis/results/" -b 64 --log True -m 'xception' -e 100 -lr 0.0001
+

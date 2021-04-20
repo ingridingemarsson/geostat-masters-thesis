@@ -107,11 +107,14 @@ elif (net_name == 'xception'):
 	from quantnn.models.pytorch.xception import XceptionFpn
 	net =  XceptionFpn(len(channels), quantiles.size, n_features=128)
 elif (net_name == 'ResNet'):
-	from from quantnn.models.pytorch.xception import ResNet
+	from quantnn.models.pytorch.resnet import ResNet
 	net = ResNet(len(channels), quantiles.size)
 elif (net_name == 'UNet'):
-	from from quantnn.models.pytorch.xception import UNet
-	net = UNet(len(channels), quantiles.size)	
+	from quantnn.models.pytorch.unet import UNet
+	net = UNet(len(channels), quantiles.size)
+elif (net_name == 'per'):
+	from models.per import Net
+	net = Net(len(quantiles), len(channels))	
 	
 filename = net_name + str(apply_log) + str(BATCH_SIZE) + filename_extension
 
@@ -178,37 +181,27 @@ def performance(validation_data, qrnn, filename, fillvalue):
 	
 
 # TRAIN MODEL
-#qrnn_model = QRNN(quantiles=quantiles, model=net)
-#optimizer = SGD(net.parameters(), lr=0.1, momentum=0.9)
+qrnn = QRNN(quantiles=quantiles, model=net)
+metrics = ["MeanSquaredError", "Bias"]
 
-
-def runTrain(net, training_data, validation_data, filename, n_epochs=10, lr=0.01, metrics=["MeanSquaredError"]):
-	qrnn = QRNN(quantiles=quantiles, model=net)
-	log_sub_dir = os.path.join(log_directory,str(n_epochs)+'_'+str(lr))
+for i in range(len(n_epochs_arr)):
+	log_sub_dir = os.path.join(log_directory,str(n_epochs_arr[i])+'_'+str(lrs[i]))
 	if not Path(log_sub_dir).exists():
 		os.makedirs(log_sub_dir)
-	logger = TensorBoardLogger(n_epochs, log_directory=log_sub_dir)
-	logger.set_attributes({"optimizer": "Adam", "learning_rate": lr}) 
-	optimizer = Adam(qrnn.model.parameters(), lr=lr)
-	#scheduler = CosineAnnealingLR(optimizer, n_epochs, lr)
+	logger = TensorBoardLogger(n_epochs_arr[i], log_directory=log_sub_dir)
+	logger.set_attributes({"optimizer": "Adam", "learning_rate": lrs[i]}) 
+	optimizer = Adam(qrnn.model.parameters(), lr=lrs[i])
 	qrnn.train(training_data=training_data,
 		      validation_data=validation_data,
 		      keys=("box", "label"),
-		      n_epochs=n_epochs,
+		      n_epochs=n_epochs_arr[i],
 		      optimizer=optimizer,
-		      #scheduler=scheduler,
 		      mask=fillvalue,
 		      device=device,
 		      metrics=metrics,
 		      logger=logger);
-
-	qrnn.save(os.path.join(path_to_save_model, filename+'.pckl'))
-	performance(validation_data, qrnn, filename, fillvalue)
-
-metrics = ["MeanSquaredError", "Bias", "CRPS"]
-
-for i in range(len(n_epochs_arr)):
-	runTrain(net, training_data, validation_data, filename+'_'+str(n_epochs_arr[i])+'_'+str(lrs[i]), n_epochs=n_epochs_arr[i], lr=lrs[i], metrics=metrics)
-	
+	filename_tmp = filename+'_'+str(n_epochs_arr[i])+'_'+str(lrs[i])+'_'+str(i)
+	qrnn.save(os.path.join(path_to_save_model, filename_tmp+'.pckl'))
+	performance(validation_data, qrnn, filename_tmp, fillvalue)	
 
 
