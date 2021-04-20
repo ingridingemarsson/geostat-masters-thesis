@@ -178,7 +178,10 @@ def performance(validation_data, qrnn, filename, fillvalue):
 
 def runTrain(net, training_data, validation_data, filename, n_epochs=10, lr=0.01, metrics=["MeanSquaredError"]):
 	qrnn = QRNN(quantiles=quantiles, model=net)
-	logger = TensorBoardLogger(n_epochs, log_directory=log_directory)
+	log_sub_dir = os.path.join(log_directory,str(n_epochs)+'_'+str(lr))
+	if not Path(log_sub_dir).exists():
+		os.makedirs(log_sub_dir)
+	logger = TensorBoardLogger(n_epochs, log_directory=log_sub_dir)
 	logger.set_attributes({"optimizer": "Adam", "learning_rate": lr}) 
 	optimizer = Adam(qrnn.model.parameters(), lr=lr)
 	#scheduler = CosineAnnealingLR(optimizer, n_epochs, lr)
