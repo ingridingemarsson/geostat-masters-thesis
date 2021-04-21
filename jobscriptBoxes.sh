@@ -18,6 +18,6 @@ export PYTHONPATH=$PYTHONPATH:"${HOME}/geostat-masters-thesis/src"
 rsync -rq "${HOME}/geostat-masters-thesis/dataset/data/dataset-boxes" $TMPDIR
 
 # Execute this script in the node
-python -u ${HOME}/geostat-masters-thesis/src/train_boxes.py -p "$TMPDIR/dataset-boxes/" -s "${HOME}/geostat-masters-thesis/results/" -b 64 --log True -m 'xception' -e 20 -lr 0.001
+python -u ${HOME}/geostat-masters-thesis/src/train_boxes.py -p "$TMPDIR/dataset-boxes/" -s "${HOME}/geostat-masters-thesis/results/" -b 64 --log True -m 'xception' -e 20 -lr 0.0001
 #python -u ${HOME}/geostat-masters-thesis/src/train_boxes.py -p "$TMPDIR/dataset-boxes/" -s "${HOME}/geostat-masters-thesis/results/" -b 32 --log True -m 'ResNet' -e 100 -lr 0.0001
 
