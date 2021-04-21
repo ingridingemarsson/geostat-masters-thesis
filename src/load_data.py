@@ -43,8 +43,9 @@ class Mask(object):
 		
 		filled_box = np.stack([np.where(np.isnan(box[i]), self.fillvalue, box[i]) for i in range(box.shape[0])])
 		
-		filled_label = np.where(np.isnan(label), self.fillvalue, label)
-
+		#filled_label = np.where(np.isnan(label), self.fillvalue, label)
+		filled_label = np.where(np.logical_or(np.isnan(label), label<0.0), self.fillvalue, label)
+		
 		return {'box': filled_box, 'label': filled_label}
 		
 

@@ -23,7 +23,7 @@ def ConvertDatasetToSingles(channels, path_to_data_list, path_to_storage, max_nu
                     box_dataset = xr.open_dataset(os.path.join(path,file))
                     box_dataset.close()
 
-                    label_exists = (np.isnan(box_dataset['gpm_precipitation'].values)==False)
+                    label_exists = np.logical_and((np.isnan(box_dataset['gpm_precipitation'].values)==False),(box_dataset['gpm_precipitation'].values >= 0.0))
                     idy, idx = np.where(label_exists)
                     labs = box_dataset['gpm_precipitation'].values[idy,idx]
                     vals = np.zeros((np.sum(label_exists),len(channels)))
