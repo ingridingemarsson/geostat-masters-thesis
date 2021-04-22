@@ -14,7 +14,6 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from quantnn.qrnn import QRNN
 from quantnn.models.pytorch.logging import TensorBoardLogger
-from quantnn.metrics import ScatterPlot
 
 from load_data import GOESRETRIEVALSDataset, Mask, RandomLog, RandomCrop, Standardize, ToTensor
 
@@ -71,14 +70,14 @@ parser.add_argument(
 	help="List of number of epochs",
 	nargs="+", 
 	type=int,
-	default=[10, 20, 40])
+	default=[2, 3, 4])
 parser.add_argument(
 	"-lr",
 	"--lr_list", 
 	help="List of learning rates",
 	nargs="+", 
 	type=float,
-	default=[0.01, 0.001, 0.0001])
+	default=[0.01, 0.01, 0.001])
 args = parser.parse_args()
 
 BATCH_SIZE = args.BATCH_SIZE
@@ -105,7 +104,7 @@ elif (net_name == 'boxes_one_modified'):
 	net = Net(len(quantiles), len(channels))
 elif (net_name == 'xception'):
 	from quantnn.models.pytorch.xception import XceptionFpn
-	net =  XceptionFpn(len(channels), quantiles.size, n_features=128)
+	net = XceptionFpn(len(channels), quantiles.size, n_features=128)
 elif (net_name == 'ResNet'):
 	from quantnn.models.pytorch.resnet import ResNet
 	net = ResNet(len(channels), quantiles.size)
@@ -116,7 +115,7 @@ elif (net_name == 'per'):
 	from models.per import Net
 	net = Net(len(quantiles), len(channels))	
 	
-filename = net_name + str(apply_log) + str(BATCH_SIZE) + filename_extension
+filename = (net_name + str(apply_log) + str(BATCH_SIZE) + '_' + str(n_epochs_arr) + '_' + str(lrs) + filename_extension).replace(" ", "")
 
 path_to_data = args.path_to_data
 path_to_storage = args.path_to_storage
@@ -163,14 +162,14 @@ validation_dataset, validation_data  = importData(channels, BATCH_SIZE, path_to_
 
 
 # PLOT PERFORMANCE
-def performance(validation_data, qrnn, filename, fillvalue):
+def performance(data, qrnn, filename, fillvalue):
 
 	y_true = []
 	y_pred = []
 	
 	torch.cuda.empty_cache()
 	with torch.no_grad():
-		for batch_index, batch in enumerate(validation_data):
+		for batch_index, batch in enumerate(data):
 			y_true += [batch['label'].detach().numpy()]
 			X = batch['box'].to(device).detach()
 			y_pred += [qrnn.posterior_mean(x=X).cpu().detach().numpy()] 
@@ -182,14 +181,15 @@ def performance(validation_data, qrnn, filename, fillvalue):
 
 # TRAIN MODEL
 qrnn = QRNN(quantiles=quantiles, model=net)
-metrics = ["MeanSquaredError", "Bias"]
+metrics = ["MeanSquaredError", "Bias", "CRPS"]
+
+log_sub_dir = os.path.join(log_directory,str(n_epochs_arr)+'_'+str(lrs))
+if not Path(log_sub_dir).exists():
+	os.makedirs(log_sub_dir)
+logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_sub_dir)
+logger.set_attributes({"optimizer": "Adam", "n_epochs": str(n_epochs_arr), "learning_rates": str(lrs)}) 
 
 for i in range(len(n_epochs_arr)):
-	log_sub_dir = os.path.join(log_directory,str(n_epochs_arr[i])+'_'+str(lrs[i]))
-	if not Path(log_sub_dir).exists():
-		os.makedirs(log_sub_dir)
-	logger = TensorBoardLogger(n_epochs_arr[i], log_directory=log_sub_dir)
-	logger.set_attributes({"optimizer": "Adam", "learning_rate": lrs[i]}) 
 	optimizer = Adam(qrnn.model.parameters(), lr=lrs[i])
 	qrnn.train(training_data=training_data,
 		      validation_data=validation_data,
@@ -202,6 +202,7 @@ for i in range(len(n_epochs_arr)):
 		      logger=logger);
 	filename_tmp = filename+'_'+str(n_epochs_arr[i])+'_'+str(lrs[i])+'_'+str(i)
 	qrnn.save(os.path.join(path_to_save_model, filename_tmp+'.pckl'))
-	performance(validation_data, qrnn, filename_tmp, fillvalue)	
+	performance(training_data, qrnn, filename_tmp+'train', fillvalue)
+	performance(validation_data, qrnn, filename_tmp+'val', fillvalue)	
 
 
