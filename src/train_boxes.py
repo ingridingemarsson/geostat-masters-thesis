@@ -136,6 +136,10 @@ global path_to_save_y
 path_to_save_y = os.path.join(path_to_storage, filename, 'preds')
 if not Path(path_to_save_y).exists():
 	os.makedirs(path_to_save_y)
+global path_to_save_images
+path_to_save_images = os.path.join(path_to_storage, filename, 'images')
+if not Path(path_to_save_images).exists():
+	os.makedirs(path_to_save_images)
 	
 global log_directory
 log_directory = os.path.join(path_to_storage, filename, 'runs')
@@ -170,7 +174,7 @@ validation_dataset, validation_data  = importData(channels, BATCH_SIZE, path_to_
 
 
 # PLOT PERFORMANCE
-def performance(data, qrnn, filename, fillvalue):
+def performance(data, qrnn, filename, fillvalue, apply_log):
 
 	y_true = []
 	y_pred = []
@@ -185,6 +189,29 @@ def performance(data, qrnn, filename, fillvalue):
 	y_pred = np.concatenate(y_pred, axis=0)
 	indices = (y_true != fillvalue)
 	np.savetxt(os.path.join(path_to_save_y, filename+'.txt'), np.transpose(np.stack((y_true[indices],  y_pred[indices]))))
+	
+	
+	bins = np.logspace(-2, 2, 100)
+	if apply_log:
+		y_true = np.exp(y_true[indices])
+		y_pred = np.exp(y_pred[indices])
+	freqs, _, _ = np.histogram2d(y_true[indices], y_pred[indices], bins=bins)
+
+	f, ax = plt.subplots(figsize=(8, 9))
+
+	p = ax.pcolormesh(bins, bins, freqs.T)
+	ax.set_xlim([1e-2, 1e2])
+	ax.set_ylim([1e-2, 1e2])
+	ax.set_xscale("log")
+	ax.set_yscale("log")
+	ax.set_xlabel("Reference rain rate [mm / h]")
+	ax.set_ylabel("Predicted rain rate [mm / h]")
+	ax.plot(bins, bins, c="grey", ls="--")
+	f.colorbar(p, ax=ax, orientation="horizontal", label="Surface precipitation [mm / h]")
+	ax.set_aspect(1.0)
+
+	plt.tight_layout()
+	plt.savefig(os.path.join(path_to_save_images, filename+'.png'))
 	
 
 # TRAIN MODEL
@@ -221,7 +248,7 @@ for i in range(len(n_epochs_arr)):
 		      logger=logger);
 	filename_tmp = filename+'_'+str(n_epochs_arr[i])+'_'+str(lrs[i])+'_'+str(i)
 	qrnn.save(os.path.join(path_to_save_model, filename_tmp+'.pckl'))
-	performance(training_data, qrnn, filename_tmp+'train', fillvalue)
-	performance(validation_data, qrnn, filename_tmp+'val', fillvalue)	
+	performance(training_data, qrnn, filename_tmp+'train', fillvalue, apply_log)
+	performance(validation_data, qrnn, filename_tmp+'val', fillvalue, apply_log)	
 
 
