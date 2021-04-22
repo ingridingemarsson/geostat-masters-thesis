@@ -21,5 +21,5 @@ rsync -rq "${HOME}/geostat-masters-thesis/dataset/data/dataset-boxes" $TMPDIR
 python -u ${HOME}/geostat-masters-thesis/src/train_boxes.py -p "$TMPDIR/dataset-boxes/" -s "${HOME}/geostat-masters-thesis/results/" "$@" 
 # -b 64 --log True -m 'xception' -e 20 -lr 0.001
 # -b 32 --log True -m 'ResNet' -e 20 -lr 0.001
-# -b 256 --log True -m 'boxes_one' -e 20 -lr 0.001
+# -b 256 --log True -m 'boxes_one' -e 10 20 40 -lr 0.01 0.001 0.0001 -o 'SGD'
 

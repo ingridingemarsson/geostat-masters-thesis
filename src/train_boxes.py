@@ -78,6 +78,12 @@ parser.add_argument(
 	nargs="+", 
 	type=float,
 	default=[0.01, 0.01, 0.001])
+parser.add_argument(
+	"-o",
+	"--optimizer", 
+	help="Optimizer", 
+	type=str,
+	default="Adam")
 args = parser.parse_args()
 
 BATCH_SIZE = args.BATCH_SIZE
@@ -88,6 +94,8 @@ n_epochs_arr = args.epochs_list
 lrs = args.lr_list
 if (len(n_epochs_arr) != len(lrs)):
 	raise ValueError("list epochs_list and list lr_list must have the same length")
+	
+opt = args.optimizer
 
 # SETUP
 channels = list(range(8,17))
@@ -115,7 +123,7 @@ elif (net_name == 'per'):
 	from models.per import Net
 	net = Net(len(quantiles), len(channels))	
 	
-filename = (net_name + str(apply_log) + str(BATCH_SIZE) + '_' + str(n_epochs_arr) + '_' + str(lrs) + filename_extension).replace(" ", "")
+filename = (net_name + str(apply_log) + str(BATCH_SIZE) + '_' + str(n_epochs_arr) + '_' + str(lrs) + '_' + opt + filename_extension).replace(" ", "")
 
 path_to_data = args.path_to_data
 path_to_storage = args.path_to_storage
@@ -187,15 +195,26 @@ log_sub_dir = os.path.join(log_directory,str(n_epochs_arr)+'_'+str(lrs))
 if not Path(log_sub_dir).exists():
 	os.makedirs(log_sub_dir)
 logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_sub_dir)
-logger.set_attributes({"optimizer": "Adam", "n_epochs": str(n_epochs_arr), "learning_rates": str(lrs)}) 
+
+if opt == "Adam":
+	logger.set_attributes({"optimizer": "Adam", "n_epochs": str(n_epochs_arr), "learning_rates": str(lrs)}) 
+elif opt == "SGD":
+	logger.set_attributes({"optimizer": "SGD", "scheduler": "CosineAnnealingLR", "n_epochs": str(n_epochs_arr), "learning_rates": str(lrs)}) 
+	optimizer = SGD(qrnn.model.parameters(), lr=0.1, momentum=0.9)
 
 for i in range(len(n_epochs_arr)):
-	optimizer = Adam(qrnn.model.parameters(), lr=lrs[i])
+	if opt == "Adam":
+		optimizer = Adam(qrnn.model.parameters(), lr=lrs[i])
+		scheduler = None
+	elif opt == "SGD":
+		scheduler = CosineAnnealingLR(optimizer, n_epochs_arr[i], lrs[i])
+		
 	qrnn.train(training_data=training_data,
 		      validation_data=validation_data,
 		      keys=("box", "label"),
 		      n_epochs=n_epochs_arr[i],
 		      optimizer=optimizer,
+		      scheduler=scheduler,
 		      mask=fillvalue,
 		      device=device,
 		      metrics=metrics,
