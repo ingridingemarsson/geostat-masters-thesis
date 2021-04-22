@@ -188,7 +188,7 @@ def performance(data, qrnn, filename, fillvalue, apply_log):
 	y_true = np.concatenate(y_true, axis=0)
 	y_pred = np.concatenate(y_pred, axis=0)
 	indices = (y_true != fillvalue)
-	np.savetxt(os.path.join(path_to_save_y, filename+'.txt'), np.transpose(np.stack((y_true[indices],  y_pred[indices]))))
+	#np.savetxt(os.path.join(path_to_save_y, filename+'.txt'), np.transpose(np.stack((y_true[indices],  y_pred[indices]))))
 	
 	
 	bins = np.logspace(-2, 2, 100)
