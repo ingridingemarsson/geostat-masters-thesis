@@ -190,12 +190,13 @@ def performance(data, qrnn, filename, fillvalue, apply_log):
 	indices = (y_true != fillvalue)
 	#np.savetxt(os.path.join(path_to_save_y, filename+'.txt'), np.transpose(np.stack((y_true[indices],  y_pred[indices]))))
 	
-	
+	y_true = y_true[indices]
+	y_pred = y_pred[indices]
 	bins = np.logspace(-2, 2, 100)
 	if apply_log:
-		y_true = np.exp(y_true[indices])
-		y_pred = np.exp(y_pred[indices])
-	freqs, _, _ = np.histogram2d(y_true[indices], y_pred[indices], bins=bins)
+		y_true = np.exp(y_true)
+		y_pred = np.exp(y_pred)
+	freqs, _, _ = np.histogram2d(y_true, y_pred, bins=bins)
 
 	f, ax = plt.subplots(figsize=(8, 9))
 
