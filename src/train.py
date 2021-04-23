@@ -11,6 +11,8 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 from torch.optim import SGD, Adam
 #from torch.optim.lr_scheduler import CosineAnnealingLR
+import warnings
+warnings.filterwarnings("ignore")
 
 from quantnn.qrnn import QRNN
 from quantnn.models.pytorch.logging import TensorBoardLogger
@@ -178,7 +180,7 @@ elif (data_type == "boxes"):
 	training_dataset, training_data = importData(channels, BATCH_SIZE, path_to_train_data_files, path_to_stats, apply_log=apply_log)
 	validation_dataset, validation_data  = importData(channels, BATCH_SIZE, path_to_val_data_files, path_to_stats, apply_log=apply_log)
 
-	'''
+
 
 	def make_prediction(writer, model, epoch_index):
 	    """
@@ -197,13 +199,13 @@ elif (data_type == "boxes"):
 	    precip_norm = LogNorm(1e-2, 1e2)
 	    
 	    # Make prediction
-	    y_mean = qrnn.posterior_mean(x)
+	    y_mean = torch.squeeze(qrnn.posterior_mean(x)).cpu().detach().numpy()
 	    
 	    # Store output using add_figure function of SummaryWriter
 	    fig_pred = plt.figure()
 	    gs = GridSpec(2, 1, figure=fig_pred, height_ratios=[1.0, 0.1])
 	    ax = plt.subplot(gs[0, 0])
-	    m = ax.imshow(y_mean.squeeze(0), norm=precip_norm, cmap=plt.get_cmap('GnBu'))
+	    m = ax.imshow(y_mean, norm=precip_norm, cmap=plt.get_cmap('GnBu'))
 	    ax.imshow(y.squeeze(0)!=-1,  cmap=plt.get_cmap('binary_r'), alpha = 0.02)
 	    ax.grid(False)
 	    ax.set_title("(d) Model prediction rain rate", loc="left")
@@ -226,14 +228,14 @@ elif (data_type == "boxes"):
 	    plt.tight_layout()
 	    writer.add_figure("reference_rain_rate", fig_true, 0)
 
-	'''
+
 
 	sample_index = np.random.randint(len(validation_dataset))
-	x = validation_dataset[sample_index]['box'].unsqueeze(0)
-	y = validation_dataset[sample_index]['label'].unsqueeze(0)
+	x = validation_dataset[sample_index]['box'].unsqueeze(0).to(device)
+	y = validation_dataset[sample_index]['label']
 	
-	#logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory, epoch_begin_callback=make_prediction)
-	logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory)
+	logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory, epoch_begin_callback=make_prediction)
+	#logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory)
 
 # TRAIN MODEL
 qrnn = QRNN(quantiles=quantiles, model=net)
