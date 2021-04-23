@@ -131,12 +131,12 @@ if (data_type == "singles"):
 	y_val = np.load(os.path.join(path_to_validation_data, 'y_singles_dataset.npy'))	
 	
 		
-	subs = 100000
-	X_train = X_train[:subs].astype(np.float32)
-	y_train = y_train[:subs].astype(np.float32)
-	X_val = X_val[:subs].astype(np.float32)
-	y_val = y_val[:subs].astype(np.float32)
-	print('size of training data: ', X_train.shape)
+	#subs = 100000
+	#X_train = X_train[:subs].astype(np.float32)
+	#y_train = y_train[:subs].astype(np.float32)
+	#X_val = X_val[:subs].astype(np.float32)
+	#y_val = y_val[:subs].astype(np.float32)
+	#print('size of training data: ', X_train.shape)
 	
 	
 	def Standardize(X, path_to_training_data):
