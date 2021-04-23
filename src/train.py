@@ -29,7 +29,8 @@ parser.add_argument(
 	"--path_to_data",
 	help="Path to data.",
 	type=str,
-	default="../dataset/data/dataset-test/"
+	nargs='+',
+	default=["../dataset/data/dataset-test/train/", "../dataset/data/dataset-test/validation/"]
 	)
 parser.add_argument(
 	"-s",
@@ -96,7 +97,9 @@ quantiles = np.linspace(0.01, 0.99, 99)
 
 filename = (net_name + str(apply_log) + str(BATCH_SIZE) + '_' + str(n_epochs_arr) + '_' + str(lr) + '_' + '_' + data_type).replace(" ", "")
 
-path_to_data = args.path_to_data
+path_to_training_data = args.path_to_data[0]
+path_to_validation_data = args.path_to_data[1]
+
 path_to_storage = args.path_to_storage
 
 global path_to_save_model
@@ -120,10 +123,10 @@ if (data_type == "singles"):
 
 	keys = None
 	
-	X_train = np.load(path_to_data+'train/X_singles_dataset.npy')
-	y_train = np.load(path_to_data+'train/y_singles_dataset.npy')
-	X_val = np.load(path_to_data+'validation/X_singles_dataset.npy')
-	y_val = np.load(path_to_data+'validation/y_singles_dataset.npy')	
+	X_train = np.load(os.path.join(path_to_training_data, 'X_singles_dataset.npy'))
+	y_train = np.load(os.path.join(path_to_training_data, 'y_singles_dataset.npy'))
+	X_val = np.load(os.path.join(path_to_validation_data, 'X_singles_dataset.npy'))
+	y_val = np.load(os.path.join(path_to_validation_data, 'y_singles_dataset.npy'))	
 	
 		
 	subs = 10
@@ -134,12 +137,12 @@ if (data_type == "singles"):
 	print('size of training data: ', X_train.shape)
 	
 	
-	def Standardize(X, path_to_data):
-	    stats = np.load(path_to_data+'train/X_singles_stats.npy')
+	def Standardize(X, path_to_training_data):
+	    stats = np.load(os.path.join(path_to_training_data, 'X_singles_stats.npy'))
 	    return ((X-stats[0,:])/stats[1,:]).astype(np.float32)
 	    
-	X_train = Standardize(X_train, path_to_data)
-	X_val = Standardize(X_val, path_to_data)
+	X_train = Standardize(X_train, path_to_training_data)
+	X_val = Standardize(X_val, path_to_training_data)
 	
 	training_data = BatchedDataset((X_train, y_train), BATCH_SIZE)
 	validation_data = BatchedDataset((X_val, y_val), BATCH_SIZE)
@@ -154,11 +157,9 @@ elif (data_type == "boxes"):
 	
 	keys=("box", "label")
 	
-	path_to_train_data = os.path.join(path_to_data, 'train/npy_files')
-	path_to_stats = os.path.join(Path(path_to_train_data).parent, Path('stats.npy'))
-	path_to_val_data = os.path.join(path_to_data, 'validation/npy_files')
-	path_to_test_data = os.path.join(path_to_data, 'test/npy_files')
-
+	path_to_train_data_files = os.path.join(path_to_training_data, 'npy_files')
+	path_to_stats = os.path.join(path_to_training_data, 'stats.npy')
+	path_to_val_data_files = os.path.join(path_to_validation_data, 'npy_files')
 
 	def importData(channels, BATCH_SIZE, path_to_data, path_to_stats, apply_log=False):
 		transforms_list = [Mask()]
@@ -174,8 +175,8 @@ elif (data_type == "boxes"):
 		dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
 		return(dataset, dataloader)
 
-	training_dataset, training_data = importData(channels, BATCH_SIZE, path_to_train_data, path_to_stats, apply_log=apply_log)
-	validation_dataset, validation_data  = importData(channels, BATCH_SIZE, path_to_val_data, path_to_stats, apply_log=apply_log)
+	training_dataset, training_data = importData(channels, BATCH_SIZE, path_to_train_data_files, path_to_stats, apply_log=apply_log)
+	validation_dataset, validation_data  = importData(channels, BATCH_SIZE, path_to_val_data_files, path_to_stats, apply_log=apply_log)
 
 	def make_prediction(writer, model, epoch_index):
 	    """

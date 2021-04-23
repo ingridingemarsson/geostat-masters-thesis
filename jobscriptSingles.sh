@@ -11,7 +11,10 @@ source ${HOME}/geostat-masters-thesis/src/setup_vera.sh
 # Data
 mydata="${HOME}/geostat-masters-thesis/dataset/data/dataset-singles/"
 
+TRAINING_DATA="${mydata}/train"
+VALIDATION_DATA="${mydata}/validation"
+
 # Execute this script in the node
-python -u ${HOME}/geostat-masters-thesis/src/train.py -p "${mydata}" -s "${HOME}/geostat-masters-thesis/results/" -D "singles" "$@" 
+python -u ${HOME}/geostat-masters-thesis/src/train.py -p  -p ${TRAINING_DATA} ${VALIDATION_DATA} -s "${HOME}/geostat-masters-thesis/results/" -D "singles" "$@" 
 
 
