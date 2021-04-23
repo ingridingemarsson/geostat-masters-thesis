@@ -131,7 +131,7 @@ if (data_type == "singles"):
 	y_val = np.load(os.path.join(path_to_validation_data, 'y_singles_dataset.npy'))	
 	
 		
-	subs = 10
+	subs = 100000
 	X_train = X_train[:subs].astype(np.float32)
 	y_train = y_train[:subs].astype(np.float32)
 	X_val = X_val[:subs].astype(np.float32)
@@ -230,7 +230,7 @@ elif (data_type == "boxes"):
 
 
 
-	sample_index = np.random.randint(len(validation_dataset))
+	index = 0 #np.random.randint(len(validation_dataset))
 	x = validation_dataset[sample_index]['box'].unsqueeze(0).to(device)
 	y = validation_dataset[sample_index]['label']
 	
