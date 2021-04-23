@@ -6,7 +6,7 @@
 #SBATCH --gres=gpu:1
 #SBATCH --job-name=goesrain
 
-source ${HOME}/geostat-masters-thesis/src/setup_vera.sh
+source ${HOME}/geostat-masters-thesis/setup_vera.sh
 
 # Data
 mydata="${HOME}/geostat-masters-thesis/dataset/data/dataset-singles/"
