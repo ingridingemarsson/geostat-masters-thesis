@@ -229,16 +229,12 @@ if opt == "Adam":
 elif opt == "SGD":
 	logger.set_attributes({"optimizer": "SGD", "scheduler": "CosineAnnealingLR", "n_epochs": str(n_epochs_arr), "learning_rates": str(lrs)}) 
 	optimizer = SGD(qrnn.model.parameters(), lr=0.1, momentum=0.9)
-elif opt == "SGDw":
-	weight_decay = 0.9
-	logger.set_attributes({"optimizer": "SGD", "scheduler": "CosineAnnealingLR", "n_epochs": str(n_epochs_arr), "learning_rates": str(lrs), "weight_decay": weight_decay}) 
-	optimizer = SGD(qrnn.model.parameters(), lr=0.1, momentum=0.9, weight_decay=weight_decay)
 
 for i in range(len(n_epochs_arr)):
 	if opt == "Adam":
 		optimizer = Adam(qrnn.model.parameters(), lr=lrs[i])
 		scheduler = None
-	elif (opt == "SGD" or opt == "SGDw"):
+	elif (opt == "SGD"):
 		scheduler = CosineAnnealingLR(optimizer, n_epochs_arr[i], lrs[i])
 
 	qrnn.train(training_data=training_data,
