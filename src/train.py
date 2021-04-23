@@ -178,6 +178,8 @@ elif (data_type == "boxes"):
 	training_dataset, training_data = importData(channels, BATCH_SIZE, path_to_train_data_files, path_to_stats, apply_log=apply_log)
 	validation_dataset, validation_data  = importData(channels, BATCH_SIZE, path_to_val_data_files, path_to_stats, apply_log=apply_log)
 
+	'''
+
 	def make_prediction(writer, model, epoch_index):
 	    """
 	    Predicts the mean precipitation rate on a random sample
@@ -224,12 +226,14 @@ elif (data_type == "boxes"):
 	    plt.tight_layout()
 	    writer.add_figure("reference_rain_rate", fig_true, 0)
 
+	'''
 
 	sample_index = np.random.randint(len(validation_dataset))
 	x = validation_dataset[sample_index]['box'].unsqueeze(0)
 	y = validation_dataset[sample_index]['label'].unsqueeze(0)
 	
-	logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory, epoch_begin_callback=make_prediction)
+	#logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory, epoch_begin_callback=make_prediction)
+	logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory)
 
 # TRAIN MODEL
 qrnn = QRNN(quantiles=quantiles, model=net)
