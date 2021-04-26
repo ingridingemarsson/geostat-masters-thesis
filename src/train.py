@@ -160,6 +160,7 @@ if (data_type == "singles"):
 	validation_data = BatchedDataset((X_val, y_val), BATCH_SIZE)
 	
 	logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory)
+	dat_size = str(len(training_data))+'_v'+str(len(validation_data))
 		
 elif (data_type == "boxes"):
 
@@ -189,8 +190,6 @@ elif (data_type == "boxes"):
 
 	training_dataset, training_data = importData(channels, BATCH_SIZE, path_to_train_data_files, path_to_stats, apply_log=apply_log)
 	validation_dataset, validation_data  = importData(channels, BATCH_SIZE, path_to_val_data_files, path_to_stats, apply_log=apply_log)
-
-
 
 	def make_prediction(writer, model, epoch_index):
 	    """
@@ -246,6 +245,7 @@ elif (data_type == "boxes"):
 	
 	logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory, epoch_begin_callback=make_prediction)
 	#logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory)
+	dat_size = str(len(training_dataset))+'_v'+str(len(validation_dataset))
 
 # TRAIN MODEL
 qrnn = QRNN(quantiles=quantiles, model=net)
@@ -267,6 +267,6 @@ for i in range(len(n_epochs_arr)):
 		      device=device,
 		      metrics=metrics,
 		      logger=logger);
-	filename_tmp = filename+'_'+str(n_epochs_arr[i])+'_'+str(lr)+'_'+str(i)+'_t'+str(len(training_dataset))+'_v'+str(len(validation_dataset))
+	filename_tmp = filename+'_'+str(n_epochs_arr[i])+'_'+str(lr)+'_'+str(i)+'_t'+dat_size
 	qrnn.save(os.path.join(path_to_save_model, filename_tmp+'.pckl'))
 
