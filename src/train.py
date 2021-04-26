@@ -18,7 +18,7 @@ from quantnn.qrnn import QRNN
 from quantnn.models.pytorch.logging import TensorBoardLogger
 from quantnn.metrics import ScatterPlot
 
-from load_data import GOESRETRIEVALSDataset, Mask, RandomLog, RandomCrop, Standardize, ToTensor
+from load_data import GOESRETRIEVALSDataset, Mask, RandomSmallVals, TakeLog, RandomCrop, Standardize, ToTensor
 
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -140,11 +140,21 @@ if (data_type == "singles"):
 	
 	
 	def Standardize(X, path_to_training_data):
-	    stats = np.load(os.path.join(path_to_training_data, 'X_singles_stats.npy'))
-	    return ((X-stats[0,:])/stats[1,:]).astype(np.float32)
-	    
+		stats = np.load(os.path.join(path_to_training_data, 'X_singles_stats.npy'))
+		return ((X-stats[0,:])/stats[1,:]).astype(np.float32)
+	
+	def ZeroToRand(y):
+		inds = np.where(y==0.0)
+		y[inds] = np.random.uniform(1e-4, 1e-3, len(y[inds]))
+
+		return y
+	
+	
 	X_train = Standardize(X_train, path_to_training_data)
 	X_val = Standardize(X_val, path_to_training_data)
+	
+	y_train = ZeroToRand(y_train)
+	y_val = ZeroToRand(y_val)
 	
 	training_data = BatchedDataset((X_train, y_train), BATCH_SIZE)
 	validation_data = BatchedDataset((X_val, y_val), BATCH_SIZE)
@@ -164,9 +174,9 @@ elif (data_type == "boxes"):
 	path_to_val_data_files = os.path.join(path_to_validation_data, 'npy_files')
 
 	def importData(channels, BATCH_SIZE, path_to_data, path_to_stats, apply_log=False):
-		transforms_list = [Mask()]
+		transforms_list = [Mask(), RandomSmallVals()]
 		if apply_log:
-			transforms_list.append(RandomLog())
+			transforms_list.append(TakeLog())
 		transforms_list.extend([RandomCrop(128), Standardize(path_to_data, path_to_stats, channels), ToTensor()])
 		dataset = GOESRETRIEVALSDataset(
 			path_to_data = path_to_data,
@@ -231,8 +241,8 @@ elif (data_type == "boxes"):
 
 
 	index = 0 #np.random.randint(len(validation_dataset))
-	x = validation_dataset[sample_index]['box'].unsqueeze(0).to(device)
-	y = validation_dataset[sample_index]['label']
+	x = validation_dataset[index]['box'].unsqueeze(0).to(device)
+	y = validation_dataset[index]['label']
 	
 	logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory, epoch_begin_callback=make_prediction)
 	#logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory)
@@ -257,6 +267,6 @@ for i in range(len(n_epochs_arr)):
 		      device=device,
 		      metrics=metrics,
 		      logger=logger);
-	filename_tmp = filename+'_'+str(n_epochs_arr[i])+'_'+str(lr)+'_'+str(i)
+	filename_tmp = filename+'_'+str(n_epochs_arr[i])+'_'+str(lr)+'_'+str(i)+'_t'+str(len(training_dataset))+'_v'+str(len(validation_dataset))
 	qrnn.save(os.path.join(path_to_save_model, filename_tmp+'.pckl'))
 

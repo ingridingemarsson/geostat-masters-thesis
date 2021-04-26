@@ -93,15 +93,15 @@ channels.remove(12)
 
 
 path_to_data = '../origin/'
-path_to_storage = 'dataset-singles/' 
+path_to_storage = 'dataset-singles/' #'dataset-test/' 
 
 
-traindirlist = CreateListOfLinkfilesInSpan(17, 12, 19, 12)
+traindirlist = CreateListOfLinkfilesInSpan(17, 12, 19, 12) # (17, 12, 18, 2) 
 traindirlist = [path_to_data+elem for elem in traindirlist]
 dattype = 'train/'
 ConvertDatasetToSingles(channels, traindirlist, path_to_storage+dattype)
 
-valdirlist = CreateListOfLinkfilesInSpan(20, 1, 20, 7)
+valdirlist = CreateListOfLinkfilesInSpan(20, 1, 20, 7) # (18, 3, 18, 3) 
 valdirlist = [path_to_data+elem for elem in valdirlist]
 dattype = 'validation/'
 ConvertDatasetToSingles(channels, valdirlist, path_to_storage+dattype)

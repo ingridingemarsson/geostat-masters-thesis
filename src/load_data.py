@@ -5,9 +5,9 @@ from pathlib import Path
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 
-class RandomLog(object):
+class RandomSmallVals(object):
 	'''
-	Log of labels, where zero vals are replaced by small random values.
+	Zero vals are replaced by small random values.
 	
 	'''
 	
@@ -17,13 +17,27 @@ class RandomLog(object):
 	def __call__(self, sample):
 		box, label = sample['box'], sample['label']
 		
-		num_vals_to_replace = len(label==0.0)
-		new_rand_vals = np.random.uniform(1e-4, 1e-3, num_vals_to_replace)
-		logged_label = np.where(label==0.0, new_rand_vals, label)
+		new_rand_vals = np.random.uniform(1e-4, 1e-3, len(label))
+		nonzero_label = np.where(label==0.0, new_rand_vals, label)
 		
-		#logged_label = np.where(replaced_label>0.0, np.log(replaced_label), replaced_label)
+		return {'box': box, 'label': nonzero_label}
+		
+		
+class TakeLog(object):
+	'''
+	Log of labels.
+	
+	'''
+	
+	def __init__(self):
+		pass
+	
+	def __call__(self, sample):
+		box, label = sample['box'], sample['label']
+		
+		logged_label = label
 		swath = np.where(logged_label>0.0)
-		logged_label[swath] = np.log(logged_label[swath])
+		logged_label[swath] = np.log10(logged_label[swath])
 
 		return {'box': box, 'label': logged_label}
 
