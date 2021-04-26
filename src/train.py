@@ -160,10 +160,10 @@ if (data_type == "singles"):
 	validation_data = BatchedDataset((X_val, y_val), BATCH_SIZE)
 	
 	logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory)
-	dat_size = str(len(training_data))+'_v'+str(len(validation_data))
+	dat_size = str(len(y_train))+'_v'+str(len(y_val))
 		
 elif (data_type == "boxes"):
-
+	print(quantiles.size)
 	if (net_name == 'xception'):
 		from quantnn.models.pytorch.xception import XceptionFpn
 		net = XceptionFpn(len(channels), quantiles.size, n_features=128)
