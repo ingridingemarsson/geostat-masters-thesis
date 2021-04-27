@@ -1,5 +1,6 @@
 import numpy as np
 import os
+from datetime import datetime
 import argparse
 from pathlib import Path
 import matplotlib.pyplot as plt
@@ -20,6 +21,7 @@ from quantnn.metrics import ScatterPlot
 
 from load_data import GOESRETRIEVALSDataset, Mask, RandomSmallVals, TakeLog, RandomCrop, Standardize, ToTensor
 
+stamp = str(datetime.today().timestamp())
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print('device: ', device)
@@ -110,7 +112,7 @@ if not Path(path_to_save_model).exists():
 	os.makedirs(path_to_save_model)
 	
 global log_directory
-log_directory = os.path.join(path_to_storage, filename, 'runs', str(n_epochs_arr)+'_'+str(lr))
+log_directory = os.path.join(path_to_storage, filename, 'runs', str(n_epochs_arr)+'_'+str(lr), stamp)
 if not Path(log_directory).exists():
 	os.makedirs(log_directory)
 
@@ -267,6 +269,6 @@ for i in range(len(n_epochs_arr)):
 		      device=device,
 		      metrics=metrics,
 		      logger=logger);
-	filename_tmp = filename+'_'+str(n_epochs_arr[i])+'_'+str(lr)+'_'+str(i)+'_t'+dat_size
+	filename_tmp = filename+'_'+str(n_epochs_arr[i])+'_'+str(lr)+'_'+str(i)+'_t'+dat_size+'_'+stamp
 	qrnn.save(os.path.join(path_to_save_model, filename_tmp+'.pckl'))
 
