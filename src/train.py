@@ -10,7 +10,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
 from torch.optim import SGD, Adam
-#from torch.optim.lr_scheduler import CosineAnnealingLR
+from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR
 import warnings
 warnings.filterwarnings("ignore")
 
@@ -253,7 +253,7 @@ metrics = ["MeanSquaredError", "Bias", "CRPS", "CalibrationPlot"]
 scatter_plot = ScatterPlot(bins=np.logspace(-2, 2, 100), log_scale=True)
 metrics.append(scatter_plot)
 
-logger.set_attributes({"optimizer": "Adam", "n_epochs": str(n_epochs_arr), "learning_rate": lr}) 
+logger.set_attributes({"optimizer": "Adam", "n_epochs": str(n_epochs_arr), "learning_rate": lr, "scheduler": 'StepLR'}) 
 optimizer = Adam(qrnn.model.parameters(), lr=lr)
 
 for i in range(len(n_epochs_arr)):
@@ -262,7 +262,7 @@ for i in range(len(n_epochs_arr)):
 		      keys=keys,
 		      n_epochs=n_epochs_arr[i],
 		      optimizer=optimizer,
-		      scheduler=None,
+		      scheduler = StepLR(optimizer, step_size=50, gamma=0.1),
 		      mask=fillvalue,
 		      device=device,
 		      metrics=metrics,
