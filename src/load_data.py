@@ -37,7 +37,7 @@ class TakeLog(object):
 		
 		logged_label = label
 		swath = np.where(logged_label>0.0)
-		logged_label[swath] = np.log10(logged_label[swath])
+		logged_label[swath] = np.log(logged_label[swath])
 
 		return {'box': box, 'label': logged_label}
 
