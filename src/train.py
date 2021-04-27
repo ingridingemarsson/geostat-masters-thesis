@@ -83,6 +83,12 @@ parser.add_argument(
 	help="Type of dataset, boxes or singles", 
 	type=str,
 	default="boxes")
+parser.add_argument(
+	"-O",
+	"--optimizer", 
+	help="Optimizer", 
+	type=str,
+	default="Adam")
 args = parser.parse_args()
 
 BATCH_SIZE = args.BATCH_SIZE
@@ -92,6 +98,7 @@ n_epochs_arr = args.epochs_list
 lr = args.lr
 data_type = args.data_type
 net_name = args.model
+optim = args.optimizer 
 
 # SETUP
 channels = list(range(8,17))
@@ -255,8 +262,11 @@ metrics = ["MeanSquaredError", "Bias", "CRPS", "CalibrationPlot"]
 scatter_plot = ScatterPlot(bins=np.logspace(-2, 2, 100), log_scale=True)
 metrics.append(scatter_plot)
 
-logger.set_attributes({"optimizer": "Adam", "n_epochs": str(n_epochs_arr), "learning_rate": lr, "scheduler": 'StepLR'}) 
-optimizer = Adam(qrnn.model.parameters(), lr=lr)
+logger.set_attributes({"optimizer": optim, "n_epochs": str(n_epochs_arr), "learning_rate": lr}) 
+if (optim=="Adam"):
+	optimizer = Adam(qrnn.model.parameters(), lr=lr)
+elif (optim=="SGD"):
+	optimizer = SGD(qrnn.model.parameters(), lr=lr, momentum=0.9)
 
 for i in range(len(n_epochs_arr)):
 	qrnn.train(training_data=training_data,
@@ -264,11 +274,11 @@ for i in range(len(n_epochs_arr)):
 		      keys=keys,
 		      n_epochs=n_epochs_arr[i],
 		      optimizer=optimizer,
-		      scheduler = StepLR(optimizer, step_size=50, gamma=0.1),
+		      scheduler = StepLR(optimizer, step_size=100, gamma=0.1),
 		      mask=fillvalue,
 		      device=device,
 		      metrics=metrics,
 		      logger=logger);
-	filename_tmp = filename+'_'+str(n_epochs_arr[i])+'_'+str(lr)+'_'+str(i)+'_t'+dat_size+'_'+stamp
+	filename_tmp = filename+'_'+str(n_epochs_arr[i])+'_'+str(lr)+'_'+str(i)+'_t'+dat_size+'_'+optim+'_'+stamp
 	qrnn.save(os.path.join(path_to_save_model, filename_tmp+'.pckl'))
 
