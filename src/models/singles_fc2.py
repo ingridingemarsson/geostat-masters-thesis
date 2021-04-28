@@ -13,10 +13,7 @@ class Net(nn.Module):
 		self.l5 = nn.Linear(256, 256)
 		self.l6 = nn.Linear(256, 256)
 		self.l7 = nn.Linear(256, 256)
-		self.l8 = nn.Linear(256, 256)
-		self.l9 = nn.Linear(256, 256)
-		self.l10 = nn.Linear(256, 256)
-		self.l11 = nn.Linear(256, num_quantiles)
+		self.l8 = nn.Linear(256, num_quantiles)
 
 
     
@@ -29,9 +26,6 @@ class Net(nn.Module):
 		x = F.relu(self.l5(x))
 		x = F.relu(self.l6(x))
 		x = F.relu(self.l7(x))
-		x = F.relu(self.l8(x))
-		x = F.relu(self.l9(x))
-		x = F.relu(self.l10(x))
-		x = F.relu(self.l11(x))
+		x = self.l8(x)
         
 		return x

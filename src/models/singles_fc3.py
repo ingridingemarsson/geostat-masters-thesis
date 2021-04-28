@@ -22,6 +22,6 @@ class Net(nn.Module):
 		x = F.relu(self.l3(x))
 		x = F.relu(self.l4(x))
 		x = F.relu(self.l5(x))
-		x = F.relu(self.l6(x))
+		x = self.l6(x)
         
 		return x
