@@ -6,7 +6,7 @@ class Net(nn.Module):
 		
 		super(Net, self).__init__()
 		
-		self.l1 = nn.Linear(num_channels, 2048)
+		self.l1 = nn.Linear(num_channels, 1024)
 		self.l2 = nn.Linear(1024, 512)
 		self.l3 = nn.Linear(512, 256)
 		self.l4 = nn.Linear(256, 128)
