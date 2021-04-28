@@ -18,6 +18,6 @@ class Net(nn.Module):
         x = F.relu(self.l1(x))
         x = F.relu(self.l2(x))
         x = F.relu(self.l3(x))
-        x = F.relu(self.l4(x))
+        x = self.l4(x)
         
         return x

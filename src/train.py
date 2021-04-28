@@ -163,6 +163,7 @@ if (data_type == "singles"):
 	
 	def ZeroToRand(y):
 		inds = np.where(y==0.0)
+		print(len(y[inds]))
 		y[inds] = np.random.uniform(1e-4, 1e-3, len(y[inds]))
 
 		return y
