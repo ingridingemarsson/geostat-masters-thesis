@@ -129,6 +129,12 @@ if (data_type == "singles"):
 	if (net_name == 'singles_fc'):
 		from models.singles_fc import Net
 		net = Net(len(quantiles), len(channels))
+	elif (net_name == 'singles_fc2'):
+		from models.singles_fc2 import Net
+		net = Net(len(quantiles), len(channels))
+	elif (net_name == 'singles_fc3'):
+		from models.singles_fc3 import Net
+		net = Net(len(quantiles), len(channels))
 
 	from quantnn.models.pytorch import BatchedDataset
 
