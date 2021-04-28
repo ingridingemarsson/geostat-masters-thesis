@@ -287,7 +287,7 @@ for i in range(len(n_epochs_arr)):
 		      keys=keys,
 		      n_epochs=n_epochs_arr[i],
 		      optimizer=optimizer,
-		      scheduler = CosineAnnealingLR(optimizer, n_epochs_arr[i]) #StepLR(optimizer, step_size=100, gamma=0.1),
+		      scheduler = CosineAnnealingLR(optimizer, n_epochs_arr[i]), #StepLR(optimizer, step_size=100, gamma=0.1),
 		      mask=fillvalue,
 		      device=device,
 		      metrics=metrics,
