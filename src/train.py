@@ -272,11 +272,23 @@ def make_prediction(writer, model, epoch_index):
     m = ax.imshow(y.squeeze(0), norm=precip_norm, cmap=plt.get_cmap('GnBu'))
     ax.imshow(y.squeeze(0)!=-1, cmap=plt.get_cmap('binary_r'), alpha = 0.02)
     ax.grid(False)
-    ax.set_title("(d) Model prediction rain rate", loc="left")
+    ax.set_title("(d) Reference rain rate", loc="left")
     ax = plt.subplot(gs[1, 0])
     plt.colorbar(m, cax=ax, orientation="horizontal", label=r"Rain rate [mm/h]")    
     plt.tight_layout()
     writer.add_figure("reference_rain_rate", fig_true, 0)	
+    
+    box = x
+    fig_c = plt.figure()
+    gs = GridSpec(2, 1, figure=fig_c, height_ratios=[1.0, 0.1])
+    ax = plt.subplot(gs[0, 0])
+    m = ax.imshow(box.squeeze()[0].numpy(), cmap=plt.get_cmap('inferno'))
+    ax.grid(False)
+    ax.set_title("(d) First channel", loc="left")
+    ax = plt.subplot(gs[1, 0])
+    plt.colorbar(m, cax=ax, orientation="horizontal", label="Normalized brightness temperature")   
+    plt.tight_layout()
+    writer.add_figure("input_channel", fig_c, 0)
 
 
 logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory, epoch_begin_callback=make_prediction)
