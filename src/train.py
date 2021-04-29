@@ -264,8 +264,6 @@ def make_prediction(writer, model, epoch_index):
     plt.tight_layout()
     writer.add_figure("predicted_rain_rate", fig_pred, epoch_index)
     
-    # Store reference rain using add_figure function of
-    # SummaryWriter. No need to store for every epoch.
     fig_true = plt.figure()
     gs = GridSpec(2, 1, figure=fig_true, height_ratios=[1.0, 0.1])
     ax = plt.subplot(gs[0, 0])
@@ -276,7 +274,7 @@ def make_prediction(writer, model, epoch_index):
     ax = plt.subplot(gs[1, 0])
     plt.colorbar(m, cax=ax, orientation="horizontal", label=r"Rain rate [mm/h]")    
     plt.tight_layout()
-    writer.add_figure("reference_rain_rate", fig_true, 0)	
+    writer.add_figure("reference_rain_rate", fig_true, epoch_index)	
     
     box = x
     fig_c = plt.figure()
@@ -288,7 +286,7 @@ def make_prediction(writer, model, epoch_index):
     ax = plt.subplot(gs[1, 0])
     plt.colorbar(m, cax=ax, orientation="horizontal", label="Normalized brightness temperature")   
     plt.tight_layout()
-    writer.add_figure("input_channel", fig_c, 0)
+    writer.add_figure("input_channel", fig_c, epoch_index)
 
 
 logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory, epoch_begin_callback=make_prediction)
