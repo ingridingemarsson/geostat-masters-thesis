@@ -81,7 +81,7 @@ def ConvertDatasetToSingles(channels, path_to_data_list, path_to_storage, max_nu
     #X_mean = np.mean(X_mean_sub, axis=0)
     #X_mean = np.mean(X_mean_sub, axis=0)
     X_mean = np.mean(vals_tot, axis=0)
-    X_std = np.mean(vals_tot, axis=0)
+    X_std = np.std(vals_tot, axis=0)
     stats = np.stack([X_mean, X_std])
 
     np.save(path_to_storage + 'X_singles_stats.npy', stats)
@@ -93,14 +93,16 @@ channels.remove(12)
 
 
 path_to_data = '../origin/'
-path_to_storage = 'dataset-singles/' #'dataset-test/' 
+#path_to_storage = 'dataset-singles/'  
+path_to_storage = 'dataset-test/'
 
-
-traindirlist = CreateListOfLinkfilesInSpan(17, 12, 19, 12) # (17, 12, 18, 2) 
+#traindirlist = CreateListOfLinkfilesInSpan(17, 12, 19, 12) 
+traindirlist = CreateListOfLinkfilesInSpan(17, 12, 18, 2) 
 traindirlist = [path_to_data+elem for elem in traindirlist]
 dattype = 'train/'
 ConvertDatasetToSingles(channels, traindirlist, path_to_storage+dattype)
 
+'''
 valdirlist = CreateListOfLinkfilesInSpan(20, 1, 20, 7) # (18, 3, 18, 3) 
 valdirlist = [path_to_data+elem for elem in valdirlist]
 dattype = 'validation/'
@@ -110,4 +112,5 @@ testdirlist = CreateListOfLinkfilesInSpan(20, 8, 21, 3)
 testdirlist = [path_to_data+elem for elem in testdirlist]
 dattype = 'test/'
 ConvertDatasetToSingles(channels, testdirlist, path_to_storage+dattype)
+'''
 
