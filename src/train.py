@@ -218,9 +218,10 @@ elif (data_type == "boxes"):
 	
 	
 	
-image, __ = importData(channels, 1, path_to_image_to_plot, path_to_stats, apply_log=apply_log)
-x = image[0]['box'].unsqueeze(0).to(device)
-y = image[0]['label']	
+dat_image, __ = importData(channels, 1, path_to_image_to_plot, path_to_stats, apply_log=apply_log)
+image = dat_image[0]
+x = image['box'].unsqueeze(0).to(device)
+y = image['label']	
 	
 def make_prediction(writer, model, epoch_index):
     """
@@ -274,7 +275,7 @@ def make_prediction(writer, model, epoch_index):
     ax = plt.subplot(gs[1, 0])
     plt.colorbar(m, cax=ax, orientation="horizontal", label=r"Rain rate [mm/h]")    
     plt.tight_layout()
-    writer.add_figure("reference_rain_rate", fig_true, epoch_index)	
+    writer.add_figure("reference_rain_rate", fig_true, 0)	
     
     box = x
     fig_c = plt.figure()
@@ -286,7 +287,7 @@ def make_prediction(writer, model, epoch_index):
     ax = plt.subplot(gs[1, 0])
     plt.colorbar(m, cax=ax, orientation="horizontal", label="Normalized brightness temperature")   
     plt.tight_layout()
-    writer.add_figure("input_channel", fig_c, epoch_index)
+    writer.add_figure("input_channel", fig_c, 0)
 
 
 logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory, epoch_begin_callback=make_prediction)

@@ -18,9 +18,9 @@ def plotRandomSample(dataset, channels, qrnn = None, device='cpu', cha=[0,4], us
     i = 0
     for c in cha:
 	    ax = plt.subplot(gs[0, i])
-	    m = ax.imshow(data['box'].numpy()[channels.index(c)], cmap=plt.get_cmap('inferno'))
+	    m = ax.imshow(data['box'].numpy()[c], cmap=plt.get_cmap('inferno'))
 	    ax.grid(False)
-	    ax.set_title("(a) channel "+str(c), loc="left")
+	    ax.set_title("(a) channel "+str(channels[c]), loc="left")
 	    ax = plt.subplot(gs[1, i])
 	    plt.colorbar(m, cax=ax, orientation="horizontal", label="Normalized brightness temperature")
 	    i+=1
