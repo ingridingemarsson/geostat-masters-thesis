@@ -89,6 +89,11 @@ parser.add_argument(
 	help="Optimizer", 
 	type=str,
 	default="Adam")
+parser.add_argument(
+	"--im_to_plot", 
+	help="Test image", 
+	type=str,
+	default="../dataset/data/image_to_plot/")
 args = parser.parse_args()
 
 BATCH_SIZE = args.BATCH_SIZE
@@ -110,7 +115,7 @@ filename = (net_name + str(apply_log) + str(BATCH_SIZE) + '_' + str(n_epochs_arr
 
 path_to_training_data = args.path_to_data[0]
 path_to_validation_data = args.path_to_data[1]
-
+path_to_image_to_plot = args.im_to_plot
 path_to_storage = args.path_to_storage
 
 global path_to_save_model
@@ -122,6 +127,21 @@ global log_directory
 log_directory = os.path.join(path_to_storage, filename, 'runs', str(n_epochs_arr)+'_'+str(lr), stamp)
 if not Path(log_directory).exists():
 	os.makedirs(log_directory)
+	
+
+def importData(channels, BATCH_SIZE, path_to_data, path_to_stats, apply_log=False):
+	transforms_list = [Mask(), RandomSmallVals()]
+	if apply_log:
+		transforms_list.append(TakeLog())
+	transforms_list.extend([RandomCrop(128), Standardize(path_to_data, path_to_stats, channels), ToTensor()])
+	dataset = GOESRETRIEVALSDataset(
+		path_to_data = path_to_data,
+		channels = channels, 
+		transform = transforms.Compose(transforms_list))
+	print('number of samples:', len(dataset))
+
+	dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
+	return(dataset, dataloader)
 
 
 if (data_type == "singles"):
@@ -143,22 +163,15 @@ if (data_type == "singles"):
 
 	keys = None
 	
+	path_to_stats = os.path.join(path_to_training_data, 'X_singles_stats.npy')
+	
 	X_train = np.load(os.path.join(path_to_training_data, 'X_singles_dataset.npy'))
 	y_train = np.load(os.path.join(path_to_training_data, 'y_singles_dataset.npy'))
 	X_val = np.load(os.path.join(path_to_validation_data, 'X_singles_dataset.npy'))
-	y_val = np.load(os.path.join(path_to_validation_data, 'y_singles_dataset.npy'))	
+	y_val = np.load(os.path.join(path_to_validation_data, 'y_singles_dataset.npy'))		
 	
-		
-	#subs = 100000
-	#X_train = X_train[:subs].astype(np.float32)
-	#y_train = y_train[:subs].astype(np.float32)
-	#X_val = X_val[:subs].astype(np.float32)
-	#y_val = y_val[:subs].astype(np.float32)
-	#print('size of training data: ', X_train.shape)
-	
-	
-	def Standardize(X, path_to_training_data):
-		stats = np.load(os.path.join(path_to_training_data, 'X_singles_stats.npy'))
+	def SinglesStandardize(X, path_to_stats):
+		stats = np.load(path_to_stats)
 		return ((X-stats[0,:])/stats[1,:]).astype(np.float32)
 	
 	def ZeroToRand(y):
@@ -169,8 +182,8 @@ if (data_type == "singles"):
 		return y
 	
 	
-	X_train = Standardize(X_train, path_to_training_data)
-	X_val = Standardize(X_val, path_to_training_data)
+	X_train = SinglesStandardize(X_train, path_to_stats)
+	X_val = SinglesStandardize(X_val, path_to_stats)
 	
 	y_train = ZeroToRand(y_train)
 	y_val = ZeroToRand(y_val)
@@ -178,7 +191,7 @@ if (data_type == "singles"):
 	training_data = BatchedDataset((X_train, y_train), BATCH_SIZE)
 	validation_data = BatchedDataset((X_val, y_val), BATCH_SIZE)
 	
-	logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory)
+	#logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory)
 	dat_size = str(len(y_train))+'_v'+str(len(y_val))
 		
 elif (data_type == "boxes"):
@@ -196,78 +209,78 @@ elif (data_type == "boxes"):
 	path_to_stats = os.path.join(path_to_training_data, 'stats.npy')
 	path_to_val_data_files = os.path.join(path_to_validation_data, 'npy_files')
 
-	def importData(channels, BATCH_SIZE, path_to_data, path_to_stats, apply_log=False):
-		transforms_list = [Mask(), RandomSmallVals()]
-		if apply_log:
-			transforms_list.append(TakeLog())
-		transforms_list.extend([RandomCrop(128), Standardize(path_to_data, path_to_stats, channels), ToTensor()])
-		dataset = GOESRETRIEVALSDataset(
-			path_to_data = path_to_data,
-			channels = channels, 
-			transform = transforms.Compose(transforms_list))
-		print('number of samples:', len(dataset))
-
-		dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
-		return(dataset, dataloader)
-
 	training_dataset, training_data = importData(channels, BATCH_SIZE, path_to_train_data_files, path_to_stats, apply_log=apply_log)
 	validation_dataset, validation_data  = importData(channels, BATCH_SIZE, path_to_val_data_files, path_to_stats, apply_log=apply_log)
 
-	def make_prediction(writer, model, epoch_index):
-	    """
-	    Predicts the mean precipitation rate on a random sample
-	    from the validation set.
-	    
-	    Args:
-		writer: The SummaryWriter object that is used to log
-		     to the tensbor board.
-		model: The model attributed of the qrnn object being
-		    trained.
-		epoch_index: The index (zero-based) of the current
-		    epoch.
-	    """
-	    
-	    precip_norm = LogNorm(1e-2, 1e2)
-	    
-	    # Make prediction
-	    y_mean = torch.squeeze(qrnn.posterior_mean(x)).cpu().detach().numpy()
-	    
-	    # Store output using add_figure function of SummaryWriter
-	    fig_pred = plt.figure()
-	    gs = GridSpec(2, 1, figure=fig_pred, height_ratios=[1.0, 0.1])
-	    ax = plt.subplot(gs[0, 0])
-	    m = ax.imshow(y_mean, norm=precip_norm, cmap=plt.get_cmap('GnBu'))
-	    ax.imshow(y.squeeze(0)!=-1,  cmap=plt.get_cmap('binary_r'), alpha = 0.02)
-	    ax.grid(False)
-	    ax.set_title("(d) Model prediction rain rate", loc="left")
-	    ax = plt.subplot(gs[1, 0])
-	    plt.colorbar(m, cax=ax, orientation="horizontal", label=r"Rain rate [mm/h]")    
-	    plt.tight_layout()
-	    writer.add_figure("predicted_rain_rate", fig_pred, epoch_index)
-	    
-	    # Store reference rain using add_figure function of
-	    # SummaryWriter. No need to store for every epoch.
-	    fig_true = plt.figure()
-	    gs = GridSpec(2, 1, figure=fig_true, height_ratios=[1.0, 0.1])
-	    ax = plt.subplot(gs[0, 0])
-	    m = ax.imshow(y.squeeze(0), norm=precip_norm, cmap=plt.get_cmap('GnBu'))
-	    ax.imshow(y.squeeze(0)!=-1, cmap=plt.get_cmap('binary_r'), alpha = 0.02)
-	    ax.grid(False)
-	    ax.set_title("(d) Model prediction rain rate", loc="left")
-	    ax = plt.subplot(gs[1, 0])
-	    plt.colorbar(m, cax=ax, orientation="horizontal", label=r"Rain rate [mm/h]")    
-	    plt.tight_layout()
-	    writer.add_figure("reference_rain_rate", fig_true, 0)
-
-
-
-	index = 0 #np.random.randint(len(validation_dataset))
-	x = validation_dataset[index]['box'].unsqueeze(0).to(device)
-	y = validation_dataset[index]['label']
-	
-	logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory, epoch_begin_callback=make_prediction)
-	#logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory)
 	dat_size = str(len(training_dataset))+'_v'+str(len(validation_dataset))
+	
+	
+	
+	
+	
+image, __ = importData(channels, 1, path_to_image_to_plot, path_to_stats, apply_log=apply_log)
+x = image[0]['box'].unsqueeze(0).to(device)
+y = image[0]['label']	
+	
+def make_prediction(writer, model, epoch_index):
+    """
+    Predicts the mean precipitation rate on a random sample
+    from the validation set.
+    
+    Args:
+	writer: The SummaryWriter object that is used to log
+	     to the tensbor board.
+	model: The model attributed of the qrnn object being
+	    trained.
+	epoch_index: The index (zero-based) of the current
+	    epoch.
+    """
+    
+    precip_norm = LogNorm(1e-2, 1e2)
+    
+    X = x
+    
+    if (data_type == "boxes"):
+    	y_mean = torch.squeeze(qrnn.posterior_mean(X)).cpu().detach().numpy()
+    
+    elif (data_type == "singles"):
+    	X = torch.transpose(torch.squeeze(torch.flatten(X, start_dim=2)), 0, 1)
+    	print(X.shape)
+    	y_mean = qrnn.posterior_mean(X).cpu().detach()
+    	print(y_mean.shape)
+    	y_mean = torch.reshape(y_mean, (int(np.sqrt(y_mean.shape[0])), int(np.sqrt(y_mean.shape[0])))).numpy()
+    	print(y_mean.shape)
+    
+    # Store output using add_figure function of SummaryWriter
+    fig_pred = plt.figure()
+    gs = GridSpec(2, 1, figure=fig_pred, height_ratios=[1.0, 0.1])
+    ax = plt.subplot(gs[0, 0])
+    m = ax.imshow(y_mean, norm=precip_norm, cmap=plt.get_cmap('GnBu'))
+    ax.imshow(y.squeeze(0)!=-1,  cmap=plt.get_cmap('binary_r'), alpha = 0.02)
+    ax.grid(False)
+    ax.set_title("(d) Model prediction rain rate", loc="left")
+    ax = plt.subplot(gs[1, 0])
+    plt.colorbar(m, cax=ax, orientation="horizontal", label=r"Rain rate [mm/h]")    
+    plt.tight_layout()
+    writer.add_figure("predicted_rain_rate", fig_pred, epoch_index)
+    
+    # Store reference rain using add_figure function of
+    # SummaryWriter. No need to store for every epoch.
+    fig_true = plt.figure()
+    gs = GridSpec(2, 1, figure=fig_true, height_ratios=[1.0, 0.1])
+    ax = plt.subplot(gs[0, 0])
+    m = ax.imshow(y.squeeze(0), norm=precip_norm, cmap=plt.get_cmap('GnBu'))
+    ax.imshow(y.squeeze(0)!=-1, cmap=plt.get_cmap('binary_r'), alpha = 0.02)
+    ax.grid(False)
+    ax.set_title("(d) Model prediction rain rate", loc="left")
+    ax = plt.subplot(gs[1, 0])
+    plt.colorbar(m, cax=ax, orientation="horizontal", label=r"Rain rate [mm/h]")    
+    plt.tight_layout()
+    writer.add_figure("reference_rain_rate", fig_true, 0)	
+
+
+logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory, epoch_begin_callback=make_prediction)
+#logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory)
 
 # TRAIN MODEL
 qrnn = QRNN(quantiles=quantiles, model=net)
