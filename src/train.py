@@ -245,11 +245,11 @@ def make_prediction(writer, model, epoch_index):
     
     elif (data_type == "singles"):
     	X = torch.transpose(torch.squeeze(torch.flatten(X, start_dim=2)), 0, 1)
-    	print(X.shape)
+    	#print(X.shape)
     	y_mean = qrnn.posterior_mean(X).cpu().detach()
-    	print(y_mean.shape)
+    	#print(y_mean.shape)
     	y_mean = torch.reshape(y_mean, (int(np.sqrt(y_mean.shape[0])), int(np.sqrt(y_mean.shape[0])))).numpy()
-    	print(y_mean.shape)
+    	#print(y_mean.shape)
     
     # Store output using add_figure function of SummaryWriter
     fig_pred = plt.figure()
@@ -282,7 +282,7 @@ def make_prediction(writer, model, epoch_index):
     fig_c = plt.figure()
     gs = GridSpec(2, 1, figure=fig_c, height_ratios=[1.0, 0.1])
     ax = plt.subplot(gs[0, 0])
-    m = ax.imshow(box.squeeze()[0].numpy(), cmap=plt.get_cmap('inferno'))
+    m = ax.imshow(box.squeeze()[0].cpu().detach().numpy(), cmap=plt.get_cmap('inferno'))
     ax.grid(False)
     ax.set_title("(d) First channel", loc="left")
     ax = plt.subplot(gs[1, 0])
