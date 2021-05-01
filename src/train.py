@@ -302,8 +302,10 @@ metrics.append(scatter_plot)
 logger.set_attributes({"optimizer": optim, "n_epochs": str(n_epochs_arr), "learning_rate": lr}) 
 if (optim=="Adam"):
 	optimizer = Adam(qrnn.model.parameters(), lr=lr)
+	scheduler = CosineAnnealingLR(optimizer, np.sum(n_epochs_arr))
 elif (optim=="SGD"):
 	optimizer = SGD(qrnn.model.parameters(), lr=lr, momentum=0.9)
+	scheduler = CosineAnnealingLR(optimizer, np.sum(n_epochs_arr))
 
 for i in range(len(n_epochs_arr)):
 	qrnn.train(training_data=training_data,
@@ -311,7 +313,7 @@ for i in range(len(n_epochs_arr)):
 		      keys=keys,
 		      n_epochs=n_epochs_arr[i],
 		      optimizer=optimizer,
-		      scheduler = CosineAnnealingLR(optimizer, n_epochs_arr[i]), #StepLR(optimizer, step_size=100, gamma=0.1),
+		      scheduler = scheduler,
 		      mask=fillvalue,
 		      device=device,
 		      metrics=metrics,
