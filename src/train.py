@@ -94,6 +94,11 @@ parser.add_argument(
 	help="Test image", 
 	type=str,
 	default="../dataset/data/image_to_plot/")
+parser.add_argument(
+	"--sche_restart", 
+	help="If to restart for each element in epochs list", 
+	type=bool,
+	default=False)
 args = parser.parse_args()
 
 BATCH_SIZE = args.BATCH_SIZE
@@ -104,6 +109,7 @@ lr = args.lr
 data_type = args.data_type
 net_name = args.model
 optim = args.optimizer 
+sche_restart = args.sche_restart
 
 # SETUP
 channels = list(range(8,17))
@@ -302,18 +308,20 @@ metrics.append(scatter_plot)
 logger.set_attributes({"optimizer": optim, "n_epochs": str(n_epochs_arr), "learning_rate": lr}) 
 if (optim=="Adam"):
 	optimizer = Adam(qrnn.model.parameters(), lr=lr)
-	scheduler = CosineAnnealingLR(optimizer, np.sum(n_epochs_arr))
 elif (optim=="SGD"):
 	optimizer = SGD(qrnn.model.parameters(), lr=lr, momentum=0.9)
-	scheduler = CosineAnnealingLR(optimizer, np.sum(n_epochs_arr))
+	
+scheduler = CosineAnnealingLR(optimizer, np.sum(n_epochs_arr))
 
 for i in range(len(n_epochs_arr)):
+	if sche_restart == True:
+		scheduler = CosineAnnealingLR(optimizer, n_epochs_arr[i])
 	qrnn.train(training_data=training_data,
 		      validation_data=validation_data,
 		      keys=keys,
 		      n_epochs=n_epochs_arr[i],
 		      optimizer=optimizer,
-		      scheduler = scheduler,
+		      scheduler=scheduler,
 		      mask=fillvalue,
 		      device=device,
 		      metrics=metrics,
