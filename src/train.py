@@ -194,7 +194,7 @@ if (data_type == "singles"):
 	validation_data = BatchedDataset((X_val, y_val), BATCH_SIZE)
 	
 	#logger = TensorBoardLogger(np.sum(n_epochs_arr), log_directory=log_directory)
-	dat_size = str(len(y_train))+'_v'+str(len(y_val))
+	dat_size = str(len(y_train))+'_v'+str(len(y_val))+str(channel_inds)
 		
 elif (data_type == "boxes"):
 	print(quantiles.size)
@@ -214,7 +214,7 @@ elif (data_type == "boxes"):
 	training_dataset, training_data = importData(BATCH_SIZE, path_to_train_data_files, path_to_stats, channel_inds)
 	validation_dataset, validation_data  = importData(BATCH_SIZE, path_to_val_data_files, path_to_stats, channel_inds)
 
-	dat_size = str(len(training_dataset))+'_v'+str(len(validation_dataset))
+	dat_size = str(len(training_dataset))+'_v'+str(len(validation_dataset))+str(channel_inds)
 	
 	
 	
