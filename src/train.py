@@ -94,10 +94,10 @@ parser.add_argument(
 	default=False)
 parser.add_argument(
 	"--channel_inds", 
-	help="Subset of avalible channels", 
+	help="Subset of avalible channel indices", 
 	nargs="+", 
 	type=int,
-	default=None)
+	default=list(range(0,8)))
 args = parser.parse_args()
 
 BATCH_SIZE = args.BATCH_SIZE
@@ -109,15 +109,8 @@ optim = args.optimizer
 sche_restart = args.sche_restart
 
 # SETUP
-channels_all = list(range(8,17))
-channels_all.remove(12)
-
 channel_inds = args.channel_inds
-if channel_inds==None:
-	channels = channels_all[:]
-else: 
-	channels = channels_all[channel_inds]
-print(channels)
+num_channels = len(channel_inds)
 
 fillvalue = -1
 quantiles = np.linspace(0.01, 0.99, 99)
@@ -140,12 +133,12 @@ if not Path(log_directory).exists():
 	os.makedirs(log_directory)
 	
 
-def importData(channels, BATCH_SIZE, path_to_data, path_to_stats, channel_inds):
-	transforms_list = [Mask(), RandomSmallVals(), RandomCrop(128), Standardize(path_to_data, path_to_stats, len(channels), channel_inds=channel_inds), ToTensor()]
+def importData(BATCH_SIZE, path_to_data, path_to_stats, channel_inds):
+	transforms_list = [Mask(), RandomSmallVals(), RandomCrop(128), Standardize(path_to_stats, channel_inds), ToTensor()]
 	dataset = GOESRETRIEVALSDataset(
-		path_to_data = path_to_data, 
-		transform = transforms.Compose(transforms_list),
-		channel_inds=channel_inds)
+		path_to_data=path_to_data, 
+		channel_inds=channel_inds,
+		transform=transforms.Compose(transforms_list))
 	print('number of samples:', len(dataset))
 
 	dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
@@ -156,16 +149,16 @@ if (data_type == "singles"):
 
 	if (net_name == 'singles_fc'):
 		from models.singles_fc import Net
-		net = Net(len(quantiles), len(channels))
+		net = Net(len(quantiles), num_channels)
 	elif (net_name == 'singles_fc2'):
 		from models.singles_fc2 import Net
-		net = Net(len(quantiles), len(channels))
+		net = Net(len(quantiles), num_channels)
 	elif (net_name == 'singles_fc3'):
 		from models.singles_fc3 import Net
-		net = Net(len(quantiles), len(channels))
+		net = Net(len(quantiles), num_channels)
 	elif (net_name == 'singles_fc4'):
 		from models.singles_fc4 import Net
-		net = Net(len(quantiles), len(channels))	
+		net = Net(len(quantiles), num_channels)	
 
 	from quantnn.models.pytorch import BatchedDataset
 
@@ -206,10 +199,10 @@ elif (data_type == "boxes"):
 	print(quantiles.size)
 	if (net_name == 'xception'):
 		from quantnn.models.pytorch.xception import XceptionFpn
-		net = XceptionFpn(len(channels), quantiles.size, n_features=128)
+		net = XceptionFpn(num_channels, quantiles.size, n_features=128)
 	elif (net_name == 'boxes_one'):
 		from models.boxes_one import Net
-		net = Net(quantiles.size, len(channels))
+		net = Net(quantiles.size, num_channels)
 	
 	keys=("box", "label")
 	
@@ -217,8 +210,8 @@ elif (data_type == "boxes"):
 	path_to_stats = os.path.join(path_to_training_data, 'stats.npy')
 	path_to_val_data_files = os.path.join(path_to_validation_data, 'npy_files')
 
-	training_dataset, training_data = importData(channels, BATCH_SIZE, path_to_train_data_files, path_to_stats, channel_inds)
-	validation_dataset, validation_data  = importData(channels, BATCH_SIZE, path_to_val_data_files, path_to_stats, channel_inds)
+	training_dataset, training_data = importData(BATCH_SIZE, path_to_train_data_files, path_to_stats, channel_inds)
+	validation_dataset, validation_data  = importData(BATCH_SIZE, path_to_val_data_files, path_to_stats, channel_inds)
 
 	dat_size = str(len(training_dataset))+'_v'+str(len(validation_dataset))
 	
@@ -226,7 +219,7 @@ elif (data_type == "boxes"):
 	
 	
 	
-dat_image, __ = importData(channels, 1, path_to_image_to_plot, path_to_stats, channel_inds)
+dat_image, __ = importData(1, path_to_image_to_plot, path_to_stats, channel_inds)
 image = dat_image[0]
 x = image['box'].unsqueeze(0).to(device)
 y = image['label']	
