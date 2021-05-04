@@ -19,7 +19,7 @@ from quantnn.qrnn import QRNN
 from quantnn.models.pytorch.logging import TensorBoardLogger
 from quantnn.metrics import ScatterPlot
 
-from load_data import GOESRETRIEVALSDataset, Mask, RandomSmallVals, TakeLog, RandomCrop, Standardize, ToTensor
+from load_data import GOESRETRIEVALSDataset, Mask, RandomSmallVals, RandomCrop, Standardize, ToTensor
 
 stamp = str(datetime.today().timestamp())
 
@@ -49,13 +49,6 @@ parser.add_argument(
 	help="Batch size.",
 	type=int,
 	default=4
-	)
-parser.add_argument(
-	"-l",
-	"--log",
-	help="Apply log transform to label data.",
-	type=bool,
-	default=False
 	)
 parser.add_argument(
 	"-m",
@@ -99,11 +92,15 @@ parser.add_argument(
 	help="If to restart for each element in epochs list", 
 	type=bool,
 	default=False)
+parser.add_argument(
+	"--channel_inds", 
+	help="Subset of avalible channels", 
+	nargs="+", 
+	type=int,
+	default=None)
 args = parser.parse_args()
 
 BATCH_SIZE = args.BATCH_SIZE
-apply_log = args.log
-print(apply_log)
 n_epochs_arr = args.epochs_list
 lr = args.lr
 data_type = args.data_type
@@ -112,12 +109,20 @@ optim = args.optimizer
 sche_restart = args.sche_restart
 
 # SETUP
-channels = list(range(8,17))
-channels.remove(12)
+channels_all = list(range(8,17))
+channels_all.remove(12)
+
+channel_inds = args.channel_inds
+if channel_inds==None:
+	channels = channels_all[:]
+else: 
+	channels = channels_all[channel_inds]
+print(channels)
+
 fillvalue = -1
 quantiles = np.linspace(0.01, 0.99, 99)
 
-filename = (net_name + str(apply_log) + str(BATCH_SIZE) + '_' + str(n_epochs_arr) + '_' + str(lr) + '_' + '_' + data_type).replace(" ", "")
+filename = (net_name + str(BATCH_SIZE) + '_' + str(n_epochs_arr) + '_' + str(lr) + '_' + '_' + data_type).replace(" ", "")
 
 path_to_training_data = args.path_to_data[0]
 path_to_validation_data = args.path_to_data[1]
@@ -135,15 +140,12 @@ if not Path(log_directory).exists():
 	os.makedirs(log_directory)
 	
 
-def importData(channels, BATCH_SIZE, path_to_data, path_to_stats, apply_log=False):
-	transforms_list = [Mask(), RandomSmallVals()]
-	if apply_log:
-		transforms_list.append(TakeLog())
-	transforms_list.extend([RandomCrop(128), Standardize(path_to_data, path_to_stats, channels), ToTensor()])
+def importData(channels, BATCH_SIZE, path_to_data, path_to_stats, channel_inds):
+	transforms_list = [Mask(), RandomSmallVals(), RandomCrop(128), Standardize(path_to_data, path_to_stats, len(channels), channel_inds=channel_inds), ToTensor()]
 	dataset = GOESRETRIEVALSDataset(
-		path_to_data = path_to_data,
-		channels = channels, 
-		transform = transforms.Compose(transforms_list))
+		path_to_data = path_to_data, 
+		transform = transforms.Compose(transforms_list),
+		channel_inds=channel_inds)
 	print('number of samples:', len(dataset))
 
 	dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
@@ -215,8 +217,8 @@ elif (data_type == "boxes"):
 	path_to_stats = os.path.join(path_to_training_data, 'stats.npy')
 	path_to_val_data_files = os.path.join(path_to_validation_data, 'npy_files')
 
-	training_dataset, training_data = importData(channels, BATCH_SIZE, path_to_train_data_files, path_to_stats, apply_log=apply_log)
-	validation_dataset, validation_data  = importData(channels, BATCH_SIZE, path_to_val_data_files, path_to_stats, apply_log=apply_log)
+	training_dataset, training_data = importData(channels, BATCH_SIZE, path_to_train_data_files, path_to_stats, channel_inds)
+	validation_dataset, validation_data  = importData(channels, BATCH_SIZE, path_to_val_data_files, path_to_stats, channel_inds)
 
 	dat_size = str(len(training_dataset))+'_v'+str(len(validation_dataset))
 	
@@ -224,7 +226,7 @@ elif (data_type == "boxes"):
 	
 	
 	
-dat_image, __ = importData(channels, 1, path_to_image_to_plot, path_to_stats, apply_log=apply_log)
+dat_image, __ = importData(channels, 1, path_to_image_to_plot, path_to_stats, channel_inds)
 image = dat_image[0]
 x = image['box'].unsqueeze(0).to(device)
 y = image['label']	

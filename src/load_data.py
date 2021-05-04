@@ -21,25 +21,6 @@ class RandomSmallVals(object):
 		nonzero_label = np.where(label==0.0, new_rand_vals, label)
 		
 		return {'box': box, 'label': nonzero_label}
-		
-		
-class TakeLog(object):
-	'''
-	Log of labels.
-	
-	'''
-	
-	def __init__(self):
-		pass
-	
-	def __call__(self, sample):
-		box, label = sample['box'], sample['label']
-		
-		logged_label = label
-		swath = np.where(logged_label>0.0)
-		logged_label[swath] = np.log(logged_label[swath])
-
-		return {'box': box, 'label': logged_label}
 
 
 
@@ -98,23 +79,29 @@ class Standardize(object):
 	Args:
 		path_to_data: Path to directory where numpy data files are stored
 		path_to_stats: Path to file to save to/load from
-		channels: List of channels in data
+		num_channels: Number of channels in data
+		channel_inds: Index of channels to load in array
 		
 	Returns:
 		New sample dicitionary with standardized sample
 	'''
 	
-	def __init__(self, path_to_data, path_to_stats, channels):
+	def __init__(self, path_to_data, path_to_stats, num_channels, channel_inds=None):
 			
 		if not Path.exists(Path(path_to_stats)):
 			i = 1
-			glob_mean = np.zeros(len(channels))
-			glob_std = np.zeros(len(channels))
+			glob_mean = np.zeros(num_channels)
+			glob_std = np.zeros(num_channels)
 
 			for file in os.listdir(path_to_data):
 				if file.endswith('.npy'):
 					data = np.load(os.path.join(path_to_data,file))
-					box = data[:-1]
+								
+					if channel_inds==None:
+						box = data[:-1] 
+					else:
+						box = data[channel_inds]				
+					
 					tmp_mean = np.array([np.nanmean(box[c]) for c in range(box.shape[0])])
 					tmp_std = np.array([np.nanstd(box[c]) for c in range(box.shape[0])])
 					glob_mean = (glob_mean*(i-1)+tmp_mean)/i
@@ -171,9 +158,9 @@ class GOESRETRIEVALSDataset(Dataset):
 	'''
 	TODO
 	'''
-	def __init__(self, path_to_data, channels, transform=None):
+	def __init__(self, path_to_data, transform=None, channel_inds=None):
 		self.path_to_data = path_to_data
-		self.channels = ['C'+str(channel).zfill(2) for channel in channels]
+		self.channel_inds = channel_inds
 		self.transform=transform
 
 	
@@ -194,7 +181,11 @@ class GOESRETRIEVALSDataset(Dataset):
 		data_file_path = self.list_of_data_files[idx]
 		data = np.load(data_file_path)
 		
-		box = np.asarray(data[:-1]) #Unit K
+		if self.channel_inds==None:
+			box = np.asarray(data[:-1]) #Unit K
+		else:
+			box = np.asarray(data[self.channel_inds])
+			
 		label = np.asarray(data[-1]) #Unit mm/h
 		
 		sample = {'box': box, 'label': label}
