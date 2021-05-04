@@ -171,8 +171,9 @@ if (data_type == "singles"):
 	X_val = np.load(os.path.join(path_to_validation_data, 'X_singles_dataset.npy'))
 	y_val = np.load(os.path.join(path_to_validation_data, 'y_singles_dataset.npy'))		
 	
-	def SinglesStandardize(X, path_to_stats):
+	def SinglesStandardize(X, path_to_stats, channel_inds):
 		stats = np.load(path_to_stats)
+		stats = stats[:,channel_inds]
 		return ((X-stats[0,:])/stats[1,:]).astype(np.float32)
 	
 	def ZeroToRand(y):
@@ -183,8 +184,8 @@ if (data_type == "singles"):
 		return y
 	
 	
-	X_train = SinglesStandardize(X_train, path_to_stats)
-	X_val = SinglesStandardize(X_val, path_to_stats)
+	X_train = SinglesStandardize(X_train, path_to_stats, channel_inds)
+	X_val = SinglesStandardize(X_val, path_to_stats, channel_inds)
 	
 	y_train = ZeroToRand(y_train)
 	y_val = ZeroToRand(y_val)
