@@ -137,7 +137,7 @@ def importData(BATCH_SIZE, path_to_data, path_to_stats, channel_inds, isTrain=Fa
 
 	transforms_list = [Mask(), RandomSmallVals()]
 	if isTrain:
-		transform_list.append(RandomCrop(128))
+		transforms_list.append(RandomCrop(128))
 	transforms_list.extend([Standardize(path_to_stats, channel_inds), ToTensor()])
 	
 	dataset = GOESRETRIEVALSDataset(
