@@ -133,8 +133,13 @@ if not Path(log_directory).exists():
 	os.makedirs(log_directory)
 	
 
-def importData(BATCH_SIZE, path_to_data, path_to_stats, channel_inds):
-	transforms_list = [Mask(), RandomSmallVals(), RandomCrop(128), Standardize(path_to_stats, channel_inds), ToTensor()]
+def importData(BATCH_SIZE, path_to_data, path_to_stats, channel_inds, isTrain=False):
+
+	transforms_list = [Mask(), RandomSmallVals()]
+	if isTrain:
+		transform_list.append(RandomCrop(128))
+	transforms_list.extend([Standardize(path_to_stats, channel_inds), ToTensor()])
+	
 	dataset = GOESRETRIEVALSDataset(
 		path_to_data=path_to_data, 
 		channel_inds=channel_inds,
@@ -211,7 +216,7 @@ elif (data_type == "boxes"):
 	path_to_stats = os.path.join(path_to_training_data, 'stats.npy')
 	path_to_val_data_files = os.path.join(path_to_validation_data, 'npy_files')
 
-	training_dataset, training_data = importData(BATCH_SIZE, path_to_train_data_files, path_to_stats, channel_inds)
+	training_dataset, training_data = importData(BATCH_SIZE, path_to_train_data_files, path_to_stats, channel_inds, isTrain=True)
 	validation_dataset, validation_data  = importData(BATCH_SIZE, path_to_val_data_files, path_to_stats, channel_inds)
 
 	dat_size = str(len(training_dataset))+'_v'+str(len(validation_dataset))+str(channel_inds)
