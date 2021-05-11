@@ -7,6 +7,7 @@ import warnings
 import datetime
 import shutil
 import torch
+import time
 from pathlib import Path
 
 import xarray as xr
@@ -170,7 +171,7 @@ class RetrieveHour():
 
 			return([start, end])			
 		
-		def get_datetimes_in_range(self, padtime=5):
+		def get_datetimes_in_range(self, padtime=0):
 			channel = channels[0]
 				
 			p = GOES16L1BRadiances("F", channel)
@@ -279,7 +280,7 @@ global colrows
 colrows = get_gauge_locations(path_to_rain_gauge_data, region_ind_extent)
 
 
-period_start = datetime.datetime(2020,3,2,22) 
+period_start = datetime.datetime(2020,3,3,0) 
 period_end = datetime.datetime(2020,3,3,1) 
 
 
@@ -287,6 +288,7 @@ hourslist = getHoursList(period_start,period_end)
 retrieve_hours = [RetrieveHour(hourslist[h_ind],hourslist[h_ind+1]) for h_ind in range(len(hourslist)-1)]
 
 for retrieve_hour in retrieve_hours: 
+	start = time.time()
 	datetimes = retrieve_hour.get_datetimes_in_range()
 	for d in datetimes:
 		print(d)	
@@ -294,6 +296,8 @@ for retrieve_hour in retrieve_hours:
 	print(retrieve_hour.hour_start.strftime('%Y%m%d%H')+'.npy')
 	retrieve_hour.save(retrieve_hour.hour_start.strftime('%Y%m%d%H')+'.npy', aggregated_predictions)
 	del retrieve_hour
+	end = time.time()
+	print(f"Retrieve hour time {end - start}")
 
 	
 	
