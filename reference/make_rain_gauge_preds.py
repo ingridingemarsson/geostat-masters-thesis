@@ -17,6 +17,8 @@ from satpy import Scene
 from pansat.download.providers.goes_aws import GOESAWSProvider
 from pansat.products.satellite.goes import GOES16L1BRadiances
 from quantnn.qrnn import QRNN
+import sys
+sys.path.append('../src') #to be able to import mlp.pckl
 
 # GLOBAL VARIABLES ################################################################################################################################################################
 
@@ -26,6 +28,8 @@ channels.remove(12)
 
 global quantiles
 quantiles = np.linspace(0.01, 0.99, 99)
+global q_ind_to_save
+q_ind_to_save = [94, 98]
 
 path_to_rain_gauge_data = '.'
 
@@ -62,10 +66,15 @@ shape_full_disk = area_dict_full_disk['shape']
 global projection
 projection = area_dict_full_disk['projection']
 
-global qrnn
-qrnn = QRNN.load('../results/qrnn_model.pckl')
-global stats
-stats = np.load('../dataset/data/dataset-boxes/train/stats.npy')
+global xception
+xception = QRNN.load('../results/xception.pckl')
+global mlp
+mlp = QRNN.load('../results/mlp.pckl')
+
+global stats_boxes
+stats_boxes = np.load('../dataset/data/dataset-boxes/train/stats.npy')
+global stats_singles
+stats_singles = np.load('../dataset/data/dataset-singles/train/X_singles_stats.npy')
 
 
 # FRAMEWORK SETUP #################################################################################################################################################################
@@ -185,30 +194,55 @@ class RetrieveHour():
 			return(datetimes)	
 		
 		def make_retrievals(self, datetimes):
-			extract_main_predictions_agg = np.zeros((3, region_ind_extent[2]-region_ind_extent[0], region_ind_extent[1]-region_ind_extent[3]))
+			extract_main_predictions_agg = np.zeros((6, region_ind_extent[2]-region_ind_extent[0], 
+												region_ind_extent[1]-region_ind_extent[3]))
 			retrievals = [self.Retrieve(datetime[0], datetime[1]) for datetime in datetimes]
 			for retrieval in retrievals:
-				print('start retrieval')	
 				retrieval.download()
-				print('start crop')
 				retrieval.crop()
 				#retrieval.save_raw_data()
-				print('start prediction')
-				retrieval.make_prediction()
-				print('start extraction')
-				main_preds = retrieval.extract_main_predictions()
-				extract_main_predictions_agg = np.stack([np.sum(np.stack([extract_main_predictions_agg[i], main_preds[i]]), axis=0) for i in range(main_preds.shape[0])])
-				print(extract_main_predictions_agg.shape)
-				#del main_preds
+				main_preds_xception = retrieval.make_prediction(xception, stats_boxes, 'boxes', split_nums=8)
+				main_preds_mlp = retrieval.make_prediction(mlp, stats_singles, 'singles', split_nums=8)
+				main_preds = np.concatenate([main_preds_xception, main_preds_mlp])     
+				extract_main_predictions_agg = np.stack([np.sum(np.stack([extract_main_predictions_agg[i], 
+												main_preds[i]]), axis=0) for i in range(main_preds.shape[0])])
+				retrieval.remove_files()
 				del retrieval		
-				print('end retrieval')
 			extract_main_predictions_agg = extract_main_predictions_agg/len(retrievals)
-			print(len(retrievals))
-			return(extracted_predictions_agg)
+			return(extract_main_predictions_agg)
 			
-		def save(self, filename, aggregated_predictions):
-			np.save(os.path.join(storage_path_final,filename), aggregated_predictions)
+		#def save(self, filename, aggregated_predictions):
+		#    np.save(os.path.join(storage_path_final,filename), aggregated_predictions)
+		
+		def save_preds(self, filename, aggregated_predictions, datetimes):
+			keys = ['posterior_mean']
+			keys.extend(['Q'+"{:0.2f}".format(quantiles[i]) for i in q_ind_to_save])   
+			mods = ['xception', 'mlp']
+			keys = [s+'_'+v for s in mods for v in keys]
+			values_list = []
+			for i in range(aggregated_predictions.shape[0]):
+				values_list.append((["y", "x"], aggregated_predictions[i])) 
+
+			projcoords_x, projcoords_y  = area_def.get_proj_vectors()
+			area_extent = [projcoords_x[region_ind_extent[0]], projcoords_y[region_ind_extent[1]],
+						projcoords_x[region_ind_extent[2]], projcoords_y[region_ind_extent[3]]]
 			
+			data_vars_dict = dict(zip(keys, values_list))
+			dataset = xr.Dataset(
+				data_vars = data_vars_dict, 
+					attrs = dict(
+						ind_extent = region_ind_extent,
+						area_extent = area_extent,
+						shape = [region_ind_extent[2]-region_ind_extent[0], region_ind_extent[1]-region_ind_extent[3]],
+						start = str(self.hour_start),
+						end = str(self.hour_end), 
+						datetimes = [str(datetime) for datetime in datetimes]))
+			dataset = dataset.astype(np.float32)
+			print(dataset)
+			dataset.to_netcdf(os.path.join(storage_path_final,filename+'.nc'))
+			dataset.close()            
+            
+            
 		class Retrieve():
 		
 			def __init__(self, start, end):
@@ -231,7 +265,7 @@ class RetrieveHour():
 						if not Path(path).exists() or no_cache:
 							data = provider.download_file(f, path)
 						files.append(path)
-				self.files = files							
+				self.files = files
 							
 			def crop(self): 
 				filenames = map(str, self.files)
@@ -249,6 +283,8 @@ class RetrieveHour():
 					scn = scn.aggregate(x=np.int(ref_width/width), y=np.int(ref_height/height), func='mean')
 					region_corners_idx_low, region_corners_idy_high, region_corners_idx_high, region_corners_idy_low = region_ind_extent
 					self.values = np.stack([np.array(scn[av_dat_name].values[region_corners_idy_low:region_corners_idy_high, region_corners_idx_low:region_corners_idx_high]) for av_dat_name in av_dat_names])
+					print(self.values)
+					print(np.isnan(self.values).any())                    
 				
 			def save_raw_data(self):
 				values_list = []
@@ -275,7 +311,7 @@ class RetrieveHour():
 				dataset.to_netcdf(os.path.join(storage_path_final,dataset_filename))
 				dataset.close()	
 				
-			def make_prediction(self, split_nums=8):
+			def make_prediction(self, model, stats, data_type, split_nums=8):
 				predictions = np.zeros((len(quantiles), self.values.shape[1],self.values.shape[1]))
 				y_mean = np.zeros((self.values.shape[1], self.values.shape[2]))
 				for u in range(int(split_nums)):
@@ -285,11 +321,26 @@ class RetrieveHour():
 						print(indsx, indsy)
 						subdata = np.stack([self.values[i, indsx[0]:indsx[1],indsy[0]:indsy[1]] for i in range(len(channels))])
 						subdata = np.stack([(subdata[i]-stats[0, i])/stats[1, i] for i in range(stats.shape[1])])
+						subdata = np.stack([np.where(np.isnan(subdata[i]), 0, subdata[i]) for i in range(subdata.shape[0])])#How to do this? (handle nans)
 						subdata = torch.from_numpy(subdata).float()
-						predictions[:, indsx[0]:indsx[1], indsy[0]:indsy[1]] = qrnn.predict(subdata.unsqueeze(0)).squeeze().detach().numpy()	
-						y_mean[indsx[0]:indsx[1], indsy[0]:indsy[1]] = qrnn.posterior_mean(subdata.unsqueeze(0)).squeeze().detach().numpy()		
-				self.predictions = predictions
-				self.posterior_mean = y_mean
+						if data_type=='boxes':                        
+							predictions[:, indsx[0]:indsx[1], indsy[0]:indsy[1]] = model.predict(
+								subdata.unsqueeze(0)).squeeze().detach().numpy()
+							y_mean[indsx[0]:indsx[1], indsy[0]:indsy[1]] = model.posterior_mean(
+								subdata.unsqueeze(0)).squeeze().detach().numpy()                           
+						elif data_type=='singles':
+							predictions[:, indsx[0]:indsx[1], indsy[0]:indsy[1]] = torch.reshape(model.predict(
+								torch.transpose(torch.squeeze(torch.flatten(subdata.unsqueeze(0),
+									start_dim=2)), 0, 1)).squeeze().detach(), (len(quantiles),
+										int(self.values.shape[1]/split_nums), int(self.values.shape[2]/split_nums))).numpy()
+							y_mean[indsx[0]:indsx[1], indsy[0]:indsy[1]] = torch.reshape(model.posterior_mean(
+								torch.transpose(torch.squeeze(torch.flatten(subdata.unsqueeze(0),
+									start_dim=2)), 0, 1)).squeeze().detach(), (int(self.values.shape[1]/split_nums),
+										int(self.values.shape[2]/split_nums))).numpy() 
+				res = [y_mean]              
+				res.extend([predictions[i] for i in q_ind_to_save]) 
+				return(np.stack(res))
+				#return(np.stack([y_mean, predictions[94], predictions[98]]))
 			
 			#def extract_rain_gauge_predictions(self):
 			#	extracted_predictions = np.zeros((len(colrows['cols']), len(quantiles)))
@@ -300,10 +351,6 @@ class RetrieveHour():
 			#	del self.predictions
 			#	return(extracted_predictions)
 				
-			def extract_main_predictions(self, split_nums=8):
-				main_preds = np.stack([self.posterior_mean, self.predictions[94], self.predictions[98]])
-				return(main_preds)
-
 			def remove_files(self):
 				
 				for f in self.files:
@@ -317,8 +364,8 @@ global colrows
 colrows = get_gauge_locations(path_to_rain_gauge_data, region_ind_extent)
 
 
-period_start = datetime.datetime(2020,3,3,0) 
-period_end = datetime.datetime(2020,3,3,1) 
+period_start = datetime.datetime(2020,3,3,4) 
+period_end = datetime.datetime(2020,3,3,12) 
 
 
 hourslist = getHoursList(period_start,period_end)
@@ -331,7 +378,7 @@ for retrieve_hour in retrieve_hours:
 		print(d)	
 	aggregated_predictions = retrieve_hour.make_retrievals(datetimes)
 	print(retrieve_hour.hour_start.strftime('%Y%m%d%H')+'.npy')
-	retrieve_hour.save(retrieve_hour.hour_start.strftime('%Y%m%d%H')+'.npy', aggregated_predictions)
+	retrieve_hour.save_preds(retrieve_hour.hour_start.strftime('%Y%m%d%H'), aggregated_predictions, datetimes)
 	del retrieve_hour
 	end = time.time()
 	print(f"Retrieve hour time {end - start}")
