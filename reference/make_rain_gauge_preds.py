@@ -201,8 +201,8 @@ class RetrieveHour():
 				retrieval.download()
 				retrieval.crop()
 				#retrieval.save_raw_data()
-				main_preds_xception = retrieval.make_prediction(xception, stats_boxes, 'boxes', split_nums=8)
-				main_preds_mlp = retrieval.make_prediction(mlp, stats_singles, 'singles', split_nums=8)
+				main_preds_xception = retrieval.make_prediction(xception, stats_boxes, 'boxes', split_nums=2)
+				main_preds_mlp = retrieval.make_prediction(mlp, stats_singles, 'singles', split_nums=2)
 				main_preds = np.concatenate([main_preds_xception, main_preds_mlp])     
 				extract_main_predictions_agg = np.stack([np.sum(np.stack([extract_main_predictions_agg[i], 
 												main_preds[i]]), axis=0) for i in range(main_preds.shape[0])])
@@ -321,7 +321,7 @@ class RetrieveHour():
 						print(indsx, indsy)
 						subdata = np.stack([self.values[i, indsx[0]:indsx[1],indsy[0]:indsy[1]] for i in range(len(channels))])
 						subdata = np.stack([(subdata[i]-stats[0, i])/stats[1, i] for i in range(stats.shape[1])])
-						subdata = np.stack([np.where(np.isnan(subdata[i]), 0, subdata[i]) for i in range(subdata.shape[0])])#How to do this? (handle nans)
+						#subdata = np.stack([np.where(np.isnan(subdata[i]), 0, subdata[i]) for i in range(subdata.shape[0])])#How to do this? (handle nans)
 						subdata = torch.from_numpy(subdata).float()
 						if data_type=='boxes':                        
 							predictions[:, indsx[0]:indsx[1], indsy[0]:indsy[1]] = model.predict(
@@ -365,7 +365,7 @@ colrows = get_gauge_locations(path_to_rain_gauge_data, region_ind_extent)
 
 
 period_start = datetime.datetime(2020,3,3,4) 
-period_end = datetime.datetime(2020,3,3,12) 
+period_end = datetime.datetime(2020,3,3,6) 
 
 
 hourslist = getHoursList(period_start,period_end)
