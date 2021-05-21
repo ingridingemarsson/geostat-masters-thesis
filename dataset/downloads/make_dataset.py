@@ -41,7 +41,7 @@ global used_remove
 used_remove = True
 
 global check_for_nans
-check_for_nans = True
+check_for_nans = False
 
 global storage_path_temp
 storage_path_temp = '../temp'
