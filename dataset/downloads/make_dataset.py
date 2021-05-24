@@ -28,6 +28,13 @@ parser.add_argument(
 	help="Path to Earth data search link file.",
 	type=str,
 	default="files/links/linkfiles/linkfileYYYY-MM.txt")
+parser.add_argument(
+        "--temp",
+        help="Path to temporary storage.",
+        type=str,
+        default="../temp")
+args = parser.parse_args()
+
 args = parser.parse_args()
 
 global link_file_path
@@ -44,7 +51,7 @@ global check_for_nans
 check_for_nans = False
 
 global storage_path_temp
-storage_path_temp = '../temp'
+storage_path_temp = args.temp
 if not Path(storage_path_temp).exists():
 	os.mkdir(storage_path_temp)
 
@@ -329,53 +336,55 @@ class MakeOverpass():
 			provider = GOESAWSProvider(p)
 			filenames = provider.get_files_in_range(self.gpm_time_in, self.gpm_time_out, start_inclusive=True)
 			
-			f_ind = 0
-			if (len(filenames) == 2):
-				timediff = []
-				for filename in filenames:
-					goes_start, goes_end = self.goes_filename_extract_datetime(filename)
-					timediff.append(min(np.abs((self.gpm_time_in-goes_start).total_seconds()), np.abs((self.gpm_time_out-goes_end).total_seconds())))
+			if(len(filenames)>0):
+				f_ind = 0
+				if (len(filenames) == 2):
+					timediff = []
+					for filename in filenames:
+						goes_start, goes_end = self.goes_filename_extract_datetime(filename)
+						timediff.append(min(np.abs((self.gpm_time_in-goes_start).total_seconds()), np.abs((self.gpm_time_out-goes_end).total_seconds())))
 
-				if (timediff[0] > timediff[1]):
-					f_ind = 1
+					if (timediff[0] > timediff[1]):
+						f_ind = 1
 
-			goes_start, goes_end = self.goes_filename_extract_datetime(filenames[f_ind])
-			timesmid_goes = goes_start + datetime.timedelta(seconds=int((goes_end-goes_start).total_seconds()/2)) 
-			timesmid_gpm = self.gpm_time_in + datetime.timedelta(seconds=int((self.gpm_time_out-self.gpm_time_in).total_seconds()/2))            
+				goes_start, goes_end = self.goes_filename_extract_datetime(filenames[f_ind])
+				timesmid_goes = goes_start + datetime.timedelta(seconds=int((goes_end-goes_start).total_seconds()/2)) 
+				timesmid_gpm = self.gpm_time_in + datetime.timedelta(seconds=int((self.gpm_time_out-self.gpm_time_in).total_seconds()/2))            
 				   
-			if(np.abs((timesmid_goes-timesmid_gpm).total_seconds()) > time_tol):
-			    return None
+				if(np.abs((timesmid_goes-timesmid_gpm).total_seconds()) > time_tol):
+				    return None
 					       
-			f = filenames[f_ind]
-			path = dest / f
-			
-			if not path.exists() or no_cache:
-				data = provider.download_file(f, path)
-			files.append(path)
-			
-			for channel in channels[1:]:
-				p = GOES16L1BRadiances("F", channel)
-				dest = Path(storage_path_temp)
-				dest.mkdir(parents=True, exist_ok=True)
+				f = filenames[f_ind]
+				path = dest / f
+				
+				if not path.exists() or no_cache:
+					data = provider.download_file(f, path)
+				files.append(path)
+				
+				for channel in channels[1:]:
+					p = GOES16L1BRadiances("F", channel)
+					dest = Path(storage_path_temp)
+					dest.mkdir(parents=True, exist_ok=True)
 
-				provider = GOESAWSProvider(p)
-				filenames = provider.get_files_in_range(goes_start, goes_end, start_inclusive=True)
-				if (len(filenames)>0):
-					goes_start_new, goes_end_new = self.goes_filename_extract_datetime(filenames[0])	
-					if(np.abs((goes_start_new - goes_start).total_seconds())>60 or np.abs((goes_end_new - goes_end).total_seconds())>60):
-						return None	
+					provider = GOESAWSProvider(p)
+					filenames = provider.get_files_in_range(goes_start, goes_end, start_inclusive=True)
+					if (len(filenames)>0):
+						goes_start_new, goes_end_new = self.goes_filename_extract_datetime(filenames[0])	
+						if(np.abs((goes_start_new - goes_start).total_seconds())>60 or np.abs((goes_end_new - goes_end).total_seconds())>60):
+							return None	
+							
+						f = filenames[0]
+						path = dest / f
 						
-					f = filenames[0]
-					path = dest / f
+						if not path.exists() or no_cache:
+							data = provider.download_file(f, path)
+						files.append(path)	
+					else:
+						return None			
 					
-					if not path.exists() or no_cache:
-						data = provider.download_file(f, path)
-					files.append(path)	
-				else:
-					return None			
-					
-			self.filenames_goes = files	
-			
+				self.filenames_goes = files	
+			else:
+				return None
 	
 			return(files)			
 			

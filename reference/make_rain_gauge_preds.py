@@ -190,39 +190,45 @@ class RetrieveHour():
 			pad = datetime.timedelta(minutes=padtime)
 			filenames0 = provider.get_files_in_range(self.hour_start-pad, self.hour_end, start_inclusive=False)	
 			datetimes = [self.goes_filename_extract_datetime(filename) for filename in filenames0]	
-			
-			return(datetimes)	
+			self.datetimes = datetimes
 		
-		def make_retrievals(self, datetimes):
-			extract_main_predictions_agg = np.zeros((6, region_ind_extent[2]-region_ind_extent[0], 
-												region_ind_extent[1]-region_ind_extent[3]))
-			retrievals = [self.Retrieve(datetime[0], datetime[1]) for datetime in datetimes]
+		def make_retrievals(self):
+			#extract_main_predictions_agg = np.zeros((6, region_ind_extent[2]-region_ind_extent[0], 
+			#									region_ind_extent[1]-region_ind_extent[3]))
+			retrievals = [self.Retrieve(datetime[0], datetime[1]) for datetime in self.datetimes]
+			main_preds_list = []
+			nans_at_loc_list = []
 			for retrieval in retrievals:
 				retrieval.download()
-				retrieval.crop()
+				nans_at_loc = retrieval.crop()
+				nans_at_loc_list.append(nans_at_loc)
 				#retrieval.save_raw_data()
 				main_preds_xception = retrieval.make_prediction(xception, stats_boxes, 'boxes', split_nums=2)
 				main_preds_mlp = retrieval.make_prediction(mlp, stats_singles, 'singles', split_nums=2)
-				main_preds = np.concatenate([main_preds_xception, main_preds_mlp])     
-				extract_main_predictions_agg = np.stack([np.sum(np.stack([extract_main_predictions_agg[i], 
-												main_preds[i]]), axis=0) for i in range(main_preds.shape[0])])
+				main_preds_list.append(np.concatenate([main_preds_xception, main_preds_mlp]))     
 				retrieval.remove_files()
 				del retrieval		
-			extract_main_predictions_agg = extract_main_predictions_agg/len(retrievals)
-			return(extract_main_predictions_agg)
+			extract_main_predictions_agg = np.nanmean(main_preds_list, axis=0)
+			extract_num_nans_at_loc = np.sum(nans_at_loc_list, axis=0)
+			print(extract_num_nans_at_loc)
+			print(extract_num_nans_at_loc.shape)
+			self.extract_main_predictions_agg = extract_main_predictions_agg
+			self.extract_num_nans_at_loc = extract_num_nans_at_loc
 			
 		#def save(self, filename, aggregated_predictions):
 		#    np.save(os.path.join(storage_path_final,filename), aggregated_predictions)
 		
-		def save_preds(self, filename, aggregated_predictions, datetimes):
+		def save_preds(self, filename):
 			keys = ['posterior_mean']
 			keys.extend(['Q'+"{:0.2f}".format(quantiles[i]) for i in q_ind_to_save])   
 			mods = ['xception', 'mlp']
 			keys = [s+'_'+v for s in mods for v in keys]
+			keys.append('NaNs_at_locs')
 			values_list = []
-			for i in range(aggregated_predictions.shape[0]):
-				values_list.append((["y", "x"], aggregated_predictions[i])) 
-
+			for i in range(self.extract_main_predictions_agg.shape[0]):
+				values_list.append((["y", "x"], self.extract_main_predictions_agg[i])) 
+			values_list.append((["y", "x"], self.extract_num_nans_at_loc))
+			
 			projcoords_x, projcoords_y  = area_def.get_proj_vectors()
 			area_extent = [projcoords_x[region_ind_extent[0]], projcoords_y[region_ind_extent[1]],
 						projcoords_x[region_ind_extent[2]], projcoords_y[region_ind_extent[3]]]
@@ -236,7 +242,7 @@ class RetrieveHour():
 						shape = [region_ind_extent[2]-region_ind_extent[0], region_ind_extent[1]-region_ind_extent[3]],
 						start = str(self.hour_start),
 						end = str(self.hour_end), 
-						datetimes = [str(datetime) for datetime in datetimes]))
+						datetimes = [str(datetime) for datetime in self.datetimes]))
 			dataset = dataset.astype(np.float32)
 			print(dataset)
 			dataset.to_netcdf(os.path.join(storage_path_final,filename+'.nc'))
@@ -283,8 +289,8 @@ class RetrieveHour():
 					scn = scn.aggregate(x=np.int(ref_width/width), y=np.int(ref_height/height), func='mean')
 					region_corners_idx_low, region_corners_idy_high, region_corners_idx_high, region_corners_idy_low = region_ind_extent
 					self.values = np.stack([np.array(scn[av_dat_name].values[region_corners_idy_low:region_corners_idy_high, region_corners_idx_low:region_corners_idx_high]) for av_dat_name in av_dat_names])
-					print(self.values)
-					print(np.isnan(self.values).any())                    
+					print(np.isnan(self.values).any(axis=0))
+				return(np.isnan(self.values).any(axis=0))                    
 				
 			def save_raw_data(self):
 				values_list = []
@@ -364,8 +370,8 @@ global colrows
 colrows = get_gauge_locations(path_to_rain_gauge_data, region_ind_extent)
 
 
-period_start = datetime.datetime(2020,3,3,4) 
-period_end = datetime.datetime(2020,3,3,6) 
+period_start = datetime.datetime(2020,3,3,0) 
+period_end = datetime.datetime(2020,3,4,0) 
 
 
 hourslist = getHoursList(period_start,period_end)
@@ -373,12 +379,10 @@ retrieve_hours = [RetrieveHour(hourslist[h_ind],hourslist[h_ind+1]) for h_ind in
 
 for retrieve_hour in retrieve_hours: 
 	start = time.time()
-	datetimes = retrieve_hour.get_datetimes_in_range()
-	for d in datetimes:
-		print(d)	
-	aggregated_predictions = retrieve_hour.make_retrievals(datetimes)
+	retrieve_hour.get_datetimes_in_range()
+	retrieve_hour.make_retrievals()
 	print(retrieve_hour.hour_start.strftime('%Y%m%d%H')+'.npy')
-	retrieve_hour.save_preds(retrieve_hour.hour_start.strftime('%Y%m%d%H'), aggregated_predictions, datetimes)
+	retrieve_hour.save_preds(retrieve_hour.hour_start.strftime('%Y%m%d%H'))
 	del retrieve_hour
 	end = time.time()
 	print(f"Retrieve hour time {end - start}")
