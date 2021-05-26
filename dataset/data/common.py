@@ -6,8 +6,6 @@ def CreateListOfLinkfilesInSpan(firstYear, firstMonth, lastYear, lastMonth):
 
     while(year*10**2+month<=lastYear*10**2+lastMonth):
         dirname = 'linkfile20' + str(year) + '-' + str(month).zfill(2)
-        print(dirname)
-        print(month)
         dirlist.append(dirname)
         month+=1
         if(month>12):

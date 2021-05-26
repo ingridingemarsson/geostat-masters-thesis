@@ -9,7 +9,7 @@ export PANSAT_PASSWORD=$password
 
 linkfilepath='./files/links/linkfiles/linkfile2018-02*'
 datalocpath='~/Git/geostat-masters-thesis/src/dataset/origin/'
-datasavepath='~/Dendrite/UserAreas/Ingrid/Dataset'
+datasavepath='~/Dendrite/UserAreas/Ingrid/origin'
 
 for file in $linkfilepath
 do
