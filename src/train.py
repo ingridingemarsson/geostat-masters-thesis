@@ -160,12 +160,12 @@ if (data_type == "singles"):
 
 	keys = None
 	
-	path_to_stats = os.path.join(path_to_training_data, 'X_singles_stats.npy')
+	path_to_stats = os.path.join(path_to_training_data, 'stats.npy')
 	
-	X_train = np.load(os.path.join(path_to_training_data, 'X_singles_dataset.npy'))
-	y_train = np.load(os.path.join(path_to_training_data, 'y_singles_dataset.npy'))
-	X_val = np.load(os.path.join(path_to_validation_data, 'X_singles_dataset.npy'))
-	y_val = np.load(os.path.join(path_to_validation_data, 'y_singles_dataset.npy'))		
+	X_train = np.load(os.path.join(path_to_training_data, 'X.npy'))
+	y_train = np.load(os.path.join(path_to_training_data, 'y.npy'))
+	X_val = np.load(os.path.join(path_to_validation_data, 'X.npy'))
+	y_val = np.load(os.path.join(path_to_validation_data, 'y.npy'))		
 	
 	def SinglesStandardize(X, path_to_stats, channel_inds):
 		stats = np.load(path_to_stats)
