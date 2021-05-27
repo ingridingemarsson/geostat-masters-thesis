@@ -42,7 +42,7 @@ class Mask(object):
 		filled_label = np.where(np.isnan(label), self.fillvalue, label)
 		filled_label = np.where((filled_label<0.0), self.fillvalue, filled_label)
 		
-		return {'box': filled_box, 'label': filled_label}
+		return {'box': box, 'label': filled_label}
 		
 
 
