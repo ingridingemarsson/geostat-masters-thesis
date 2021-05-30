@@ -10,6 +10,7 @@ import torch
 import time
 from pathlib import Path
 from scipy import ndimage
+import argparse
 
 import xarray as xr
 from pyresample import kd_tree, geometry, load_area
@@ -23,6 +24,28 @@ sys.path.append('../src') #to be able to import mlp.pckl
 
 # GLOBAL VARIABLES ################################################################################################################################################################
 
+# ARGUMENTS
+parser = argparse.ArgumentParser(description='Train fully-connected QRNN')
+parser.add_argument(
+    "--day",
+    help="Day in month.",
+    type=int,
+    default=1
+    )
+parser.add_argument(
+    "--save_path",
+    help="Path to store predictions.",
+    type=str,
+    default='rain_gauge_preds/'
+    )
+parser.add_argument(
+    "--temp_path",
+    help="Path to store temp files.",
+    type=str,
+    default='temp_gauge/'
+    )
+args = parser.parse_args()
+
 global channels
 channels = list(range(8,17))
 channels.remove(12)
@@ -35,14 +58,17 @@ q_ind_to_save = [94, 98]
 path_to_rain_gauge_data = '.'
 
 global storage_path_temp
-storage_path_temp = '../dataset/temp_gauge'
+storage_path_temp = args.temp_path #'temp_gauge'+str(args.day)
 if not Path(storage_path_temp).exists():
-    os.mkdir(storage_path_temp)
+    os.makedirs(storage_path_temp)
+    
+print(storage_path_temp)
 
 global storage_path_final
-storage_path_final='rain_gauge_preds/'
+storage_path_final = args.save_path #'rain_gauge_preds/'+str(args.day)
 if not Path(storage_path_final).exists():
-    os.mkdir(storage_path_final)
+    os.makedirs(storage_path_final)
+print(storage_path_final)
 
 global number_of_pixels
 number_of_pixels = 128
@@ -68,16 +94,16 @@ global projection
 projection = area_dict_full_disk['projection']
 
 global xception
-xception = QRNN.load('../results/xception.pckl')
+xception = QRNN.load('../results/xception64_[100]_0.01__boxes_100_0.01_0_t5412_v1354[0, 1, 2, 3, 4, 5, 6, 7]_Adam_1622288705.386947.pckl') #xception.pckl')
 global mlp
-mlp = QRNN.load('../results/mlp.pckl')
+mlp = QRNN.load('../results/singles_fc32786_[100]_0.001__singles_100_0.001_0_t83360758_v20805499[0, 1, 2, 3, 4, 5, 6, 7]_Adam_1622293711.867882.pckl') #mlp.pckl')
 
 global stats
 f = open('../path_to_data.txt', "r")
 path_to_dataset = f.read()
 f.close() 
 stats = np.load(os.path.join(path_to_dataset,'data','stats.npy')) #np.load('../dataset/data/stats.npy')
-
+print(stats)
 
 # FRAMEWORK SETUP #################################################################################################################################################################
 
@@ -209,12 +235,14 @@ class RetrieveHour():
                 main_preds_xception = retrieval.make_prediction(xception, stats, 'boxes', split_nums=1)
                 main_preds_mlp = retrieval.make_prediction(mlp, stats, 'singles', split_nums=1)
                 main_preds_list.append(np.concatenate([main_preds_xception, main_preds_mlp]))     
-                #retrieval.remove_files()
+                retrieval.remove_files()
                 del retrieval		
-            extract_nans_at_loc = np.prod(nans_at_loc_list, axis=0)
+            print(nans_at_loc_list)
+            extract_nans_at_loc = np.stack(nans_at_loc_list).any(axis=0)
             print(extract_nans_at_loc)
+            print(extract_nans_at_loc.shape)
             extract_main_predictions_agg = np.mean(main_preds_list, axis=0)
-            extract_main_predictions_agg = np.where(np.tile(extract_nans_at_loc, (extract_main_predictions_agg.shape[0],1,1)), extract_main_predictions_agg, np.nan)
+            extract_main_predictions_agg = np.where(np.tile(extract_nans_at_loc, (extract_main_predictions_agg.shape[0],1,1)), np.nan, extract_main_predictions_agg)
             print(extract_main_predictions_agg)
             self.extract_main_predictions_agg = extract_main_predictions_agg
 
@@ -292,14 +320,18 @@ class RetrieveHour():
                     self.values = np.stack([np.array(scn[av_dat_name].values[region_corners_idy_low:region_corners_idy_high, region_corners_idx_low:region_corners_idx_high]) for av_dat_name in av_dat_names])                   
 
             def handleNaNs(self, stats):
-                mask = (np.isnan(self.values).any(axis=0)==False)    
+                mask = (np.isnan(self.values).any(axis=0))    
                 #print(mask)
                 #print(mask.shape)
                 #print(self.values.shape)
                 #print(np.tile(mask,(self.values.shape[0],1,1)).shape)
                 #print(np.tile(stats[0], (self.values.shape[1]*self.values.shape[2],1)).T.reshape(self.values.shape).shape)
-                self.values = np.where(np.tile(mask,(self.values.shape[0],1,1)), self.values, np.tile(stats[0], (self.values.shape[1]*self.values.shape[2],1)).T.reshape(self.values.shape))
-                mask = ndimage.binary_dilation(mask, structure=np.ones((32, 32)))
+                self.values = np.where(np.tile(mask,(self.values.shape[0],1,1)), np.tile(stats[0], (self.values.shape[1]*self.values.shape[2],1)).T.reshape(self.values.shape), self.values)
+                
+                print(np.sum(mask))
+                
+                mask = ndimage.binary_dilation(mask, structure=np.ones((16,16))).astype(mask.dtype)
+                print(np.sum(mask))
                 return(mask)
 
 
@@ -340,22 +372,56 @@ class RetrieveHour():
                         subdata = np.stack([(subdata[i]-stats[0, i])/stats[1, i] for i in range(stats.shape[1])])
                         subdata = torch.from_numpy(subdata).float()
                         if data_type=='boxes': 
+                            print('boxes')
                             #UserWarning: Default upsampling behavior when mode=bilinear is changed to align_corners=False since 0.4.0. Please specify align_corners=True if the old behavior is desired. See the documentation of nn.Upsample for details. warnings.warn("Default upsampling behavior when mode={} is changed "
                             with warnings.catch_warnings():
                                 warnings.simplefilter('ignore')
-                                predictions[:, indsx[0]:indsx[1], indsy[0]:indsy[1]] = model.predict(
-                                    subdata.unsqueeze(0)).squeeze().detach().numpy()
+                                
+                                #print(subdata.shape)
+                                inp = subdata.unsqueeze(0)
+                                #print(inp.shape)
+                                
+                                preds = model.predict(inp)
+                                #print(preds.shape)
+                                preds = preds.squeeze().detach().numpy()
+                                #print(preds.shape)
+                                
+                                predictions[:, indsx[0]:indsx[1], indsy[0]:indsy[1]] = preds
+                                
                                 y_mean[indsx[0]:indsx[1], indsy[0]:indsy[1]] = model.posterior_mean(
-                                    subdata.unsqueeze(0)).squeeze().detach().numpy()                           
+                                    inp).squeeze().detach().numpy()     
+                                
                         elif data_type=='singles':
-                            predictions[:, indsx[0]:indsx[1], indsy[0]:indsy[1]] = torch.reshape(model.predict(
-                                torch.transpose(torch.squeeze(torch.flatten(subdata.unsqueeze(0),
-                                    start_dim=2)), 0, 1)).squeeze().detach(), (len(quantiles),
-                                        int(self.values.shape[1]/split_nums), int(self.values.shape[2]/split_nums))).numpy()
-                            y_mean[indsx[0]:indsx[1], indsy[0]:indsy[1]] = torch.reshape(model.posterior_mean(
-                                torch.transpose(torch.squeeze(torch.flatten(subdata.unsqueeze(0),
-                                    start_dim=2)), 0, 1)).squeeze().detach(), (int(self.values.shape[1]/split_nums),
-                                        int(self.values.shape[2]/split_nums))).numpy() 
+                            print('singles')
+                            #print(subdata.shape)
+                            inp = subdata
+                            #inp = inp.unsqueeze(0)
+                            #print(inp.shape)
+                            inp = torch.flatten(inp, start_dim=1)
+                            #print(inp.shape)
+                            #inp = torch.squeeze(inp)
+                            #print(inp.shape)
+                            inp = torch.transpose(inp, 0, 1)
+                            #print(inp.shape)
+
+                            preds = model.predict(inp)
+                            #print(preds.shape)
+                            #preds = preds.squeeze().detach()
+                            preds = preds.detach()
+                            preds = torch.transpose(preds, 0, 1)
+                            #print(preds.shape)
+                            preds = torch.reshape(preds,
+                                (len(quantiles),
+                                 int(self.values.shape[1]/split_nums),
+                                 int(self.values.shape[2]/split_nums))).numpy()
+                            #print(preds.shape)
+                            
+                            predictions[:, indsx[0]:indsx[1], indsy[0]:indsy[1]] = preds
+                            
+                            y_mean[indsx[0]:indsx[1], indsy[0]:indsy[1]] = torch.reshape(
+                                model.posterior_mean(inp).detach(),
+                                (int(self.values.shape[1]/split_nums),
+                                 int(self.values.shape[2]/split_nums))).numpy() 
                 res = [y_mean]              
                 res.extend([predictions[i] for i in q_ind_to_save]) 
                 return(np.stack(res))
@@ -383,9 +449,11 @@ region_ind_extent = region_setup()
 #colrows = get_gauge_locations(path_to_rain_gauge_data, region_ind_extent)
 
 
-period_start = datetime.datetime(2020,3,3,5) 
-period_end = datetime.datetime(2020,3,3,6) 
+#period_start = datetime.datetime(2020,3,3,5) 
+#period_end = datetime.datetime(2020,3,3,6) 
 
+period_start = datetime.datetime(2020,12,args.day,0) 
+period_end = period_start+datetime.timedelta(hours=24)
 
 hourslist = getHoursList(period_start,period_end)
 retrieve_hours = [RetrieveHour(hourslist[h_ind],hourslist[h_ind+1]) for h_ind in range(len(hourslist)-1)]
