@@ -380,15 +380,16 @@ class RetrieveHour():
                                 #print(subdata.shape)
                                 inp = subdata.unsqueeze(0)
                                 #print(inp.shape)
-                                
-                                preds = model.predict(inp)
+                                with torch.no_grad():
+                                    preds = model.predict(inp)
                                 #print(preds.shape)
                                 preds = preds.squeeze().detach().numpy()
                                 #print(preds.shape)
                                 
                                 predictions[:, indsx[0]:indsx[1], indsy[0]:indsy[1]] = preds
                                 
-                                y_mean[indsx[0]:indsx[1], indsy[0]:indsy[1]] = model.posterior_mean(
+                                with torch.no_grad():
+                                    y_mean[indsx[0]:indsx[1], indsy[0]:indsy[1]] = model.posterior_mean(
                                     inp).squeeze().detach().numpy()     
                                 
                         elif data_type=='singles':
@@ -403,8 +404,8 @@ class RetrieveHour():
                             #print(inp.shape)
                             inp = torch.transpose(inp, 0, 1)
                             #print(inp.shape)
-
-                            preds = model.predict(inp)
+                            with torch.no_grad():
+                                preds = model.predict(inp)
                             #print(preds.shape)
                             #preds = preds.squeeze().detach()
                             preds = preds.detach()
@@ -418,7 +419,8 @@ class RetrieveHour():
                             
                             predictions[:, indsx[0]:indsx[1], indsy[0]:indsy[1]] = preds
                             
-                            y_mean[indsx[0]:indsx[1], indsy[0]:indsy[1]] = torch.reshape(
+                            with torch.no_grad():
+                                y_mean[indsx[0]:indsx[1], indsy[0]:indsy[1]] = torch.reshape(
                                 model.posterior_mean(inp).detach(),
                                 (int(self.values.shape[1]/split_nums),
                                  int(self.values.shape[2]/split_nums))).numpy() 
