@@ -100,8 +100,9 @@ mlp = QRNN.load('../results/singles_fc32786_[100]_0.001__singles_100_0.001_0_t83
 
 global stats
 f = open('../path_to_data.txt', "r")
-path_to_dataset = f.read()
+path_to_dataset = f.readline().rstrip('\n')
 f.close() 
+print(path_to_dataset)
 stats = np.load(os.path.join(path_to_dataset,'data','stats.npy')) #np.load('../dataset/data/stats.npy')
 print(stats)
 
@@ -453,6 +454,9 @@ region_ind_extent = region_setup()
 
 #period_start = datetime.datetime(2020,3,3,5) 
 #period_end = datetime.datetime(2020,3,3,6) 
+
+#period_start = datetime.datetime(2020,12,args.day,18) 
+#period_end = period_start+datetime.timedelta(hours=6)
 
 period_start = datetime.datetime(2020,12,args.day,0) 
 period_end = period_start+datetime.timedelta(hours=24)
