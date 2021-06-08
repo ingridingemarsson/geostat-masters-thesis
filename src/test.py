@@ -90,7 +90,7 @@ def importData(BATCH_SIZE, path_to_data, path_to_stats, channel_inds, isTrain=Fa
 
 keys=("box", "label")
 
-path_to_stats = os.path.join(Path(path_to_test_data).parents[0], 'train', 'stats.npy') #os.path.join(path_to_data, 'stats.npy')
+path_to_stats = os.path.join(str(Path(path_to_test_data).parents[0]), 'train', 'stats.npy') #os.path.join(path_to_data, 'stats.npy')
 path_to_test_data_files = os.path.join(path_to_test_data,'npy_files') # os.path.join(path_to_data,'dataset-boxes', 'test', 'npy_files')
 
 test_dataset, test_data = importData(BATCH_SIZE, path_to_test_data_files, path_to_stats, channel_inds)
