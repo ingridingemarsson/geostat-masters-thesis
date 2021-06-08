@@ -8,6 +8,8 @@
 
 source ${HOME}/geostat-masters-thesis/setup_vera.sh
 
+export PYTHONPATH=$PYTHONPATH:"${HOME}/geostat-masters-thesis/results/models"
+
 #Copy data to node
 rsync -rq "${HOME}/geostat-masters-thesis/dataset/data/dataset-boxes" $TMPDIR
 
