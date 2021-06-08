@@ -3,13 +3,10 @@ import os
 import torch
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
-import time
 
 from quantnn.qrnn import QRNN
 from quantnn.models.pytorch.xception import XceptionFpn
 
-import sys
-sys.path.append('../src/')
 from load_data import GOESRETRIEVALSDataset, Mask, RandomSmallVals, RandomCrop, Standardize, ToTensor
 
 
@@ -35,7 +32,7 @@ parser.add_argument(
 	"--BATCH_SIZE",
 	help="Batch size.",
 	type=int,
-	default=4
+	default=64
 	)
 parser.add_argument(
 	"--channel_inds", 
@@ -53,7 +50,6 @@ BATCH_SIZE = args.BATCH_SIZE
 channel_inds = args.channel_inds
 num_channels = len(channel_inds)
 
-fillvalue = -1
 quantiles = np.linspace(0.01, 0.99, 99)
 
 
@@ -85,8 +81,8 @@ def importData(BATCH_SIZE, path_to_data, path_to_stats, channel_inds, isTrain=Fa
 
 keys=("box", "label")
 
-path_to_stats = os.path.join(path_to_data, 'stats.npy')
-path_to_test_data_files = os.path.join(path_to_data,'dataset-boxes', 'test', 'npy_files')
+path_to_stats = os.path.join(Path(path_to_test_data).parents[0], 'train', 'stats.npy') #os.path.join(path_to_data, 'stats.npy')
+path_to_test_data_files = os.path.join(path_to_test_data,'npy_files') # os.path.join(path_to_data,'dataset-boxes', 'test', 'npy_files')
 
 test_dataset, test_data = importData(BATCH_SIZE, path_to_test_data_files, path_to_stats, channel_inds)
 
