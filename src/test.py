@@ -19,15 +19,14 @@ parser.add_argument(
 	"--path_to_data",
 	help="Path to data.",
 	type=str,
-	nargs='+',
-	default=["../dataset/data/dataset-test/test/"]
+	default="../dataset/data/dataset-test/test/"
 	)
 parser.add_argument(
 	"-st",
 	"--path_to_stats",
 	help="Path to data.",
 	type=str,
-	default=["../dataset/data/dataset-test/train/stats.npy"]
+	default="../dataset/data/dataset-test/train/stats.npy"
 	)
 parser.add_argument(
 	"-s",
