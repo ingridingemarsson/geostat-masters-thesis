@@ -29,6 +29,13 @@ parser.add_argument(
 	default="../results/"
 	)
 parser.add_argument(
+	"-M",
+	"--path_to_model",
+	help="Path to stored model.",
+	type=str,
+	default="../results/models/xception64_[100]_0.01__boxes_100_0.01_0_t5412_v1354[0, 1, 2, 3, 4, 5, 6, 7]_Adam_1622288705.386947.pckl"
+	)
+parser.add_argument(
 	"-b",
 	"--BATCH_SIZE",
 	help="Batch size.",
@@ -58,7 +65,7 @@ path_to_test_data = args.path_to_data
 path_to_storage = args.path_to_storage
 
 
-xception = QRNN.load('../results/models/xception64_[100]_0.01__boxes_100_0.01_0_t5412_v1354[0, 1, 2, 3, 4, 5, 6, 7]_Adam_1622288705.386947.pckl') #xception.pckl')
+xception = QRNN.load(args.path_to_model) #xception.pckl')
 
 
 
