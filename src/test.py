@@ -23,6 +23,13 @@ parser.add_argument(
 	default=["../dataset/data/dataset-test/test/"]
 	)
 parser.add_argument(
+	"-st",
+	"--path_to_stats",
+	help="Path to data.",
+	type=str,
+	default=["../dataset/data/dataset-test/train/stats.npy"]
+	)
+parser.add_argument(
 	"-s",
 	"--path_to_storage",
 	help="Path to store results.",
@@ -64,7 +71,7 @@ quantiles = np.linspace(0.01, 0.99, 99)
 
 path_to_test_data = args.path_to_data
 path_to_storage = args.path_to_storage
-
+path_to_stats = args.path_to_stats
 
 xception = QRNN.load(args.path_to_model) #xception.pckl')
 
@@ -90,7 +97,6 @@ def importData(BATCH_SIZE, path_to_data, path_to_stats, channel_inds, isTrain=Fa
 
 keys=("box", "label")
 
-path_to_stats = os.path.join(str(Path(path_to_test_data).parents[0]), 'train', 'stats.npy') #os.path.join(path_to_data, 'stats.npy')
 path_to_test_data_files = os.path.join(path_to_test_data,'npy_files') # os.path.join(path_to_data,'dataset-boxes', 'test', 'npy_files')
 
 test_dataset, test_data = importData(BATCH_SIZE, path_to_test_data_files, path_to_stats, channel_inds)
