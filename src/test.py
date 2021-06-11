@@ -166,9 +166,9 @@ matplotlib.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 def Hist2D(y_true, y_pred, filename):
 
-    f, axs = plt.subplots(figsize=(8, 8))
+    f, ax = plt.subplots(figsize=(8, 8))
 
-    ax.pcolormesh(bins, bins, freqs_fc.T, cmap=newcmp, norm=norm)
+    m = ax.pcolormesh(bins, bins, freqs_fc.T, cmap=newcmp, norm=norm)
     ax.set_xlim([1e-2, 1e2])
     ax.set_ylim([1e-2, 1e2])
     ax.set_xscale("log")
@@ -177,6 +177,10 @@ def Hist2D(y_true, y_pred, filename):
     ax.set_ylabel("Predicted rain rate [mm / h]")
     ax.plot(bins, bins, c="grey", ls="--")
     ax.set_aspect(1.0)
+
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="5%", pad=0.07)
+    plt.colorbar(m, cax=cax)
 
     plt.tight_layout()
     plt.savefig(filename)
