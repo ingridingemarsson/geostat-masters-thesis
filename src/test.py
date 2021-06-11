@@ -131,7 +131,7 @@ with torch.no_grad():
         y_pred_tot += [y_pred[~mask_rep].detach().cpu().numpy()]
         y_mean_tot += [y_mean[~mask].detach().cpu().numpy()]
         #crps_tot += [crps[~mask].detach().numpy()]
-        print('y_pred_tot.shape', y_pred_tot.shape)
+        print('y_pred[~mask_rep].shape', y_pred[~mask_rep].shape)
         
 y_true_tot_c = np.concatenate(y_true_tot, axis=0)
 y_pred_tot_c = np.concatenate(y_pred_tot, axis=0)
