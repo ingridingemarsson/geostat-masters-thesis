@@ -105,6 +105,7 @@ test_dataset, test_data = importData(BATCH_SIZE, path_to_test_data_files, path_t
 
 
 y_true_tot = []
+y_mean_tot = []
 y_pred_tot = []
 #crps_tot = []
 
@@ -116,23 +117,28 @@ with torch.no_grad():
         y_true = batch_data['label']
         
         mask = (torch.less(y_true, 0))
+        mask_rep = mask.unsqueeze(1).repeat(1, len(quantiles), 1, 1)
         print('mask', mask.shape)
-        y_pred = xception.posterior_mean(boxes)
-        print('mean', y_pred.shape)
-        print('pred', xception.predict(boxes).shape)
+        print('mask rep', mask_rep.shape)
+        print(mask == mask_rep[:,0,:,:])
+        y_mean = xception.posterior_mean(boxes)
+        print('mean', y_mean.shape)
+        y_pred = xception.predict(boxes)
+        print('pred', y_pred.shape)
         #crps = xception.crps(x=boxes, y_true=y_true)
         
         y_true_tot += [y_true[~mask].detach().cpu().numpy()]
         y_pred_tot += [y_pred[~mask].detach().cpu().numpy()]
+        y_mean_tot += [y_mean[~mask].detach().cpu().numpy()]
         #crps_tot += [crps[~mask].detach().numpy()]
 
         
 y_true_tot_c = np.concatenate(y_true_tot, axis=0)
-y_pred_tot_c = np.concatenate(y_pred_tot, axis=0)        
+y_mean_tot_c = np.concatenate(y_mean_tot, axis=0)        
 
-MSE = np.mean(np.square(np.subtract(y_true_tot_c, y_pred_tot_c)))
-bias = np.mean(np.subtract(y_true_tot_c, y_pred_tot_c))
-MAE = np.mean(np.abs(np.subtract(y_true_tot_c, y_pred_tot_c)))
+MSE = np.mean(np.square(np.subtract(y_true_tot_c, y_mean_tot_c)))
+bias = np.mean(np.subtract(y_true_tot_c, y_mean_tot_c))
+MAE = np.mean(np.abs(np.subtract(y_true_tot_c, y_mean_tot_c)))
 
 print(MSE)
 print(bias)
@@ -143,8 +149,8 @@ print(MAE)
 from matplotlib.colors import Normalize
 from matplotlib.colors import ListedColormap
 from matplotlib import cm
-big = cm.get_cmap('autumn_r', 512)
-newcmp = ListedColormap(big(np.linspace(0.2, 0.9, 256)))
+big = cm.get_cmap('autumn_r', 1024)
+newcmp = ListedColormap(big(np.linspace(0.2, 0.9, 512)))
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -169,7 +175,7 @@ matplotlib.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 def Hist2D(y_true, y_pred, filename):
 
     #norm = Normalize(0, 100)
-    bins = np.logspace(-2, 2, 81)
+    bins = np.logspace(-2, 2, 101)
     freqs, _, _ = np.histogram2d(y_true, y_pred, bins=bins)
     
     freqs[freqs==0.0] = np.nan
@@ -194,5 +200,5 @@ def Hist2D(y_true, y_pred, filename):
     plt.savefig(filename)
 
 
-Hist2D(y_true_tot_c, y_pred_tot_c, os.path.join(path_to_storage, '2Dhist.png'))
+Hist2D(y_true_tot_c, y_mean_tot_c, os.path.join(path_to_storage, '2Dhist.png'))
 
