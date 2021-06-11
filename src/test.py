@@ -164,7 +164,7 @@ print(y_pred_tot_c.shape)
 
 from quantnn.functional import pdf
 
-p = pdf(y_pred_tot_c, quantiles, quantile_axis=1):
+p = pdf(y_pred_tot_c, quantiles, quantile_axis=1)
 print(p)
 
 #plt.plot(x_pdf, y_pdf)
