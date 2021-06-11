@@ -121,7 +121,8 @@ with torch.no_grad():
         y_pred = xception.predict(boxes).detach().cpu().numpy()
         y_pred_masked = np.concatenate([y_pred[i, :, mask[i].detach().cpu().numpy()==0] 
                                         for i in range(y_pred.shape[0])], axis=0)
-        
+        print(y_pred_masked)
+        print(y_pred_masked.shape)
         y_true_tot += [y_true[~mask].detach().cpu().numpy()]
         #y_mean_tot += [y_mean[~mask].detach().cpu().numpy()]
         y_pred_tot += [y_pred_masked]
