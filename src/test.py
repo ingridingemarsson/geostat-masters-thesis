@@ -158,8 +158,8 @@ matplotlib.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
     
 ###
 
-pdf = xception.pdf(y_pred=y_pred_tot_c)
+(x_pdf, y_pdf) = xception.pdf(y_pred=y_pred_tot_c)
 
-plt.plot(pdf)
+plt.plot(x_pdf, y_pdf)
 plt.savefig(os.path.join(path_to_storage, 'pdf.png'))
 
