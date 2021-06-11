@@ -162,7 +162,7 @@ matplotlib.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 print(y_pred_tot_c)
 print(y_pred_tot_c.shape)
 
-from quantnn.functional import pdf
+from quantnn.quantiles import pdf
 
 p = pdf(y_pred_tot_c, quantiles, quantile_axis=1)
 print(p)
