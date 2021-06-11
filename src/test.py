@@ -163,6 +163,7 @@ print(y_pred_tot_c)
 print(y_pred_tot_c.shape)
 
 plt.hist(y_pred_tot_c)
+plt.savefig(os.path.join(path_to_storage, 'hist.png'))
 
 #from quantnn.quantiles import pdf
 
