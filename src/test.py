@@ -132,5 +132,5 @@ y_pred_tot_c = np.concatenate(y_pred_tot, axis=0)
 pdf = xception.pdf(y_pred=y_pred_tot_c)
 
 plt.plot(pdf)
-plt.savefig(os.path.join(path_to_storage, 'pdf.png')
+plt.savefig(os.path.join(path_to_storage, 'pdf.png'))
 
