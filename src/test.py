@@ -8,6 +8,7 @@ from torchvision import transforms, utils
 
 from quantnn.qrnn import QRNN
 from quantnn.models.pytorch.xception import XceptionFpn
+import quantnn.quantiles as qq
 
 from load_data import GOESRETRIEVALSDataset, Mask, RandomSmallVals, RandomCrop, Standardize, ToTensor
 
@@ -94,50 +95,9 @@ def importData(BATCH_SIZE, path_to_data, path_to_stats, channel_inds, isTrain=Fa
     dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
     return(dataset, dataloader)
 
-
-
 keys=("box", "label")
-
 path_to_test_data_files = os.path.join(path_to_test_data,'npy_files') # os.path.join(path_to_data,'dataset-boxes', 'test', 'npy_files')
-
 test_dataset, test_data = importData(BATCH_SIZE, path_to_test_data_files, path_to_stats, channel_inds)
-
-
-
-y_true_tot = []
-#y_mean_tot = []
-y_pred_tot = []
-
-
-with torch.no_grad():
-    for batch_index, batch_data in enumerate(test_data):
-        print(batch_index)
-        
-        boxes = batch_data['box'].to(device)
-        y_true = batch_data['label']
-        
-        mask = (torch.less(y_true, 0))
-        #y_mean = xception.posterior_mean(boxes)
-        y_pred = xception.predict(boxes).detach().cpu().numpy()
-        y_pred_masked = np.concatenate([y_pred[i, :, mask[i].detach().cpu().numpy()==0] 
-                                        for i in range(y_pred.shape[0])], axis=0)
-        print(y_pred_masked)
-        print(y_pred_masked.shape)
-        y_true_tot += [y_true[~mask].detach().cpu().numpy()]
-        #y_mean_tot += [y_mean[~mask].detach().cpu().numpy()]
-        y_pred_tot += [y_pred_masked]
-        
-y_true_tot_c = np.concatenate(y_true_tot, axis=0)
-y_pred_tot_c = np.concatenate(y_pred_tot, axis=0)
-
-print(y_pred_tot_c)
-print(y_pred_tot_c.shape)
-
-
-import quantnn.quantiles as qq
-y_mean_tot_c = qq.posterior_mean(y_pred_tot_c, quantiles)
-
-
 
 
 ### SETTINGS PLOTS
@@ -165,20 +125,13 @@ matplotlib.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
 matplotlib.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
 matplotlib.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 matplotlib.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
-    
+
 ###
-
-#p = qq.pdf(y_pred_tot_c, quantiles, quantile_axis=1)
-#print(p)
-
-#plt.plot(x_pdf, y_pdf)
-#plt.savefig(os.path.join(path_to_storage, 'pdf.png'))
-
 
 def Hist2D(y_true, y_pred, filename):
 
     #norm = Normalize(0, 100)
-    bins = np.logspace(-2, 2, 101)
+    bins = np.logspace(-3, 3, 101)
     freqs, _, _ = np.histogram2d(y_true, y_pred, bins=bins)
     
     freqs[freqs==0.0] = np.nan
@@ -201,6 +154,49 @@ def Hist2D(y_true, y_pred, filename):
 
     plt.tight_layout()
     plt.savefig(filename)
+###
 
+
+
+y_true_tot = []
+y_pred_tot = []
+
+
+with torch.no_grad():
+    for batch_index, batch_data in enumerate(test_data):
+        print(batch_index)
+        
+        boxes = batch_data['box'].to(device)
+        y_true = batch_data['label']
+        
+        mask = (torch.less(y_true, 0))
+
+        y_pred = xception.predict(boxes).detach().cpu().numpy()
+        y_pred_masked = np.concatenate([y_pred[i, :, mask[i].detach().cpu().numpy()==0] 
+                                        for i in range(y_pred.shape[0])], axis=0)
+        print(y_pred_masked)
+        print(y_pred_masked.shape)
+        y_true_tot += [y_true[~mask].detach().cpu().numpy()]
+        y_pred_tot += [y_pred_masked]
+        
+y_true_tot_c = np.concatenate(y_true_tot, axis=0)
+y_pred_tot_c = np.concatenate(y_pred_tot, axis=0)
+
+#print(y_pred_tot_c)
+#print(y_pred_tot_c.shape)
+
+y_mean_tot_c = qq.posterior_mean(y_pred_tot_c, quantiles, quantile_axis=1)
+loss = qq.quantile_loss(y_pred_tot_c, quantiles, y_true_tot_c, quantile_axis=1)
+print('loss', loss)
+crps = qq.crps(y_pred_tot_c, quantiles, y_true_tot_c, quantile_axis=1)
+print('crps', crps)
+S
+#plt.plot(x_pdf, y_pdf)
+#plt.savefig(os.path.join(path_to_storage, 'pdf.png'))
 
 Hist2D(y_true_tot_c, y_mean_tot_c, os.path.join(path_to_storage, '2Dhist.png'))
+
+
+(x_pdf, y_pdf) = qq.pdf(y_pred_tot_c, quantiles,  quantile_axis=1) 
+print('x pdf', x_pdf)
+print('y pdf', y_pdf)
