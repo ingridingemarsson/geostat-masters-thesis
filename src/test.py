@@ -129,6 +129,35 @@ with torch.no_grad():
 y_true_tot_c = np.concatenate(y_true_tot, axis=0)
 y_pred_tot_c = np.concatenate(y_pred_tot, axis=0)
 
+
+### SETTINGS PLOTS
+
+from matplotlib.colors import Normalize
+from matplotlib.colors import ListedColormap
+from matplotlib import cm
+big = cm.get_cmap('autumn_r', 1024)
+newcmp = ListedColormap(big(np.linspace(0.1, 1, 512)))
+
+import matplotlib
+import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+plt.style.use('seaborn-whitegrid')
+matplotlib.rcParams['mathtext.fontset'] = 'cm'
+matplotlib.rcParams['font.family'] = 'STIXGeneral'
+
+SMALL_SIZE = 12 #8
+MEDIUM_SIZE = 14 #10
+BIGGER_SIZE = 16 #12
+matplotlib.rc('font', size=SMALL_SIZE)          # controls default text sizes
+matplotlib.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+matplotlib.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+matplotlib.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+matplotlib.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+matplotlib.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+matplotlib.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+    
+###
+
 pdf = xception.pdf(y_pred=y_pred_tot_c)
 
 plt.plot(pdf)
