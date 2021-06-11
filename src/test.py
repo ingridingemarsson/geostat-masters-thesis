@@ -146,6 +146,7 @@ big = cm.get_cmap('autumn_r', 512)
 newcmp = ListedColormap(big(np.linspace(0.2, 0.9, 256)))
 
 import matplotlib
+import matplotlib.pyplot as plt
 plt.style.use('seaborn-whitegrid')
 matplotlib.rcParams['mathtext.fontset'] = 'cm'
 matplotlib.rcParams['font.family'] = 'STIXGeneral'
