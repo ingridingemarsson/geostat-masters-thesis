@@ -162,8 +162,10 @@ matplotlib.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 print(y_pred_tot_c)
 print(y_pred_tot_c.shape)
 
-pdf = xception.pdf(y_pred=y_pred_tot_c)
-print(pdf)
+from quantnn.functional import pdf
+
+p = pdf(y_pred_tot_c, quantiles, quantile_axis=1):
+print(p)
 
 #plt.plot(x_pdf, y_pdf)
 #plt.savefig(os.path.join(path_to_storage, 'pdf.png'))
