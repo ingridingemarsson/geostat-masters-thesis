@@ -130,6 +130,15 @@ with torch.no_grad():
 y_true_tot_c = np.concatenate(y_true_tot, axis=0)
 y_pred_tot_c = np.concatenate(y_pred_tot, axis=0)
 
+print(y_pred_tot_c)
+print(y_pred_tot_c.shape)
+
+
+import quantnn.quantiles as qq
+y_mean_tot_c = qq.posterior_mean(y_pred_tot_c, quantiles)
+
+
+
 
 ### SETTINGS PLOTS
 
@@ -159,17 +168,39 @@ matplotlib.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
     
 ###
 
-print(y_pred_tot_c)
-print(y_pred_tot_c.shape)
-
-plt.hist(y_pred_tot_c)
-plt.savefig(os.path.join(path_to_storage, 'hist.png'))
-
-#from quantnn.quantiles import pdf
-
-#p = pdf(y_pred_tot_c, quantiles, quantile_axis=1)
+#p = qq.pdf(y_pred_tot_c, quantiles, quantile_axis=1)
 #print(p)
 
 #plt.plot(x_pdf, y_pdf)
 #plt.savefig(os.path.join(path_to_storage, 'pdf.png'))
 
+
+def Hist2D(y_true, y_pred, filename):
+
+    #norm = Normalize(0, 100)
+    bins = np.logspace(-2, 2, 101)
+    freqs, _, _ = np.histogram2d(y_true, y_pred, bins=bins)
+    
+    freqs[freqs==0.0] = np.nan
+    
+    f, ax = plt.subplots(figsize=(8, 8))
+
+    m = ax.pcolormesh(bins, bins, freqs.T, cmap=newcmp)#, norm=norm)
+    ax.set_xlim([1e-3, 1e3])
+    ax.set_ylim([1e-3, 1e3])
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlabel("Reference rain rate [mm / h]")
+    ax.set_ylabel("Predicted rain rate [mm / h]")
+    ax.plot(bins, bins, c="grey", ls="--")
+    ax.set_aspect(1.0)
+
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="5%", pad=0.07)
+    plt.colorbar(m, cax=cax)
+
+    plt.tight_layout()
+    plt.savefig(filename)
+
+
+Hist2D(y_true_tot_c, y_mean_tot_c, os.path.join(path_to_storage, '2Dhist.png'))
