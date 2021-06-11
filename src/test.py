@@ -118,6 +118,7 @@ with torch.no_grad():
         mask = (torch.less(y_true, 0))
         
         y_pred = xception.posterior_mean(boxes)
+        print(xception.predict(boxes).shape)
         #crps = xception.crps(x=boxes, y_true=y_true)
         
         y_true_tot += [y_true[~mask].detach().cpu().numpy()]
@@ -169,6 +170,8 @@ def Hist2D(y_true, y_pred, filename):
     norm = Normalize(0, 100)
     bins = np.logspace(-2, 2, 81)
     freqs, _, _ = np.histogram2d(y_true, y_pred, bins=bins)
+    
+    freqs[freqs==0.0] = np.nan
     
     f, ax = plt.subplots(figsize=(8, 8))
 
