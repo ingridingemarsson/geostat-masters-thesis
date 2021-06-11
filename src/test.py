@@ -116,9 +116,10 @@ with torch.no_grad():
         y_true = batch_data['label']
         
         mask = (torch.less(y_true, 0))
-        
+        print('mask', mask.shape)
         y_pred = xception.posterior_mean(boxes)
-        print(xception.predict(boxes).shape)
+        print('mean', y_pred.shape)
+        print('pred', xception.predict(boxes).shape)
         #crps = xception.crps(x=boxes, y_true=y_true)
         
         y_true_tot += [y_true[~mask].detach().cpu().numpy()]
@@ -167,7 +168,7 @@ matplotlib.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 def Hist2D(y_true, y_pred, filename):
 
-    norm = Normalize(0, 100)
+    #norm = Normalize(0, 100)
     bins = np.logspace(-2, 2, 81)
     freqs, _, _ = np.histogram2d(y_true, y_pred, bins=bins)
     
@@ -175,7 +176,7 @@ def Hist2D(y_true, y_pred, filename):
     
     f, ax = plt.subplots(figsize=(8, 8))
 
-    m = ax.pcolormesh(bins, bins, freqs.T, cmap=newcmp, norm=norm)
+    m = ax.pcolormesh(bins, bins, freqs.T, cmap=newcmp)#, norm=norm)
     ax.set_xlim([1e-2, 1e2])
     ax.set_ylim([1e-2, 1e2])
     ax.set_xscale("log")
