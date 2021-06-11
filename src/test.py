@@ -117,21 +117,24 @@ with torch.no_grad():
         y_true = batch_data['label']
         
         mask = (torch.less(y_true, 0))
-        mask_rep = mask.unsqueeze(1).repeat(1, len(quantiles), 1, 1)
+        #mask_rep = mask.unsqueeze(1).repeat(1, len(quantiles), 1, 1)
         #print('mask', mask.shape)
         #print('mask rep', mask_rep.shape)
         #print(mask == mask_rep[:,0,:,:])
         y_mean = xception.posterior_mean(boxes)
         #print('mean', y_mean.shape)
-        y_pred = xception.predict(boxes)
+        y_pred = xception.predict(boxes).detach().cpu().numpy()
         #print('pred', y_pred.shape)
         #crps = xception.crps(x=boxes, y_true=y_true)
+        y_pred_masked = np.concatenate([y_pred[i, :, mask[i].detach().cpu().numpy()==0] 
+                                        for i in range(y_pred.shape[0])], axis=0)
         
+        print('y_pred_masked', y_pred_masked.shape)
         y_true_tot += [y_true[~mask].detach().cpu().numpy()]
-        y_pred_tot += [y_pred[~mask_rep].detach().cpu().numpy()]
+        #y_pred_tot += [y_pred[~mask_rep].detach().cpu().numpy()]
         y_mean_tot += [y_mean[~mask].detach().cpu().numpy()]
         #crps_tot += [crps[~mask].detach().numpy()]
-        print('y_pred[~mask_rep].shape', y_pred[~mask_rep].shape)
+        y_pred_tot += [y_pred_masked]
         
 y_true_tot_c = np.concatenate(y_true_tot, axis=0)
 y_pred_tot_c = np.concatenate(y_pred_tot, axis=0)
