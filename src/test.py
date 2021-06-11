@@ -57,6 +57,8 @@ parser.add_argument(
 	default=list(range(0,8)))
 args = parser.parse_args()
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print('device: ', device)
 
 
 BATCH_SIZE = args.BATCH_SIZE
@@ -89,7 +91,7 @@ def importData(BATCH_SIZE, path_to_data, path_to_stats, channel_inds, isTrain=Fa
         transform=transforms.Compose(transforms_list))
     print('number of samples:', len(dataset))
 
-    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=0)
+    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
     return(dataset, dataloader)
 
 
@@ -110,7 +112,7 @@ with torch.no_grad():
     for batch_index, batch_data in enumerate(test_data):
         print(batch_index)
         
-        boxes = batch_data['box']
+        boxes = batch_data['box'].to(device)
         y_true = batch_data['label']
         
         mask = (torch.less(y_true, 0))
@@ -118,8 +120,8 @@ with torch.no_grad():
         y_pred = xception.posterior_mean(boxes)
         #crps = xception.crps(x=boxes, y_true=y_true)
         
-        y_true_tot += [y_true[~mask].detach().numpy()]
-        y_pred_tot += [y_pred[~mask].detach().numpy()]
+        y_true_tot += [y_true[~mask].detach().cpu().numpy()]
+        y_pred_tot += [y_pred[~mask].detach().cpu().numpy()]
         #crps_tot += [crps[~mask].detach().numpy()]
 
         
