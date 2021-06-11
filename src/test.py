@@ -146,6 +146,7 @@ newcmp = ListedColormap(big(np.linspace(0.2, 0.9, 256)))
 
 import matplotlib
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 plt.style.use('seaborn-whitegrid')
 matplotlib.rcParams['mathtext.fontset'] = 'cm'
 matplotlib.rcParams['font.family'] = 'STIXGeneral'
