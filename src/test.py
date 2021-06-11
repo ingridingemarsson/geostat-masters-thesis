@@ -139,8 +139,6 @@ print(MAE)
 ### SETTINGS PLOTS
 
 from matplotlib.colors import Normalize
-norm = Normalize(0, 100)
-bins = np.logspace(-2, 2, 81)
 from matplotlib.colors import ListedColormap
 from matplotlib import cm
 big = cm.get_cmap('autumn_r', 512)
@@ -167,9 +165,13 @@ matplotlib.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 def Hist2D(y_true, y_pred, filename):
 
+    norm = Normalize(0, 100)
+    bins = np.logspace(-2, 2, 81)
+    freqs, _, _ = np.histogram2d(y_true, y_pred, bins=bins)
+    
     f, ax = plt.subplots(figsize=(8, 8))
 
-    m = ax.pcolormesh(bins, bins, freqs_fc.T, cmap=newcmp, norm=norm)
+    m = ax.pcolormesh(bins, bins, freqs.T, cmap=newcmp, norm=norm)
     ax.set_xlim([1e-2, 1e2])
     ax.set_ylim([1e-2, 1e2])
     ax.set_xscale("log")
