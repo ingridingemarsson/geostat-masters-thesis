@@ -127,11 +127,59 @@ with torch.no_grad():
         
 y_true_tot_c = np.concatenate(y_true_tot, axis=0)
 y_pred_tot_c = np.concatenate(y_pred_tot, axis=0)        
+
 MSE = np.mean(np.square(np.subtract(y_true_tot_c, y_pred_tot_c)))
+bias = np.mean(np.subtract(y_true_tot_c, y_pred_tot_c))
+MAE = np.mean(np.abs(np.subtract(y_true_tot_c, y_pred_tot_c)))
 
 print(MSE)
+print(bias)
+print(MAE)
+
+### SETTINGS PLOTS
+
+from matplotlib.colors import Normalize
+norm = Normalize(0, 100)
+from matplotlib.colors import ListedColormap
+from matplotlib import cm
+big = cm.get_cmap('autumn_r', 512)
+newcmp = ListedColormap(big(np.linspace(0.2, 0.9, 256)))
+
+import matplotlib
+plt.style.use('seaborn-whitegrid')
+matplotlib.rcParams['mathtext.fontset'] = 'cm'
+matplotlib.rcParams['font.family'] = 'STIXGeneral'
+
+SMALL_SIZE = 12 #8
+MEDIUM_SIZE = 14 #10
+BIGGER_SIZE = 16 #12
+matplotlib.rc('font', size=SMALL_SIZE)          # controls default text sizes
+matplotlib.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
+matplotlib.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
+matplotlib.rc('xtick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+matplotlib.rc('ytick', labelsize=SMALL_SIZE)    # fontsize of the tick labels
+matplotlib.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
+matplotlib.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
+    
+###
+
+def Hist2D(y_true, y_pred, filename):
+
+    f, axs = plt.subplots(figsize=(8, 8))
+
+    ax.pcolormesh(bins, bins, freqs_fc.T, cmap=newcmp, norm=norm)
+    ax.set_xlim([1e-2, 1e2])
+    ax.set_ylim([1e-2, 1e2])
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlabel("Reference rain rate [mm / h]")
+    ax.set_ylabel("Predicted rain rate [mm / h]")
+    ax.plot(bins, bins, c="grey", ls="--")
+    ax.set_aspect(1.0)
+
+    plt.tight_layout()
+    plt.savefig(filename)
 
 
-
-
+Hist2D(y_true_tot_c, y_pred_tot_c, os.path.join(path_to_storage, '2Dhist.png'))
 
