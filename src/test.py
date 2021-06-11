@@ -131,7 +131,7 @@ with torch.no_grad():
         y_pred_tot += [y_pred[~mask_rep].detach().cpu().numpy()]
         y_mean_tot += [y_mean[~mask].detach().cpu().numpy()]
         #crps_tot += [crps[~mask].detach().numpy()]
-
+        print('y_pred_tot.shape', y_pred_tot.shape)
         
 y_true_tot_c = np.concatenate(y_true_tot, axis=0)
 y_pred_tot_c = np.concatenate(y_pred_tot, axis=0)
@@ -153,7 +153,7 @@ from matplotlib.colors import Normalize
 from matplotlib.colors import ListedColormap
 from matplotlib import cm
 big = cm.get_cmap('autumn_r', 1024)
-newcmp = ListedColormap(big(np.linspace(0.2, 0.9, 512)))
+newcmp = ListedColormap(big(np.linspace(0.1, 1, 512)))
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -186,8 +186,8 @@ def Hist2D(y_true, y_pred, filename):
     f, ax = plt.subplots(figsize=(8, 8))
 
     m = ax.pcolormesh(bins, bins, freqs.T, cmap=newcmp)#, norm=norm)
-    ax.set_xlim([1e-2, 1e2])
-    ax.set_ylim([1e-2, 1e2])
+    ax.set_xlim([1e-3, 1e3])
+    ax.set_ylim([1e-3, 1e3])
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlabel("Reference rain rate [mm / h]")
