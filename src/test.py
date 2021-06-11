@@ -140,6 +140,7 @@ print(MAE)
 
 from matplotlib.colors import Normalize
 norm = Normalize(0, 100)
+bins = np.logspace(-2, 2, 81)
 from matplotlib.colors import ListedColormap
 from matplotlib import cm
 big = cm.get_cmap('autumn_r', 512)
