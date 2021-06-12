@@ -205,13 +205,13 @@ crps = qq.crps(y_pred_tot_c, quantiles, y_true_tot_c, quantile_axis=1)
 print('crps mean', crps.mean())
 
 Hist2D(y_true_tot_c, y_mean_tot_c, os.path.join(path_to_storage, '2Dhist.png'))
-Hist2Dmed(y_true_tot_c, y_mean_tot_c, os.path.join(path_to_storage, '2Dhistmed.png'))
+#Hist2Dmed(y_true_tot_c, y_mean_tot_c, os.path.join(path_to_storage, '2Dhistmed.png'))
 
 
 (x_pdf, y_pdf) = qq.pdf(y_pred_tot_c, quantiles, quantile_axis=1) 
-print('x pdf', x_pdf.flatten())
-print('y pdf', y_pdf.flatten())
+print('x pdf', x_pdf.shape)
+print('y pdf', y_pdf.shape)
 
-#plt.plot(x_pdf, y_pdf)
-#plt.savefig(os.path.join(path_to_storage, 'pdf.png'))
+plt.plot(x_pdf.flatten(), y_pdf.flatten())
+plt.savefig(os.path.join(path_to_storage, 'pdf.png'))
 
