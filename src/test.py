@@ -167,6 +167,20 @@ def Hist2Dmed(y_true, y_pred, filename):
     ax.plot(med)
     plt.savefig(filename)
     
+def calibrationPlot(y_true, y_pred, filename):
+    cal = np.zeros(len(quantiles))
+    N = len(y_true)
+
+    for i in range(len(quantiles)):
+        cal[i] = (y_true < y_pred[:,i]).sum() / N
+        
+    f, ax = plt.subplots(figsize=(8, 8))
+    ax.plot(quantiles, cal)
+    ax.plot(quantiles, quantiles, c="grey", ls="--")
+    ax.set_xlabel("True quantiles")
+    ax.set_ylabel("Observed quantiles")
+    plt.savefig(filename)
+    
 ###
 
 
@@ -195,23 +209,26 @@ with torch.no_grad():
 y_true_tot_c = np.concatenate(y_true_tot, axis=0)
 y_pred_tot_c = np.concatenate(y_pred_tot, axis=0)
 
+    
+calibrationPlot(y_true_tot_c, y_pred_tot_c, os.path.join(path_to_storage, 'calibration.png'))
+
 #print(y_pred_tot_c)
 #print(y_pred_tot_c.shape)
 
-y_mean_tot_c = qq.posterior_mean(y_pred_tot_c, quantiles, quantile_axis=1)
-loss = qq.quantile_loss(y_pred_tot_c, quantiles, y_true_tot_c, quantile_axis=1)
-print('loss mean', loss.mean())
-crps = qq.crps(y_pred_tot_c, quantiles, y_true_tot_c, quantile_axis=1)
-print('crps mean', crps.mean())
+#y_mean_tot_c = qq.posterior_mean(y_pred_tot_c, quantiles, quantile_axis=1)
+#loss = qq.quantile_loss(y_pred_tot_c, quantiles, y_true_tot_c, quantile_axis=1)
+#print('loss mean', loss.mean())
+#crps = qq.crps(y_pred_tot_c, quantiles, y_true_tot_c, quantile_axis=1)
+#print('crps mean', crps.mean())
 
-Hist2D(y_true_tot_c, y_mean_tot_c, os.path.join(path_to_storage, '2Dhist.png'))
+#Hist2D(y_true_tot_c, y_mean_tot_c, os.path.join(path_to_storage, '2Dhist.png'))
 #Hist2Dmed(y_true_tot_c, y_mean_tot_c, os.path.join(path_to_storage, '2Dhistmed.png'))
 
 
-(x_pdf, y_pdf) = qq.pdf(y_pred_tot_c, quantiles, quantile_axis=1) 
-print('x pdf', x_pdf.shape)
-print('y pdf', y_pdf.shape)
-
-plt.plot(x_pdf.flatten(), y_pdf.flatten())
-plt.savefig(os.path.join(path_to_storage, 'pdf.png'))
+#(x_pdf, y_pdf) = qq.pdf(y_pred_tot_c, quantiles, quantile_axis=1) 
+#print('x pdf', x_pdf.shape)
+#print('y pdf', y_pdf.shape)
+#
+#plt.plot(x_pdf.flatten(), y_pdf.flatten())
+#plt.savefig(os.path.join(path_to_storage, 'pdf.png'))
 
