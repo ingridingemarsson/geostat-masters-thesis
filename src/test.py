@@ -162,7 +162,9 @@ def Hist2Dmed(y_true, y_pred, filename):
     bins = np.logspace(-3, 3, 101)
     freqs, _, _ = np.histogram2d(y_true, y_pred, bins=bins)
     med = np.median(freqs, axis=0)
-    plt.plot(med)
+    
+    f, ax = plt.subplots(figsize=(8, 8))
+    ax.plot(med)
     plt.savefig(filename)
     
 ###
@@ -207,9 +209,9 @@ Hist2Dmed(y_true_tot_c, y_mean_tot_c, os.path.join(path_to_storage, '2Dhistmed.p
 
 
 (x_pdf, y_pdf) = qq.pdf(y_pred_tot_c, quantiles, quantile_axis=1) 
-print('x pdf', x_pdf)
-print('y pdf', y_pdf)
+print('x pdf', x_pdf.flatten())
+print('y pdf', y_pdf.flatten())
 
-plt.plot(x_pdf, y_pdf)
-plt.savefig(os.path.join(path_to_storage, 'pdf.png'))
+#plt.plot(x_pdf, y_pdf)
+#plt.savefig(os.path.join(path_to_storage, 'pdf.png'))
 
