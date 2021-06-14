@@ -175,6 +175,8 @@ def calibrationPlot(y_true, y_pred, filename):
     
     
 def pdf(y_mean, y_true, filename):
+    end = np.max(np.max(y_mean),np.max(y_true))
+    bins = np.linspace(0,end,101)
     f, ax = plt.subplots(figsize=(8, 8))
     ax.hist(y_mean, label='prediction', alpha=0.5) #density=True
     ax.hist(y_true, label='true', alpha=0.5)
@@ -207,8 +209,8 @@ def evaluate(model_boxes, model_singles):
             y_true_tot += [y_true[~mask].detach().cpu().numpy()]
             y_pred_boxes_tot += [y_pred_boxes]
             
-            boxes = torch.transpose(torch.flatten(boxes, start_dim=1), 0, 1) 
-            mask = torch.transpose(torch.flatten(mask, start_dim=1), 0, 1)
+            boxes = torch.transpose(torch.flatten(boxes, start_dim=2), 0, 1) 
+            mask = torch.transpose(torch.flatten(mask, start_dim=2), 0, 1)
             print(mask.shape)
             y_pred_singles = model_singles.predict(boxes).detach().cpu().numpy()
             print(y_pred_singles.shape)
