@@ -231,7 +231,7 @@ def computeMetrics(y_true, y_pred, name):
     crps = qq.crps(y_pred, quantiles, y_true, quantile_axis=1)
     print('crps mean', crps.mean())
 
-    y_mean = qq.posterior_mean(y_boxes, quantiles, quantile_axis=1)
+    y_mean = qq.posterior_mean(y_pred, quantiles, quantile_axis=1)
 
     bias = np.mean(np.subtract(y_true, y_mean))
     print('bias', bias)
