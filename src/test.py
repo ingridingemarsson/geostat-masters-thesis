@@ -230,7 +230,7 @@ print('x pdf', x_pdf.shape)
 print('y pdf', y_pdf.shape)
 #
 del y_pred_tot_c
-print(hej)
+print('hej')
 plt.plot(x_pdf.flatten(), y_pdf.flatten())
 plt.savefig(os.path.join(path_to_storage, 'pdf.png'))
 
