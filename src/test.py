@@ -172,9 +172,12 @@ def calibrationPlot(y_true, y_pred, filename):
     plt.savefig(filename)
     
     
-def pdf(y_mean, filename):
+def pdf(y_mean, y_true, filename):
     f, ax = plt.subplots(figsize=(8, 8))
-    ax.hist(y_mean, density=True)
+    ax.hist(y_mean, label='prediction', alpha=0.5) #density=True
+    ax.hist(y_true, label='true', alpha=0.5)
+    ax.set_yscale("log")
+    ax.legend()
     plt.savefig(filename)
     
 ###
@@ -212,13 +215,14 @@ print('loss mean', loss.mean())
 crps = qq.crps(y_pred_tot_c, quantiles, y_true_tot_c, quantile_axis=1)
 print('crps mean', crps.mean())
 
+
+y_mean_tot_c = qq.posterior_mean(y_pred_tot_c, quantiles, quantile_axis=1)
 del y_pred_tot_c
 
 
-y_mean_tot_c = qq.posterior_mean(y_pred_tot_c, quantiles, quantile_axis=1)
 
 Hist2D(y_true_tot_c, y_mean_tot_c, os.path.join(path_to_storage, '2Dhist.png'))
-pdf(y_mean_tot_c, os.path.join(path_to_storage, 'pdf.png'))
+pdf(y_mean_tot_c, y_true_tot_c, os.path.join(path_to_storage, 'pdf.png'))
 
 
 bias = np.mean(np.subtract(y_true_tot_c, y_mean_tot_c))
