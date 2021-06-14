@@ -39,9 +39,10 @@ parser.add_argument(
 parser.add_argument(
 	"-M",
 	"--path_to_model",
-	help="Path to stored model.",
+	help="Path to stored models.",
 	type=str,
-	default="../results/models/xception64_[100]_0.01__boxes_100_0.01_0_t5412_v1354[0, 1, 2, 3, 4, 5, 6, 7]_Adam_1622288705.386947.pckl"
+	nargs='+',
+	default=["../results/models/xception64_[100]_0.01__boxes_100_0.01_0_t5412_v1354[0, 1, 2, 3, 4, 5, 6, 7]_Adam_1622288705.386947.pckl", "../results/models/singles_fc32786_[100]_0.001__singles_100_0.001_0_t83360758_v20805499[0, 1, 2, 3, 4, 5, 6, 7]_Adam_1622293711.867882.pckl"]
 	)
 parser.add_argument(
 	"-b",
@@ -75,7 +76,8 @@ path_to_test_data = args.path_to_data
 path_to_storage = args.path_to_storage
 path_to_stats = args.path_to_stats
 
-xception = QRNN.load(args.path_to_model) #xception.pckl')
+xception = QRNN.load(args.path_to_model[0]) 
+mlp = QRNN.load(args.path_to_model[1])
 
 
 
@@ -182,53 +184,63 @@ def pdf(y_mean, y_true, filename):
     
 ###
 
+def evaluate(model_boxes, model_singles):
+
+    y_true_tot = []
+    y_pred_boxes_tot = []
+    y_pred_singles_tot = []
 
 
-y_true_tot = []
-y_pred_tot = []
+    with torch.no_grad():
+        for batch_index, batch_data in enumerate(test_data):
+            print(batch_index)
+
+            boxes = batch_data['box'].to(device)
+            y_true = batch_data['label']
 
 
-with torch.no_grad():
-    for batch_index, batch_data in enumerate(test_data):
-        print(batch_index)
-        
-        boxes = batch_data['box'].to(device)
-        y_true = batch_data['label']
-        
-        mask = (torch.less(y_true, 0))
+            mask = (torch.less(y_true, 0))
+            y_pred_boxes = model_boxes.predict(boxes).detach().cpu().numpy()
+            y_pred_boxes = np.concatenate([y_pred_boxes[i, :, mask[i].detach().cpu().numpy()==0] 
+                                            for i in range(y_pred_boxes.shape[0])], axis=0)
 
-        y_pred = xception.predict(boxes).detach().cpu().numpy()
-        y_pred_masked = np.concatenate([y_pred[i, :, mask[i].detach().cpu().numpy()==0] 
-                                        for i in range(y_pred.shape[0])], axis=0)
+            y_true_tot += [y_true[~mask].detach().cpu().numpy()]
+            y_pred_boxes_tot += [y_pred_boxes]
+            
+            boxes = torch.transpose(torch.flatten(boxes, start_dim=1), 0, 1) 
+            mask = torch.transpose(torch.flatten(mask, start_dim=1), 0, 1)
+            print(mask.shape)
+            y_pred_singles = model_singles.predict(boxes).detach().cpu().numpy()
+            print(y_pred_singles.shape)
+            y_pred_singles_tot += [y_pred_singles[~mask].detach().cpu().numpy()]
 
-        y_true_tot += [y_true[~mask].detach().cpu().numpy()]
-        y_pred_tot += [y_pred_masked]
-        
-y_true_tot_c = np.concatenate(y_true_tot, axis=0)
-y_pred_tot_c = np.concatenate(y_pred_tot, axis=0)
+    y_true_tot_c = np.concatenate(y_true_tot, axis=0)
+    y_pred_boxes_tot_c = np.concatenate(y_pred_boxes_tot, axis=0)
+    y_pred_singles_tot_c = np.concatenate(y_pred_singles_tot, axis=0)
 
+    return(y_true_tot_c, y_pred_boxes_tot_c, y_pred_singles_tot_c)
+
+y_true, y_boxes, y_singles = evaluate(xception, mlp)
     
-calibrationPlot(y_true_tot_c, y_pred_tot_c, os.path.join(path_to_storage, 'calibration.png'))
+calibrationPlot(y_true, y_boxes, os.path.join(path_to_storage, 'calibration_boxes.png'))
+loss_boxes = qq.quantile_loss(y_boxes, quantiles, y_true, quantile_axis=1)
+print('loss boxes mean', loss_boxes.mean())
+crps_boxes = qq.crps(v, quantiles, y_true, quantile_axis=1)
+print('crps boxes mean', crps_boxes.mean())
+y_mean_boxes = qq.posterior_mean(y_boxes, quantiles, quantile_axis=1)
+del y_boxes
 
-loss = qq.quantile_loss(y_pred_tot_c, quantiles, y_true_tot_c, quantile_axis=1)
-print('loss mean', loss.mean())
-crps = qq.crps(y_pred_tot_c, quantiles, y_true_tot_c, quantile_axis=1)
-print('crps mean', crps.mean())
-
-
-y_mean_tot_c = qq.posterior_mean(y_pred_tot_c, quantiles, quantile_axis=1)
-del y_pred_tot_c
-
+calibrationPlot(y_true, y_singles, os.path.join(path_to_storage, 'calibration_singles.png'))
 
 
-Hist2D(y_true_tot_c, y_mean_tot_c, os.path.join(path_to_storage, '2Dhist.png'))
-pdf(y_mean_tot_c, y_true_tot_c, os.path.join(path_to_storage, 'pdf.png'))
+Hist2D(y_true, y_mean_boxes, os.path.join(path_to_storage, '2Dhist.png'))
+pdf(y_mean_boxes, y_true, os.path.join(path_to_storage, 'pdf.png'))
 
 
-bias = np.mean(np.subtract(y_true_tot_c, y_mean_tot_c))
+bias = np.mean(np.subtract(y_true, y_mean_boxes))
 print('bias', bias)
-mae = np.mean(np.abs(np.subtract(y_true_tot_c, y_mean_tot_c)))
+mae = np.mean(np.abs(np.subtract(y_true, y_mean_boxes)))
 print('MAE', mae)
-mse = np.mean(np.square(np.subtract(y_true_tot_c, y_mean_tot_c)))
+mse = np.mean(np.square(np.subtract(y_true, y_mean_boxes)))
 print('MSE', mse)
 
