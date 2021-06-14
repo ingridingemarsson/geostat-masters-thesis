@@ -210,7 +210,7 @@ y_true_tot_c = np.concatenate(y_true_tot, axis=0)
 y_pred_tot_c = np.concatenate(y_pred_tot, axis=0)
 
     
-calibrationPlot(y_true_tot_c, y_pred_tot_c, os.path.join(path_to_storage, 'calibration.png'))
+#calibrationPlot(y_true_tot_c, y_pred_tot_c, os.path.join(path_to_storage, 'calibration.png'))
 
 #print(y_pred_tot_c)
 #print(y_pred_tot_c.shape)
@@ -225,10 +225,12 @@ calibrationPlot(y_true_tot_c, y_pred_tot_c, os.path.join(path_to_storage, 'calib
 #Hist2Dmed(y_true_tot_c, y_mean_tot_c, os.path.join(path_to_storage, '2Dhistmed.png'))
 
 
-#(x_pdf, y_pdf) = qq.pdf(y_pred_tot_c, quantiles, quantile_axis=1) 
-#print('x pdf', x_pdf.shape)
-#print('y pdf', y_pdf.shape)
+(x_pdf, y_pdf) = qq.pdf(y_pred_tot_c, quantiles, quantile_axis=1) 
+print('x pdf', x_pdf.shape)
+print('y pdf', y_pdf.shape)
 #
-#plt.plot(x_pdf.flatten(), y_pdf.flatten())
-#plt.savefig(os.path.join(path_to_storage, 'pdf.png'))
+del y_pred_tot_c
+print(hej)
+plt.plot(x_pdf.flatten(), y_pdf.flatten())
+plt.savefig(os.path.join(path_to_storage, 'pdf.png'))
 
