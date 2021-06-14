@@ -174,12 +174,13 @@ def calibrationPlot(y_true, y_pred, filename):
     plt.savefig(filename)
     
     
-def pdf(y_mean, y_true, filename):
+def pdf(y_true, y_b, y_s, filename):
     end = np.max(np.max(y_mean),np.max(y_true))
     bins = np.linspace(0,end,101)
     f, ax = plt.subplots(figsize=(8, 8))
-    ax.hist(y_mean, label='prediction', alpha=0.5) #density=True
-    ax.hist(y_true, label='true', alpha=0.5)
+    ax.hist(y_b, label='CNN', alpha=0.5) 
+    ax.hist(y_s, label='MLP', alpha=0.5) 
+    ax.hist(y_true, label='reference', alpha=0.5)
     ax.set_yscale("log")
     ax.legend()
     plt.savefig(filename)
@@ -200,8 +201,9 @@ def evaluate(model_boxes, model_singles):
             boxes = batch_data['box'].to(device)
             y_true = batch_data['label']
 
-
             mask = (torch.less(y_true, 0))
+            
+            #Boxes
             y_pred_boxes = model_boxes.predict(boxes).detach().cpu().numpy()
             y_pred_boxes = np.concatenate([y_pred_boxes[i, :, mask[i].detach().cpu().numpy()==0] 
                                             for i in range(y_pred_boxes.shape[0])], axis=0)
@@ -209,11 +211,11 @@ def evaluate(model_boxes, model_singles):
             y_true_tot += [y_true[~mask].detach().cpu().numpy()]
             y_pred_boxes_tot += [y_pred_boxes]
             
+            #Singles
             boxes = torch.transpose(torch.flatten(torch.transpose(boxes, 0, 1), start_dim=1), 0, 1)
             mask = torch.flatten(mask)
-            print(mask.shape)
+
             y_pred_singles = model_singles.predict(boxes)
-            print(y_pred_singles.shape)
             y_pred_singles_tot += [y_pred_singles[~mask].detach().cpu().numpy()]
 
     y_true_tot_c = np.concatenate(y_true_tot, axis=0)
@@ -221,28 +223,36 @@ def evaluate(model_boxes, model_singles):
     y_pred_singles_tot_c = np.concatenate(y_pred_singles_tot, axis=0)
 
     return(y_true_tot_c, y_pred_boxes_tot_c, y_pred_singles_tot_c)
-
-y_true, y_boxes, y_singles = evaluate(xception, mlp)
     
-calibrationPlot(y_true, y_boxes, os.path.join(path_to_storage, 'calibration_boxes.png'))
-loss_boxes = qq.quantile_loss(y_boxes, quantiles, y_true, quantile_axis=1)
-print('loss boxes mean', loss_boxes.mean())
-crps_boxes = qq.crps(v, quantiles, y_true, quantile_axis=1)
-print('crps boxes mean', crps_boxes.mean())
-y_mean_boxes = qq.posterior_mean(y_boxes, quantiles, quantile_axis=1)
+def computeMetrics(y_true, y_pred, name):
+    calibrationPlot(y_true, y_pred, os.path.join(path_to_storage, 'calibration'+name+'.png'))
+    loss = qq.quantile_loss(y_pred, quantiles, y_true, quantile_axis=1)
+    print('loss mean', loss.mean())
+    crps = qq.crps(y_pred, quantiles, y_true, quantile_axis=1)
+    print('crps mean', crps.mean())
+
+    y_mean = qq.posterior_mean(y_boxes, quantiles, quantile_axis=1)
+
+    bias = np.mean(np.subtract(y_true, y_mean))
+    print('bias', bias)
+    mae = np.mean(np.abs(np.subtract(y_true, y_mean)))
+    print('MAE', mae)
+    mse = np.mean(np.square(np.subtract(y_true, y_mean)))
+    print('MSE', mse)
+
+    return(y_mean)
+
+
+# COMPUTE
+y_true, y_boxes, y_singles = evaluate(xception, mlp)
+
+y_mean_boxes = computeMetrics(y_true, y_boxes, 'boxes')
 del y_boxes
 
-calibrationPlot(y_true, y_singles, os.path.join(path_to_storage, 'calibration_singles.png'))
+y_mean_singles = computeMetrics(y_true, y_singles, 'singles')
+del y_singles
 
-
-Hist2D(y_true, y_mean_boxes, os.path.join(path_to_storage, '2Dhist.png'))
-pdf(y_mean_boxes, y_true, os.path.join(path_to_storage, 'pdf.png'))
-
-
-bias = np.mean(np.subtract(y_true, y_mean_boxes))
-print('bias', bias)
-mae = np.mean(np.abs(np.subtract(y_true, y_mean_boxes)))
-print('MAE', mae)
-mse = np.mean(np.square(np.subtract(y_true, y_mean_boxes)))
-print('MSE', mse)
+Hist2D(y_true, y_mean_boxes, os.path.join(path_to_storage, '2Dhist_boxes.png'))
+Hist2D(y_true, y_mean_singles, os.path.join(path_to_storage, '2Dhist_singles.png'))
+pdf(y_true, y_mean_boxes, y_mean_singles, os.path.join(path_to_storage, 'pdf.png'))
 
