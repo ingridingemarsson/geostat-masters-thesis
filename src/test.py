@@ -175,7 +175,7 @@ def calibrationPlot(y_true, y_pred, filename):
     
     
 def pdf(y_true, y_b, y_s, filename):
-    end = np.max(np.max(y_mean),np.max(y_true))
+    end = np.max([np.max(y_true), np.max(y_b), np.max(y_s)])
     bins = np.linspace(0,end,101)
     f, ax = plt.subplots(figsize=(8, 8))
     ax.hist(y_b, label='CNN', alpha=0.5) 
