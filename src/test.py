@@ -212,7 +212,7 @@ def evaluate(model_boxes, model_singles):
             boxes = torch.transpose(torch.flatten(torch.transpose(boxes, 0, 1), start_dim=1), 0, 1)
             mask = torch.flatten(mask)
             print(mask.shape)
-            y_pred_singles = model_singles.predict(boxes).detach().cpu().numpy()
+            y_pred_singles = model_singles.predict(boxes)
             print(y_pred_singles.shape)
             y_pred_singles_tot += [y_pred_singles[~mask].detach().cpu().numpy()]
 
