@@ -156,16 +156,6 @@ def Hist2D(y_true, y_pred, filename):
     plt.savefig(filename)
     
     
-def Hist2Dmed(y_true, y_pred, filename):
-
-    #norm = Normalize(0, 100)
-    bins = np.logspace(-3, 3, 101)
-    freqs, _, _ = np.histogram2d(y_true, y_pred, bins=bins)
-    med = np.median(freqs, axis=0)
-    
-    f, ax = plt.subplots(figsize=(8, 8))
-    ax.plot(med)
-    plt.savefig(filename)
     
 def calibrationPlot(y_true, y_pred, filename):
     cal = np.zeros(len(quantiles))
@@ -179,6 +169,12 @@ def calibrationPlot(y_true, y_pred, filename):
     ax.plot(quantiles, quantiles, c="grey", ls="--")
     ax.set_xlabel("True quantiles")
     ax.set_ylabel("Observed quantiles")
+    plt.savefig(filename)
+    
+    
+def pdf(y_mean, filename):
+    f, ax = plt.subplots(figsize=(8, 8))
+    ax.hist(y_mean, density=True)
     plt.savefig(filename)
     
 ###
@@ -201,8 +197,7 @@ with torch.no_grad():
         y_pred = xception.predict(boxes).detach().cpu().numpy()
         y_pred_masked = np.concatenate([y_pred[i, :, mask[i].detach().cpu().numpy()==0] 
                                         for i in range(y_pred.shape[0])], axis=0)
-        #print(y_pred_masked)
-        #print(y_pred_masked.shape)
+
         y_true_tot += [y_true[~mask].detach().cpu().numpy()]
         y_pred_tot += [y_pred_masked]
         
@@ -210,27 +205,26 @@ y_true_tot_c = np.concatenate(y_true_tot, axis=0)
 y_pred_tot_c = np.concatenate(y_pred_tot, axis=0)
 
     
-#calibrationPlot(y_true_tot_c, y_pred_tot_c, os.path.join(path_to_storage, 'calibration.png'))
+calibrationPlot(y_true_tot_c, y_pred_tot_c, os.path.join(path_to_storage, 'calibration.png'))
 
-#print(y_pred_tot_c)
-#print(y_pred_tot_c.shape)
+loss = qq.quantile_loss(y_pred_tot_c, quantiles, y_true_tot_c, quantile_axis=1)
+print('loss mean', loss.mean())
+crps = qq.crps(y_pred_tot_c, quantiles, y_true_tot_c, quantile_axis=1)
+print('crps mean', crps.mean())
 
-#y_mean_tot_c = qq.posterior_mean(y_pred_tot_c, quantiles, quantile_axis=1)
-#loss = qq.quantile_loss(y_pred_tot_c, quantiles, y_true_tot_c, quantile_axis=1)
-#print('loss mean', loss.mean())
-#crps = qq.crps(y_pred_tot_c, quantiles, y_true_tot_c, quantile_axis=1)
-#print('crps mean', crps.mean())
-
-#Hist2D(y_true_tot_c, y_mean_tot_c, os.path.join(path_to_storage, '2Dhist.png'))
-#Hist2Dmed(y_true_tot_c, y_mean_tot_c, os.path.join(path_to_storage, '2Dhistmed.png'))
-
-
-(x_pdf, y_pdf) = qq.pdf(y_pred_tot_c, quantiles, quantile_axis=1) 
-print('x pdf', x_pdf.shape)
-print('y pdf', y_pdf.shape)
-#
 del y_pred_tot_c
-print('hej')
-plt.plot(x_pdf.flatten(), y_pdf.flatten())
-plt.savefig(os.path.join(path_to_storage, 'pdf.png'))
+
+
+y_mean_tot_c = qq.posterior_mean(y_pred_tot_c, quantiles, quantile_axis=1)
+
+Hist2D(y_true_tot_c, y_mean_tot_c, os.path.join(path_to_storage, '2Dhist.png'))
+pdf(y_mean_tot_c, os.path.join(path_to_storage, 'pdf.png'))
+
+
+bias = np.mean(np.subtract(y_true_tot_c, y_mean_tot_c))
+print('bias', bias)
+mae = np.mean(np.abs(np.subtract(y_true_tot_c, y_mean_tot_c)))
+print('MAE', mae)
+mse = np.mean(np.square(np.subtract(y_true_tot_c, y_mean_tot_c)))
+print('MSE', mse)
 
