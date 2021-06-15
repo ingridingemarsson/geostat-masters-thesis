@@ -143,7 +143,7 @@ def Hist2D(y_true, y_pred, filename):
     
     f, ax = plt.subplots(figsize=(8, 8))
 
-    m = ax.pcolormesh(bins, bins, freqs.T, cmap=newcmp), norm=norm)
+    m = ax.pcolormesh(bins, bins, freqs.T, cmap=newcmp, norm=norm)
     ax.set_xlim([1e-4, 1e3])
     ax.set_ylim([1e-4, 1e3])
     ax.set_xscale("log")
