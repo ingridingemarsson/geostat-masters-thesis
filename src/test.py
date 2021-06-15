@@ -107,8 +107,9 @@ test_dataset, test_data = importData(BATCH_SIZE, path_to_test_data_files, path_t
 from matplotlib.colors import Normalize
 from matplotlib.colors import ListedColormap
 from matplotlib import cm
-big = cm.get_cmap('autumn_r', 1024)
-newcmp = ListedColormap(big(np.linspace(0.1, 1, 512)))
+from matplotlib.colors import LogNorm
+big = cm.get_cmap('magma', 512)
+newcmp = ListedColormap(big(np.linspace(0.05, 0.95, 256)))
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -133,22 +134,25 @@ matplotlib.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 def Hist2D(y_true, y_pred, filename):
 
     #norm = Normalize(0, 100)
-    bins = np.logspace(-3, 3, 101)
+    bins = np.logspace(-4, 3, 100)
     freqs, _, _ = np.histogram2d(y_true, y_pred, bins=bins)
     
     freqs[freqs==0.0] = np.nan
     
+    norm = LogNorm(vmin=np.nanmin(freqs_fc), vmax=np.nanmax(freqs_fc))
+    
     f, ax = plt.subplots(figsize=(8, 8))
 
-    m = ax.pcolormesh(bins, bins, freqs.T, cmap=newcmp)#, norm=norm)
-    ax.set_xlim([1e-3, 1e3])
-    ax.set_ylim([1e-3, 1e3])
+    m = ax.pcolormesh(bins, bins, freqs.T, cmap=newcmp), norm=norm)
+    ax.set_xlim([1e-4, 1e3])
+    ax.set_ylim([1e-4, 1e3])
     ax.set_xscale("log")
     ax.set_yscale("log")
     ax.set_xlabel("Reference rain rate [mm / h]")
     ax.set_ylabel("Predicted rain rate [mm / h]")
     ax.plot(bins, bins, c="grey", ls="--")
-    ax.set_aspect(1.0)
+    ax.grid(True,which="both",ls="--",c='lightgray')  
+    #ax.set_aspect(1.0)
 
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.07)
@@ -179,13 +183,30 @@ def pdf(y_true, y_b, y_s, filename):
     bins = np.linspace(0,end,101)
     f, ax = plt.subplots(figsize=(8, 8))
     ax.hist(y_b, label='CNN', bins=bins, histtype='step', color='#72196d') 
-    ax.hist(y_s, label='MLP', bins=bins, histtype='step', color='#f2e660') 
-    ax.hist(y_true, label='Reference', bins=bins, alpha=0.5, color='#64a6a1')
+    ax.hist(y_s, label='MLP', bins=bins, histtype='step', color='#f308f3') 
+    ax.hist(y_true, label='Reference', bins=bins, alpha=0.4, color='#64a6a1')
     ax.set_ylabel("Log scaled frequency")
     ax.set_xlabel("Rain rate (mm/h)")
     ax.set_yscale("log")
     ax.legend()
     plt.savefig(filename)
+    
+    
+def diff(y_true, y_b, y_s, filename):
+    start = np.min([np.min(y_true-y_b), np.min(y_true-y_s)])
+    end = np.max([np.max(y_true-y_b), np.max(y_true-y_s)])
+    bins = np.linspace(0,end,101)
+    print(bins)
+    f, ax = plt.subplots(figsize=(12,8))
+    ax.set_yscale("log")
+    ax.hist(np.subtract(y_true, y_b, alpha=0.6, bins=bins, color='#72196d', label='CNN')
+    ax.hist(np.subtract(y_true, y_s, alpha=1, bins=bins, color='#f308f3', label='MLP', histtype='step')
+    ax.set_ylabel('Logged counts')
+    ax.set_xlabel('Rain difference (mm)')
+    ax.axvline(x=0.0, color='grey', alpha=0.5, linestyle='dashed')
+    ax.grid(True,which="both",ls="--",c='lightgray')  
+    ax.legend()
+    plt.tight_layout()
     
 ###
 
@@ -257,4 +278,6 @@ del y_singles
 Hist2D(y_true, y_mean_boxes, os.path.join(path_to_storage, '2Dhist_boxes.png'))
 Hist2D(y_true, y_mean_singles, os.path.join(path_to_storage, '2Dhist_singles.png'))
 pdf(y_true, y_mean_boxes, y_mean_singles, os.path.join(path_to_storage, 'pdf.png'))
+diff(y_true, y_mean_boxes, y_mean_singles, os.path.join(path_to_storage, 'diff.png'))
+print('done')
 
