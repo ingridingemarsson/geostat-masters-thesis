@@ -139,7 +139,7 @@ def Hist2D(y_true, y_pred, filename):
     
     freqs[freqs==0.0] = np.nan
     
-    norm = LogNorm(vmin=np.nanmin(freqs_fc), vmax=np.nanmax(freqs_fc))
+    norm = LogNorm(vmin=np.nanmin(freqs), vmax=np.nanmax(freqs))
     
     f, ax = plt.subplots(figsize=(8, 8))
 
