@@ -138,7 +138,18 @@ def Hist2D(y_true, y_pred, filename):
     freqs, _, _ = np.histogram2d(y_true, y_pred, bins=bins)
     
     freqs[freqs==0.0] = np.nan
-    freqs = freqs / np.nansum(freqs, axis=0)
+    
+    freqs_normed = freqs
+    #print( np.nansum(freqs, axis=1))
+    for col_ind in range(freqs.shape[0]):
+        if np.isnan(freqs[col_ind, :]).all():
+            freqs_normed[col_ind, :] = np.array([np.nan] * freqs.shape[1])
+        else:
+            freqs_normed[col_ind, :] = freqs[col_ind, :] / np.nansum(freqs[col_ind, :])    
+            
+    freqs = freqs_normed
+    
+    #freqs = freqs / np.nansum(freqs, axis=0)
     #norm = LogNorm(vmin=np.nanmin(freqs), vmax=np.nanmax(freqs))
     
     f, ax = plt.subplots(figsize=(8, 8))
@@ -277,9 +288,9 @@ def computeMetrics(y_true, y_pred, name):
 # COMPUTE
 y_true, y_boxes, y_singles = pred(xception, mlp)
 
-y_true = applyTreshold(y_true, 1e-2)
-y_boxes = applyTreshold(y_boxes, 1e-2)
-y_singles = applyTreshold(y_singles, 1e-2)
+#y_true = applyTreshold(y_true, 1e-2)
+#y_boxes = applyTreshold(y_boxes, 1e-2)
+#y_singles = applyTreshold(y_singles, 1e-2)
 
 print('mean')
 y_mean_boxes = computeMetrics(y_true, y_boxes, 'boxes')
