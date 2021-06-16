@@ -133,17 +133,17 @@ matplotlib.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 def Hist2D(y_true, y_pred, filename):
 
-    norm = Normalize(0, 100)
+    #norm = Normalize(0, 100)
     bins = np.logspace(-4, 3, 100)
     freqs, _, _ = np.histogram2d(y_true, y_pred, bins=bins)
     
     freqs[freqs==0.0] = np.nan
-    
+    freqs = freqs / np.nansum(freqs, axis=0)
     #norm = LogNorm(vmin=np.nanmin(freqs), vmax=np.nanmax(freqs))
     
     f, ax = plt.subplots(figsize=(8, 8))
 
-    m = ax.pcolormesh(bins, bins, freqs.T, cmap=newcmp, norm=norm)
+    m = ax.pcolormesh(bins, bins, freqs.T, cmap=newcmp)#, norm=norm)
     ax.set_xlim([1e-4, 1e3])
     ax.set_ylim([1e-4, 1e3])
     ax.set_xscale("log")
@@ -206,7 +206,7 @@ def diff(y_true, y_b, y_s, filename):
     ax.axvline(x=0.0, color='grey', alpha=0.5, linestyle='dashed')
     ax.grid(True,which="both",ls="--",c='lightgray')  
     ax.legend()
-    plt.tight_layout()
+    plt.savefig(filename)
     
 ###
 
@@ -241,6 +241,7 @@ def evaluate(model_boxes, model_singles):
             y_pred_singles = model_singles.predict(boxes)
             y_pred_singles_tot += [y_pred_singles[~mask].detach().cpu().numpy()]
 
+    print('concatenate')
     y_true_tot_c = np.concatenate(y_true_tot, axis=0)
     y_pred_boxes_tot_c = np.concatenate(y_pred_boxes_tot, axis=0)
     y_pred_singles_tot_c = np.concatenate(y_pred_singles_tot, axis=0)
@@ -269,6 +270,7 @@ def computeMetrics(y_true, y_pred, name):
 # COMPUTE
 y_true, y_boxes, y_singles = evaluate(xception, mlp)
 
+print('mean')
 y_mean_boxes = computeMetrics(y_true, y_boxes, 'boxes')
 del y_boxes
 
