@@ -133,13 +133,13 @@ matplotlib.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 def Hist2D(y_true, y_pred, filename):
 
-    #norm = Normalize(0, 100)
+    norm = Normalize(0, 100)
     bins = np.logspace(-4, 3, 100)
     freqs, _, _ = np.histogram2d(y_true, y_pred, bins=bins)
     
     freqs[freqs==0.0] = np.nan
     
-    norm = LogNorm(vmin=np.nanmin(freqs), vmax=np.nanmax(freqs))
+    #norm = LogNorm(vmin=np.nanmin(freqs), vmax=np.nanmax(freqs))
     
     f, ax = plt.subplots(figsize=(8, 8))
 
