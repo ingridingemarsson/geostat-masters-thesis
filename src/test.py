@@ -195,7 +195,7 @@ def pdf(y_true, y_b, y_s, filename):
 def diff(y_true, y_b, y_s, filename):
     start = np.min([np.min(y_true-y_b), np.min(y_true-y_s)])
     end = np.max([np.max(y_true-y_b), np.max(y_true-y_s)])
-    bins = np.linspace(0,end,101)
+    bins = np.linspace(start,end,101)
     print(bins)
     f, ax = plt.subplots(figsize=(12,8))
     ax.set_yscale("log")
@@ -247,6 +247,9 @@ def evaluate(model_boxes, model_singles):
     y_pred_singles_tot_c = np.concatenate(y_pred_singles_tot, axis=0)
 
     return(y_true_tot_c, y_pred_boxes_tot_c, y_pred_singles_tot_c)
+
+def applyTreshold(y, th):
+    y[y<th] = 0.0
     
 def computeMetrics(y_true, y_pred, name):
     calibrationPlot(y_true, y_pred, os.path.join(path_to_storage, 'calibration'+name+'.png'))
@@ -269,6 +272,10 @@ def computeMetrics(y_true, y_pred, name):
 
 # COMPUTE
 y_true, y_boxes, y_singles = evaluate(xception, mlp)
+
+applyTreshold(y_true, 1e-2)
+applyTreshold(y_boxes, 1e-2)
+applyTreshold(y_singles, 1e-2)
 
 print('mean')
 y_mean_boxes = computeMetrics(y_true, y_boxes, 'boxes')
