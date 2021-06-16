@@ -233,11 +233,12 @@ def diff(y_true, y_b, y_s, filename):
 
 def pred(model_boxes, model_singles):
 
-    y_true_tot = []
-    y_pred_boxes_tot = []
-    y_pred_singles_tot = []
+    num = 44869385
+    y_true_tot = np.empty(num)
+    y_pred_boxes_tot = np.empty((num,len(quantiles)))
+    y_pred_singles_tot = np.empty((num,len(quantiles)))
 
-
+    i=0
     with torch.no_grad():
         for batch_index, batch_data in enumerate(test_data):
             print(batch_index)
@@ -252,25 +253,28 @@ def pred(model_boxes, model_singles):
             y_pred_boxes = np.concatenate([y_pred_boxes[i, :, mask[i].detach().cpu().numpy()==0] 
                                             for i in range(y_pred_boxes.shape[0])], axis=0)
 
-            y_true_tot += [y_true[~mask].detach().cpu().numpy()]
-            y_pred_boxes_tot += [y_pred_boxes]
+            increase = len(y_true[~mask].detach().cpu().numpy())
+            y_true_tot[i:i+increase] = y_true[~mask].detach().cpu().numpy()
+            y_pred_boxes_tot[i:i+increase, :] = y_pred_boxes
             
             #Singles
             boxes = torch.transpose(torch.flatten(torch.transpose(boxes, 0, 1), start_dim=1), 0, 1)
             mask = torch.flatten(mask)
 
             y_pred_singles = model_singles.predict(boxes)
-            y_pred_singles_tot += [y_pred_singles[~mask].detach().cpu().numpy()]
+            y_pred_singles_tot[i:i+increase, :] = y_pred_singles[~mask].detach().cpu().numpy()
+            i+=increase
 
-    print('concatenate')
-    y_true_tot_c = np.concatenate(y_true_tot, axis=0)
-    del y_true_tot
-    y_pred_boxes_tot_c = np.concatenate(y_pred_boxes_tot, axis=0)
-    del y_pred_boxes_tot
-    y_pred_singles_tot_c = np.concatenate(y_pred_singles_tot, axis=0)
-    del y_pred_singles_tot
+    #print('concatenate')
+    #y_true_tot_c = np.concatenate(y_true_tot, axis=0)
+    #del y_true_tot
+    #y_pred_boxes_tot_c = np.concatenate(y_pred_boxes_tot, axis=0)
+    #del y_pred_boxes_tot
+    #y_pred_singles_tot_c = np.concatenate(y_pred_singles_tot, axis=0)
+    #del y_pred_singles_tot
 
-    return(y_true_tot_c, y_pred_boxes_tot_c, y_pred_singles_tot_c)
+    #return(y_true_tot_c, y_pred_boxes_tot_c, y_pred_singles_tot_c)
+    return(y_true_tot, y_pred_boxes_tot, y_pred_singles_tot)
 
 def applyTreshold(y, th):
     y[y<th] = 0.0
