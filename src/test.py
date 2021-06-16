@@ -189,12 +189,14 @@ def calibrationPlot(y_true, y_pred, filename):
     plt.savefig(filename)
     
     
-def pdf(y_true, y_b, y_s, filename):
+def pdf(y_true, y_b, y_s, q_b, q_s, filename):
     end = np.max([np.max(y_true), np.max(y_b), np.max(y_s)])
     bins = np.linspace(0,end,101)
     f, ax = plt.subplots(figsize=(8, 8))
-    ax.hist(y_b, label='CNN', bins=bins, histtype='step', color='#72196d') 
-    ax.hist(y_s, label='MLP', bins=bins, histtype='step', color='#f308f3') 
+    ax.hist(y_b, label='CNN posterior mean', bins=bins, histtype='step', color='#72196d') 
+    ax.hist(q_b, label='CNN 95th quantile', bins=bins, histtype='step', color='#72196d', linestyle='dotted') 
+    ax.hist(y_s, label='MLP posterior mean', bins=bins, histtype='step', color='#f308f3') 
+    ax.hist(q_s, label='MLP 95th quantile', bins=bins, histtype='step', color='#f308f3', linestyle='dotted') 
     ax.hist(y_true, label='Reference', bins=bins, alpha=0.4, color='#64a6a1')
     ax.set_ylabel("Log scaled frequency")
     ax.set_xlabel("Rain rate (mm/h)")
@@ -273,35 +275,49 @@ def computeMetrics(y_true, y_pred, name):
     crps = qq.crps(y_pred, quantiles, y_true, quantile_axis=1)
     print('crps mean', crps.mean())
 
-    y_mean = qq.posterior_mean(y_pred, quantiles, quantile_axis=1)
 
+def computeMeanMetrics(y_true, y_mean, name):
+    Hist2D(y_true, y_mean, os.path.join(path_to_storage, '2Dhist_'+name+'.png'))
     bias = np.mean(np.subtract(y_true, y_mean))
     print('bias', bias)
     mae = np.mean(np.abs(np.subtract(y_true, y_mean)))
     print('MAE', mae)
     mse = np.mean(np.square(np.subtract(y_true, y_mean)))
     print('MSE', mse)
-
-    return(y_mean)
+    
+    
 
 
 # COMPUTE
 y_true, y_boxes, y_singles = pred(xception, mlp)
 
-#y_true = applyTreshold(y_true, 1e-2)
-#y_boxes = applyTreshold(y_boxes, 1e-2)
-#y_singles = applyTreshold(y_singles, 1e-2)
-
-print('mean')
-y_mean_boxes = computeMetrics(y_true, y_boxes, 'boxes')
+#Boxes
+computeMetrics(y_true, y_boxes, 'boxes')
+y_mean_boxes = qq.posterior_mean(y_boxes, quantiles, quantile_axis=1)
+q95_boxes = y_boxes[:,94]
+#q99_boxes = y_boxes[:,98]
 del y_boxes
 
-y_mean_singles = computeMetrics(y_true, y_singles, 'singles')
+#Singles
+computeMetrics(y_true, y_singles, 'singles')
+y_mean_singles = qq.posterior_mean(y_singles, quantiles, quantile_axis=1)
+q95_singles = y_singles[:,94]
+#q99_singles = y_singles[:,98]
 del y_singles
 
-Hist2D(y_true, y_mean_boxes, os.path.join(path_to_storage, '2Dhist_boxes.png'))
-Hist2D(y_true, y_mean_singles, os.path.join(path_to_storage, '2Dhist_singles.png'))
-pdf(y_true, y_mean_boxes, y_mean_singles, os.path.join(path_to_storage, 'pdf.png'))
+#Mean
+y_true = applyTreshold(y_true, 1e-2)
+y_mean_boxes = applyTreshold(y_mean_boxes, 1e-2)
+y_mean_singles = applyTreshold(y_mean_singles, 1e-2)
+computeMeanMetrics(y_true, y_mean_boxes, 'boxes')
+computeMeanMetrics(y_true, y_mean_singles, 'singles')
+
+#Common
+pdf(y_true, y_mean_boxes, y_mean_singles, q95_boxes, q95_singles, os.path.join(path_to_storage, 'pdf.png'))
 diff(y_true, y_mean_boxes, y_mean_singles, os.path.join(path_to_storage, 'diff.png'))
+
 print('done')
+
+
+
 
