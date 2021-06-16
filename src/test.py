@@ -210,7 +210,7 @@ def diff(y_true, y_b, y_s, filename):
     
 ###
 
-def evaluate(model_boxes, model_singles):
+def pred(model_boxes, model_singles):
 
     y_true_tot = []
     y_pred_boxes_tot = []
@@ -243,13 +243,17 @@ def evaluate(model_boxes, model_singles):
 
     print('concatenate')
     y_true_tot_c = np.concatenate(y_true_tot, axis=0)
+    del y_true_tot
     y_pred_boxes_tot_c = np.concatenate(y_pred_boxes_tot, axis=0)
+    del y_pred_boxes_tot
     y_pred_singles_tot_c = np.concatenate(y_pred_singles_tot, axis=0)
+    del y_pred_singles_tot
 
     return(y_true_tot_c, y_pred_boxes_tot_c, y_pred_singles_tot_c)
 
 def applyTreshold(y, th):
     y[y<th] = 0.0
+    return(y)
     
 def computeMetrics(y_true, y_pred, name):
     calibrationPlot(y_true, y_pred, os.path.join(path_to_storage, 'calibration'+name+'.png'))
@@ -271,11 +275,11 @@ def computeMetrics(y_true, y_pred, name):
 
 
 # COMPUTE
-y_true, y_boxes, y_singles = evaluate(xception, mlp)
+y_true, y_boxes, y_singles = pred(xception, mlp)
 
-applyTreshold(y_true, 1e-2)
-applyTreshold(y_boxes, 1e-2)
-applyTreshold(y_singles, 1e-2)
+y_true = applyTreshold(y_true, 1e-2)
+y_boxes = applyTreshold(y_boxes, 1e-2)
+y_singles = applyTreshold(y_singles, 1e-2)
 
 print('mean')
 y_mean_boxes = computeMetrics(y_true, y_boxes, 'boxes')
