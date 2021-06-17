@@ -269,7 +269,7 @@ def pred(model, mod_type, enum_dat, num = 44869385):
             loss[i:i+increase] = qq.quantile_loss(y_pred, quantiles, y_true, quantile_axis=1).mean(axis=1)
             crps[i:i+increase] = qq.crps(y_pred, quantiles, y_true, quantile_axis=1)
             
-            y_mean_tot[i:i+increase, :] = qq.posterior_mean(y_pred, quantiles, quantile_axis=1)
+            y_mean_tot[i:i+increase] = qq.posterior_mean(y_pred, quantiles, quantile_axis=1)
                 
             i+=increase
           
@@ -282,13 +282,28 @@ def applyTreshold(y, th):
   
 
 
-def computeMeanMetrics(y_true, y_mean, name):
+def computeMeanMetrics(y_true, y_mean):
     bias = np.mean(np.subtract(y_true, y_mean))
-    print('bias', bias)
+    #print('bias', bias)
     mae = np.mean(np.abs(np.subtract(y_true, y_mean)))
-    print('MAE', mae)
+    #print('MAE', mae)
     mse = np.mean(np.square(np.subtract(y_true, y_mean)))
-    print('MSE', mse)
+    #print('MSE', mse)
+    return([bias, mae, mse])
+    
+    
+def computeMeanMetricsIntervals(y_true, y_pred):
+    
+    
+    intervals = [0, 1e-1, 1e0, 1e1, 1e3]
+    metrics = np.array((len(intervals), 4))
+    
+    for i in range(len(intervals)):
+        interval_mask = (y_true >= intervals[i]) & (y_true < intervals[i+1])
+        metrics[i, 0] = interval_mask.sum()
+        metrics[i, 1:] = computeMeanMetrics(y_true[interval_mask], y_mean[interval_mask])
+       
+    print(metrics)
     
     
 #COMPUTE
@@ -319,8 +334,15 @@ del y_true_s
 y_true = applyTreshold(y_true, 1e-2)
 y_boxes = applyTreshold(y_boxes, 1e-2)
 y_singles = applyTreshold(y_singles, 1e-2)
-computeMeanMetrics(y_true, y_boxes, 'boxes')
-computeMeanMetrics(y_true, y_singles, 'singles')
+
+met = computeMeanMetrics(y_true, y_boxes)
+print(met)
+computeMeanMetricsIntervals(y_true, y_boxes)
+
+met = computeMeanMetrics(y_true, y_singles)
+print(met)
+computeMeanMetricsIntervals(y_true, y_singles)
+
 Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes.png'))
 Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles.png'))
 
