@@ -266,7 +266,7 @@ def pred(model, mod_type, enum_dat, num = 44869385):
             for i in range(len(quantiles)):
                 cal[i] += np.sum(y_true < y_pred[:,i])          
                 
-            loss[i:i+increase] = qq.quantile_loss(y_pred, quantiles, y_true, quantile_axis=1)
+            loss[i:i+increase] = qq.quantile_loss(y_pred, quantiles, y_true, quantile_axis=1).mean(axis=1)
             crps[i:i+increase] = qq.crps(y_pred, quantiles, y_true, quantile_axis=1)
             
             y_mean_tot[i:i+increase, :] = qq.posterior_mean(y_pred, quantiles, quantile_axis=1)
@@ -283,8 +283,6 @@ def applyTreshold(y, th):
 
 
 def computeMeanMetrics(y_true, y_mean, name):
-    Hist2D(y_true, y_mean, os.path.join(path_to_storage, '2Dhist_'+name+'.png'))
-    print('Hist2D done')
     bias = np.mean(np.subtract(y_true, y_mean))
     print('bias', bias)
     mae = np.mean(np.abs(np.subtract(y_true, y_mean)))
@@ -323,6 +321,8 @@ y_boxes = applyTreshold(y_boxes, 1e-2)
 y_singles = applyTreshold(y_singles, 1e-2)
 computeMeanMetrics(y_true, y_boxes, 'boxes')
 computeMeanMetrics(y_true, y_singles, 'singles')
+Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes.png'))
+Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles.png'))
 
 #Common
 #pdf(y_true, y_boxes, y_singles, q95_boxes, q95_singles, os.path.join(path_to_storage, 'pdf.png'))
