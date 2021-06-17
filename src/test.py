@@ -228,7 +228,7 @@ def diff(y_true, y_b, y_s, filename):
     
 ###
 
-def pred(model, mod_type, enum_dat):
+def pred(model, mod_type):
 
     y_true_tot = []
     y_mean_tot = []
@@ -312,7 +312,7 @@ def computeMeanMetricsIntervals(y_true, y_pred):
 #COMPUTE
 #Boxes
 print('boxes')
-y_true, y_boxes, cal, loss, crps = pred(xception, 'boxes', enum)
+y_true, y_boxes, cal, loss, crps = pred(xception, 'boxes')
 print('predictions done')
 print('loss', loss)
 print('crps', crps)
@@ -320,7 +320,7 @@ calibrationPlot(cal, 'calibration_boxes.png')
 
 #Singles
 print('singles')
-y_true_s, y_singles, cal, loss, crps = pred(mlp, 'singles', enum)
+y_true_s, y_singles, cal, loss, crps = pred(mlp, 'singles')
 print('predictions done')
 print('loss', loss)
 print('crps', crps)
