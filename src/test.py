@@ -182,12 +182,7 @@ def Hist2D(y_true, y_pred, filename):
     
     
     
-def calibrationPlot(y_true, y_pred, filename):
-    cal = np.zeros(len(quantiles))
-    N = len(y_true)
-
-    for i in range(len(quantiles)):
-        cal[i] = (y_true < y_pred[:,i]).sum() / N
+def calibrationPlot(cal, filename):
         
     f, ax = plt.subplots(figsize=(8, 8))
     ax.plot(quantiles, cal, color=color_neutral)
@@ -233,8 +228,11 @@ def diff(y_true, y_b, y_s, filename):
 
 def pred(model, mod_type, enum_dat, num = 44869385):
 
-    y_true_tot = np.empty(num)
-    y_pred_tot = np.empty((num,len(quantiles)))
+    y_true_tot = np.zeros(num)
+    y_mean_tot = np.zeros((num,len(quantiles)))
+    cal = np.zeros(len(quantiles))
+    loss = np.zeros(num)
+    crps = np.zeros(num)
 
     i=0
     with torch.no_grad():
@@ -246,50 +244,47 @@ def pred(model, mod_type, enum_dat, num = 44869385):
             
             mask = (torch.less(y_true, 0))
             
-            increase = len(y_true[~mask].detach().cpu().numpy())
-            y_true_tot[i:i+increase] = y_true[~mask].detach().cpu().numpy()
-
-            
+            y_true = y_true[~mask].detach().cpu().numpy()
+            increase = len(y_true)
+       
             if mod_type=='boxes':
                 y_pred_boxes = model.predict(boxes).detach().cpu().numpy()
-                y_pred_boxes = np.concatenate([y_pred_boxes[i, :, mask[i].detach().cpu().numpy()==0] 
+                y_pred = np.concatenate([y_pred_boxes[i, :, mask[i].detach().cpu().numpy()==0] 
                                                 for i in range(y_pred_boxes.shape[0])], axis=0)
-                y_pred_tot[i:i+increase, :] = y_pred_boxes
 
             elif mod_type=='singles':
                 boxes = torch.transpose(torch.flatten(torch.transpose(boxes, 0, 1), start_dim=1), 0, 1)
                 mask = torch.flatten(mask)
 
                 y_pred_singles = model.predict(boxes)
-                y_pred_tot[i:i+increase, :] = y_pred_singles[~mask].detach().cpu().numpy()
+                y_pred = y_pred_singles[~mask].detach().cpu().numpy()
+                
+            #y_pred_tot[i:i+increase, :] = y_pred
+            y_true_tot[i:i+increase] = y_true
+
+            #Metrics
+            for i in range(len(quantiles)):
+                cal[i] += np.sum(y_true < y_pred[:,i])          
+                
+            loss[i:i+increase] = qq.quantile_loss(y_pred, quantiles, y_true, quantile_axis=1)
+            crps[i:i+increase] = qq.crps(y_pred, quantiles, y_true, quantile_axis=1)
+            
+            y_mean_tot[i:i+increase, :] = qq.posterior_mean(y_pred, quantiles, quantile_axis=1)
                 
             i+=increase
-
-    #print('concatenate')
-    #y_true_tot_c = np.concatenate(y_true_tot, axis=0)
-    #del y_true_tot
-    #y_pred_boxes_tot_c = np.concatenate(y_pred_boxes_tot, axis=0)
-    #del y_pred_boxes_tot
-    #y_pred_singles_tot_c = np.concatenate(y_pred_singles_tot, axis=0)
-    #del y_pred_singles_tot
-
-    #return(y_true_tot_c, y_pred_boxes_tot_c, y_pred_singles_tot_c)
-    return(y_true_tot, y_pred_tot)
+          
+    
+    return(y_true_tot, y_mean_tot, cal/num, loss.mean(), crps.mean())
 
 def applyTreshold(y, th):
     y[y<th] = 0.0
     return(y)
-    
-def computeMetrics(y_true, y_pred, name):
-    calibrationPlot(y_true, y_pred, os.path.join(path_to_storage, 'calibration'+name+'.png'))
-    loss = qq.quantile_loss(y_pred, quantiles, y_true, quantile_axis=1)
-    print('loss mean', loss.mean())
-    crps = qq.crps(y_pred, quantiles, y_true, quantile_axis=1)
-    print('crps mean', crps.mean())
+  
 
 
 def computeMeanMetrics(y_true, y_mean, name):
     Hist2D(y_true, y_mean, os.path.join(path_to_storage, '2Dhist_'+name+'.png'))
+    print('Hist2D done')
     bias = np.mean(np.subtract(y_true, y_mean))
     print('bias', bias)
     mae = np.mean(np.abs(np.subtract(y_true, y_mean)))
@@ -303,39 +298,35 @@ enum = enumerate(test_data)
 
 #Boxes
 print('boxes')
-y_true, y_boxes = pred(xception, 'boxes', enum)
+y_true, y_boxes, cal, loss, crps = pred(xception, 'boxes', enum)
 print('predictions done')
-computeMetrics(y_true, y_boxes, 'boxes')
-y_mean_boxes = qq.posterior_mean(y_boxes, quantiles, quantile_axis=1)
-q95_boxes = y_boxes[:,94]
-#q99_boxes = y_boxes[:,98]
-del y_boxes
+print('loss', loss)
+print('crps', crps)
+calibrationPlot(cal, 'calibration_boxes.png')
 
 #Singles
 print('singles')
-y_true_s, y_singles = pred(mlp, 'singles', enum)
+y_true_s, y_singles, cal, loss, crps = pred(mlp, 'singles', enum)
 print('predictions done')
+print('loss', loss)
+print('crps', crps)
+calibrationPlot(cal, 'calibration_singles.png')
 
 same = (y_true == y_true_s).all()
 assert same, "True values differ"
 del y_true_s
-    
-computeMetrics(y_true, y_singles, 'singles')
-y_mean_singles = qq.posterior_mean(y_singles, quantiles, quantile_axis=1)
-q95_singles = y_singles[:,94]
-#q99_singles = y_singles[:,98]
-del y_singles
+
 
 #Mean
 y_true = applyTreshold(y_true, 1e-2)
-y_mean_boxes = applyTreshold(y_mean_boxes, 1e-2)
-y_mean_singles = applyTreshold(y_mean_singles, 1e-2)
-computeMeanMetrics(y_true, y_mean_boxes, 'boxes')
-computeMeanMetrics(y_true, y_mean_singles, 'singles')
+y_boxes = applyTreshold(y_boxes, 1e-2)
+y_singles = applyTreshold(y_singles, 1e-2)
+computeMeanMetrics(y_true, y_boxes, 'boxes')
+computeMeanMetrics(y_true, y_singles, 'singles')
 
 #Common
-pdf(y_true, y_mean_boxes, y_mean_singles, q95_boxes, q95_singles, os.path.join(path_to_storage, 'pdf.png'))
-diff(y_true, y_mean_boxes, y_mean_singles, os.path.join(path_to_storage, 'diff.png'))
+#pdf(y_true, y_boxes, y_singles, q95_boxes, q95_singles, os.path.join(path_to_storage, 'pdf.png'))
+diff(y_true, y_boxes, y_singles, os.path.join(path_to_storage, 'diff.png'))
 
 print('done')
 
