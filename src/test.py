@@ -301,7 +301,7 @@ def computeMeanMetricsIntervals(y_true, y_pred):
     intervals = [0, 1e-1, 1e0, 1e1, 1e3]
     metrics = np.zeros((len(intervals), 4))
     
-    for i in range(len(intervals)):
+    for i in range(len(intervals)-1):
         interval_mask = (y_true >= intervals[i]) & (y_true < intervals[i+1])
         metrics[i, 0] = len(y_true[interval_mask])
         metrics[i, 1:] = computeMeanMetrics(y_true[interval_mask], y_pred[interval_mask])
