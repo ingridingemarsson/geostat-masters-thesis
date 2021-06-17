@@ -94,7 +94,9 @@ def importData(BATCH_SIZE, path_to_data, path_to_stats, channel_inds, isTrain=Fa
         transform=transforms.Compose(transforms_list))
     print('number of samples:', len(dataset))
 
-    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True, num_workers=1)
+    dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, 
+                            shuffle=False, #Try this to run for boxes and singles separately
+                            num_workers=1)
     return(dataset, dataloader)
 
 keys=("box", "label")
@@ -235,7 +237,7 @@ def pred(model, mod_type, enum_dat):
     crps = []
 
     with torch.no_grad():
-        for batch_index, batch_data in enum_dat:
+        for batch_index, batch_data in enumerate(test_data):
             print(batch_index)
 
             boxes = batch_data['box'].to(device)
@@ -308,8 +310,6 @@ def computeMeanMetricsIntervals(y_true, y_pred):
     
     
 #COMPUTE
-enum = enumerate(test_data)
-
 #Boxes
 print('boxes')
 y_true, y_boxes, cal, loss, crps = pred(xception, 'boxes', enum)
