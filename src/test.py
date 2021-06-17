@@ -231,16 +231,14 @@ def diff(y_true, y_b, y_s, filename):
     
 ###
 
-def pred(model_boxes, model_singles):
+def pred(model, mod_type, enum_dat, num = 44869385):
 
-    num = 44869385
     y_true_tot = np.empty(num)
-    y_pred_boxes_tot = np.empty((num,len(quantiles)))
-    y_pred_singles_tot = np.empty((num,len(quantiles)))
+    y_pred_tot = np.empty((num,len(quantiles)))
 
     i=0
     with torch.no_grad():
-        for batch_index, batch_data in enumerate(test_data):
+        for batch_index, batch_data in enum_dat:
             print(batch_index)
 
             boxes = batch_data['box'].to(device)
@@ -248,21 +246,21 @@ def pred(model_boxes, model_singles):
 
             mask = (torch.less(y_true, 0))
             
-            #Boxes
-            y_pred_boxes = model_boxes.predict(boxes).detach().cpu().numpy()
-            y_pred_boxes = np.concatenate([y_pred_boxes[i, :, mask[i].detach().cpu().numpy()==0] 
-                                            for i in range(y_pred_boxes.shape[0])], axis=0)
+            if mod_type=='boxes':
+                y_pred_boxes = model.predict(boxes).detach().cpu().numpy()
+                y_pred_boxes = np.concatenate([y_pred_boxes[i, :, mask[i].detach().cpu().numpy()==0] 
+                                                for i in range(y_pred_boxes.shape[0])], axis=0)
+                y_pred_tot[i:i+increase, :] = y_pred_boxes
 
+            elif mod_type=='singles':
+                boxes = torch.transpose(torch.flatten(torch.transpose(boxes, 0, 1), start_dim=1), 0, 1)
+                mask = torch.flatten(mask)
+
+                y_pred_singles = model.predict(boxes)
+                y_pred_tot[i:i+increase, :] = y_pred_singles[~mask].detach().cpu().numpy()
+                
             increase = len(y_true[~mask].detach().cpu().numpy())
             y_true_tot[i:i+increase] = y_true[~mask].detach().cpu().numpy()
-            y_pred_boxes_tot[i:i+increase, :] = y_pred_boxes
-            
-            #Singles
-            boxes = torch.transpose(torch.flatten(torch.transpose(boxes, 0, 1), start_dim=1), 0, 1)
-            mask = torch.flatten(mask)
-
-            y_pred_singles = model_singles.predict(boxes)
-            y_pred_singles_tot[i:i+increase, :] = y_pred_singles[~mask].detach().cpu().numpy()
             i+=increase
 
     #print('concatenate')
@@ -274,7 +272,7 @@ def pred(model_boxes, model_singles):
     #del y_pred_singles_tot
 
     #return(y_true_tot_c, y_pred_boxes_tot_c, y_pred_singles_tot_c)
-    return(y_true_tot, y_pred_boxes_tot, y_pred_singles_tot)
+    return(y_true_tot, y_pred_tot)
 
 def applyTreshold(y, th):
     y[y<th] = 0.0
@@ -298,12 +296,12 @@ def computeMeanMetrics(y_true, y_mean, name):
     print('MSE', mse)
     
     
-
-
-# COMPUTE
-y_true, y_boxes, y_singles = pred(xception, mlp)
+#COMPUTE
+enum = enumerate(test_data)
 
 #Boxes
+print('boxes')
+y_true, y_boxes = pred(xception, 'boxes', enum)
 computeMetrics(y_true, y_boxes, 'boxes')
 y_mean_boxes = qq.posterior_mean(y_boxes, quantiles, quantile_axis=1)
 q95_boxes = y_boxes[:,94]
@@ -311,6 +309,13 @@ q95_boxes = y_boxes[:,94]
 del y_boxes
 
 #Singles
+print('singles')
+y_true_s, y_singles = pred(mlp, 'singles', enum)
+
+same = (y_true == y_true_s).all()
+assert same, "True values differ"
+del y_true_s
+    
 computeMetrics(y_true, y_singles, 'singles')
 y_mean_singles = qq.posterior_mean(y_singles, quantiles, quantile_axis=1)
 q95_singles = y_singles[:,94]
