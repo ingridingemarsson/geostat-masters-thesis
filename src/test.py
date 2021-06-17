@@ -304,6 +304,7 @@ enum = enumerate(test_data)
 #Boxes
 print('boxes')
 y_true, y_boxes = pred(xception, 'boxes', enum)
+print('predictions done')
 computeMetrics(y_true, y_boxes, 'boxes')
 y_mean_boxes = qq.posterior_mean(y_boxes, quantiles, quantile_axis=1)
 q95_boxes = y_boxes[:,94]
@@ -313,6 +314,7 @@ del y_boxes
 #Singles
 print('singles')
 y_true_s, y_singles = pred(mlp, 'singles', enum)
+print('predictions done')
 
 same = (y_true == y_true_s).all()
 assert same, "True values differ"
