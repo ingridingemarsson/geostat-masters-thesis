@@ -304,7 +304,7 @@ def computeMeanMetricsIntervals(y_true, y_pred):
     for i in range(len(intervals)):
         interval_mask = (y_true >= intervals[i]) & (y_true < intervals[i+1])
         metrics[i, 0] = len(y_true[interval_mask])
-        metrics[i, 1:] = computeMeanMetrics(y_true[interval_mask], y_mean[interval_mask])
+        metrics[i, 1:] = computeMeanMetrics(y_true[interval_mask], y_pred[interval_mask])
        
     print(metrics)
     
