@@ -229,7 +229,7 @@ def diff(y_true, y_b, y_s, filename):
 def pred(model, mod_type, enum_dat, num = 44869385):
 
     y_true_tot = np.zeros(num)
-    y_mean_tot = np.zeros((num,len(quantiles)))
+    y_mean_tot = np.zeros(num)
     cal = np.zeros(len(quantiles))
     loss = np.zeros(num)
     crps = np.zeros(num)
