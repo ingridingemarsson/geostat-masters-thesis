@@ -226,15 +226,14 @@ def diff(y_true, y_b, y_s, filename):
     
 ###
 
-def pred(model, mod_type, enum_dat, num = 44869385):
+def pred(model, mod_type, enum_dat):
 
-    y_true_tot = np.zeros(num)
-    y_mean_tot = np.zeros(num)
+    y_true_tot = []
+    y_mean_tot = []
     cal = np.zeros(len(quantiles))
-    loss = np.zeros(num)
-    crps = np.zeros(num)
+    loss = []
+    crps = []
 
-    i=0
     with torch.no_grad():
         for batch_index, batch_data in enum_dat:
             print(batch_index)
@@ -245,7 +244,6 @@ def pred(model, mod_type, enum_dat, num = 44869385):
             mask = (torch.less(y_true, 0))
             
             y_true = y_true[~mask].detach().cpu().numpy()
-            increase = len(y_true)
        
             if mod_type=='boxes':
                 y_pred_boxes = model.predict(boxes).detach().cpu().numpy()
@@ -259,22 +257,25 @@ def pred(model, mod_type, enum_dat, num = 44869385):
                 y_pred_singles = model.predict(boxes)
                 y_pred = y_pred_singles[~mask].detach().cpu().numpy()
                 
-            #y_pred_tot[i:i+increase, :] = y_pred
-            y_true_tot[i:i+increase] = y_true
+            y_true_tot += [y_true]
 
             #Metrics
             for i in range(len(quantiles)):
                 cal[i] += np.sum(y_true < y_pred[:,i])          
                 
-            loss[i:i+increase] = qq.quantile_loss(y_pred, quantiles, y_true, quantile_axis=1).mean(axis=1)
-            crps[i:i+increase] = qq.crps(y_pred, quantiles, y_true, quantile_axis=1)
+            loss += [qq.quantile_loss(y_pred, quantiles, y_true, quantile_axis=1).mean(axis=1)]
+            crps += [qq.crps(y_pred, quantiles, y_true, quantile_axis=1)]
             
-            y_mean_tot[i:i+increase] = qq.posterior_mean(y_pred, quantiles, quantile_axis=1)
+            y_mean_tot += [qq.posterior_mean(y_pred, quantiles, quantile_axis=1)]
                 
-            i+=increase
+
           
+    y_true_tot_c = np.concatenate(y_true_tot, axis=0)
+    y_mean_tot_c = np.concatenate(y_mean_tot, axis=0)
+    loss_c = np.concatenate(loss, axis=0)
+    crps_c = np.concatenate(crps, axis=0)
     
-    return(y_true_tot, y_mean_tot, cal/num, loss.mean(), crps.mean())
+    return(y_true_tot_c, y_mean_tot_c, cal/len(y_true_tot_c), loss_c.mean(), crps_c.mean())
 
 def applyTreshold(y, th):
     y[y<th] = 0.0
