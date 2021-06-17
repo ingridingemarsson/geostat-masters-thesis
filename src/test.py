@@ -243,6 +243,9 @@ def pred(model, mod_type, enum_dat, num = 44869385):
 
             boxes = batch_data['box'].to(device)
             y_true = batch_data['label']
+            
+            increase = len(y_true[~mask].detach().cpu().numpy())
+            y_true_tot[i:i+increase] = y_true[~mask].detach().cpu().numpy()
 
             mask = (torch.less(y_true, 0))
             
@@ -259,8 +262,6 @@ def pred(model, mod_type, enum_dat, num = 44869385):
                 y_pred_singles = model.predict(boxes)
                 y_pred_tot[i:i+increase, :] = y_pred_singles[~mask].detach().cpu().numpy()
                 
-            increase = len(y_true[~mask].detach().cpu().numpy())
-            y_true_tot[i:i+increase] = y_true[~mask].detach().cpu().numpy()
             i+=increase
 
     #print('concatenate')
