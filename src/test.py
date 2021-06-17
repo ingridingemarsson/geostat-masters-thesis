@@ -244,10 +244,11 @@ def pred(model, mod_type, enum_dat, num = 44869385):
             boxes = batch_data['box'].to(device)
             y_true = batch_data['label']
             
+            mask = (torch.less(y_true, 0))
+            
             increase = len(y_true[~mask].detach().cpu().numpy())
             y_true_tot[i:i+increase] = y_true[~mask].detach().cpu().numpy()
 
-            mask = (torch.less(y_true, 0))
             
             if mod_type=='boxes':
                 y_pred_boxes = model.predict(boxes).detach().cpu().numpy()
