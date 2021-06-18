@@ -234,6 +234,7 @@ def pred(model, mod_type):
 
     y_true_tot = []
     y_mean_tot = []
+    y_q95_tot = []
     cal = np.zeros(len(quantiles))
     loss = []
     crps = []
@@ -306,12 +307,16 @@ def computeMeanMetricsIntervals(y_true, y_pred):
     
     
     intervals = [0, 1e-1, 1e0, 1e1, 1e3]
-    metrics = np.zeros((len(intervals), 4))
+    metrics = []
     
     for i in range(len(intervals)-1):
         interval_mask = (y_true >= intervals[i]) & (y_true < intervals[i+1])
-        metrics[i, 0] = len(y_true[interval_mask])
-        metrics[i, 1:] = computeMeanMetrics(y_true[interval_mask], y_pred[interval_mask])
+        metrics_row = []
+        metrics_row.append(str(intervals[i])+'-'+str(intervals[i+1]))
+        
+        metrics_row.append(len(y_true[interval_mask])/len(y_true))
+        metrics_row.append(computeMeanMetrics(y_true[interval_mask], y_pred[interval_mask]))
+        metrics.append(metrics_row)
        
     print(metrics)
     
@@ -333,6 +338,18 @@ same = (y_true == y_true_s).all()
 assert same, "True values differ"
 del y_true_s
 
+#Hist
+Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes_colwisebinscaled.png'), norm_type='colwisebinscaled')
+Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles_colwisebinscaled.png'),  norm_type='colwisebinscaled')
+Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes_colwise.png'), norm_type='colwise')
+Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles_colwise.png'),  norm_type='colwise')
+Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes.png'))
+Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles.png'))
+
+#Common
+pdf(y_true, y_boxes, y_singles, y_boxes_q95, y_singles_q95, os.path.join(path_to_storage, 'pdf.png'))
+diff(y_true, y_boxes, y_singles, os.path.join(path_to_storage, 'diff.png'))
+
 
 #Mean
 y_true = applyTreshold(y_true, 1e-2)
@@ -346,17 +363,6 @@ computeMeanMetricsIntervals(y_true, y_boxes)
 met = computeMeanMetrics(y_true, y_singles)
 print(met)
 computeMeanMetricsIntervals(y_true, y_singles)
-
-Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes_colwisebinscaled.png'), norm_type='colwisebinscaled')
-Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles_colwisebinscaled.png'),  norm_type='colwisebinscaled')
-Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes_colwise.png'), norm_type='colwise')
-Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles_colwise.png'),  norm_type='colwise')
-Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes.png'))
-Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles.png'))
-
-#Common
-pdf(y_true, y_boxes, y_singles, y_boxes_q95, y_singles_q95, os.path.join(path_to_storage, 'pdf.png'))
-diff(y_true, y_boxes, y_singles, os.path.join(path_to_storage, 'diff.png'))
 
 print('done')
 
