@@ -138,47 +138,49 @@ color_cnn ='#72196d'
 color_mlp = '#327a4f'
 color_gauges = '#64a6a1'
 color_neutral = '#990909'
+color_grid = "#e9e9e9"
 
 ###
 
-def Hist2D(y_true, y_pred, filename):
-
-    #norm = Normalize(0, 100)
-    bins = np.logspace(-4, 3, 80)
+def hist2D(y_true, y_pred, filename, norm_type=None):
+    bins = np.logspace(-2, 2, 50)
+    
     freqs, _, _ = np.histogram2d(y_true, y_pred, bins=bins)
-    
     freqs[freqs==0.0] = np.nan
-    
-    freqs_normed = freqs
-    #print( np.nansum(freqs, axis=1))
-    for col_ind in range(freqs.shape[0]):
-        if np.isnan(freqs[col_ind, :]).all():
-            freqs_normed[col_ind, :] = np.array([np.nan] * freqs.shape[1])
-        else:
-            freqs_normed[col_ind, :] = freqs[col_ind, :] / np.nansum(freqs[col_ind, :])    
-            
-    freqs = freqs_normed
-    
-    #freqs = freqs / np.nansum(freqs, axis=0)
-    #norm = LogNorm(vmin=np.nanmin(freqs), vmax=np.nanmax(freqs))
-    
-    f, ax = plt.subplots(figsize=(8, 8))
 
-    m = ax.pcolormesh(bins, bins, freqs.T, cmap=newcmp)#, norm=norm)
-    ax.set_xlim([1e-4, 1e3])
-    ax.set_ylim([1e-4, 1e3])
+    if norm_type==None:
+        freqs_normed = freqs
+    elif norm_type=='colwise':
+        freqs_normed = freqs
+        for col_ind in range(freqs.shape[0]):
+            if np.isnan(freqs[col_ind, :]).all():
+                freqs_normed[col_ind, :] = np.array([np.nan] * freqs.shape[1])
+            else:
+                freqs_normed[col_ind, :] = freqs[col_ind, :] / np.nansum(freqs[col_ind, :])
+    elif norm_type=='colwisebinscaled':
+        freqs_normed = freqs
+        for col_ind in range(freqs.shape[0]):
+            if np.isnan(freqs[col_ind, :]).all():
+                freqs_normed[col_ind, :] = np.array([np.nan] * freqs.shape[1])
+            else:
+                nonempty_fraq = (np.isnan(freqs[col_ind, :])==False).sum()/len(np.isnan(freqs[col_ind, :]))
+                freqs_normed[col_ind, :] = freqs[col_ind, :]/np.nansum(freqs[col_ind, :])*nonempty_fraq        
+
+    f, ax = plt.subplots(figsize=(8,8))
+    m = ax.pcolormesh(bins, bins, freqs_normed.T, cmap=newcmp)
+    ax.set_xlim([1e-2, 1e2])
+    ax.set_ylim([1e-2, 1e2])
+
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel("Reference rain rate [mm / h]")
-    ax.set_ylabel("Predicted rain rate [mm / h]")
+    ax.set_xlabel("Reference rain rate, gauges (mm)")
+    ax.set_ylabel("Predicted rain rate (mm)")
     ax.plot(bins, bins, c="grey", ls="--")
-    ax.grid(True,which="both",ls="--",c='lightgray')  
-    #ax.set_aspect(1.0)
-
+    ax.grid(True,which="both",ls="--",c=color_grid)
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.07)
     plt.colorbar(m, cax=cax)
-
+    
     plt.tight_layout()
     plt.savefig(filename)
     
@@ -269,15 +271,20 @@ def pred(model, mod_type):
             crps += [qq.crps(y_pred, quantiles, y_true, quantile_axis=1)]
             
             y_mean_tot += [qq.posterior_mean(y_pred, quantiles, quantile_axis=1)]
+            y_q95_tot += [y_pred[:,94]]
                 
 
           
     y_true_tot_c = np.concatenate(y_true_tot, axis=0)
     y_mean_tot_c = np.concatenate(y_mean_tot, axis=0)
+    y_q95_tot_c = np.concatenate(y_q95_tot, axis=0)
     loss_c = np.concatenate(loss, axis=0)
     crps_c = np.concatenate(crps, axis=0)
     
-    return(y_true_tot_c, y_mean_tot_c, cal/len(y_true_tot_c), loss_c.mean(), crps_c.mean())
+    print('loss',  loss_c.mean())
+    print('crps', crps_c.mean())
+    
+    return(y_true_tot_c, y_mean_tot_c, y_q95_tot_c, cal/len(y_true_tot_c))
 
 def applyTreshold(y, th):
     y[y<th] = 0.0
@@ -312,18 +319,14 @@ def computeMeanMetricsIntervals(y_true, y_pred):
 #COMPUTE
 #Boxes
 print('boxes')
-y_true, y_boxes, cal, loss, crps = pred(xception, 'boxes')
+y_true, y_boxes, y_boxes_q95, cal = pred(xception, 'boxes')
 print('predictions done')
-print('loss', loss)
-print('crps', crps)
 calibrationPlot(cal, 'calibration_boxes.png')
 
 #Singles
 print('singles')
-y_true_s, y_singles, cal, loss, crps = pred(mlp, 'singles')
+y_true_s, y_singles, y_singles_q95, cal = pred(mlp, 'singles')
 print('predictions done')
-print('loss', loss)
-print('crps', crps)
 calibrationPlot(cal, 'calibration_singles.png')
 
 same = (y_true == y_true_s).all()
@@ -344,11 +347,15 @@ met = computeMeanMetrics(y_true, y_singles)
 print(met)
 computeMeanMetricsIntervals(y_true, y_singles)
 
+Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes_colwisebinscaled.png'), norm_type='colwisebinscaled')
+Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles_colwisebinscaled.png'),  norm_type='colwisebinscaled')
+Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes_colwise.png'), norm_type='colwise')
+Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles_colwise.png'),  norm_type='colwise')
 Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes.png'))
 Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles.png'))
 
 #Common
-#pdf(y_true, y_boxes, y_singles, q95_boxes, q95_singles, os.path.join(path_to_storage, 'pdf.png'))
+pdf(y_true, y_boxes, y_singles, y_boxes_q95, y_singles_q95, os.path.join(path_to_storage, 'pdf.png'))
 diff(y_true, y_boxes, y_singles, os.path.join(path_to_storage, 'diff.png'))
 
 print('done')
