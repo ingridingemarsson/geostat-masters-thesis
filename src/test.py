@@ -142,7 +142,7 @@ color_grid = "#e9e9e9"
 
 ###
 
-def hist2D(y_true, y_pred, filename, norm_type=None):
+def Hist2D(y_true, y_pred, filename, norm_type=None):
     bins = np.logspace(-2, 2, 50)
     
     freqs, _, _ = np.histogram2d(y_true, y_pred, bins=bins)
