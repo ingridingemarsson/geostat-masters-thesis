@@ -150,7 +150,7 @@ def Hist2D(y_true, y_pred, filename, norm_type=None):
     freqs, _, _ = np.histogram2d(y_true, y_pred, bins=bins)
     freqs[freqs==0.0] = np.nan
     vmax = None
-    extend = None
+    extend = 'neither'
 
     if norm_type==None:
         freqs_normed = freqs
