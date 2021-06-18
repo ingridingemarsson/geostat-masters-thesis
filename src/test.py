@@ -294,7 +294,7 @@ def pred(model, mod_type):
     
     return(y_true_tot_c, y_mean_tot_c, y_q95_tot_c, cal/len(y_true_tot_c))
 
-def applyTreshold(y, th):
+def applyThreshold(y, th):
     y[y<th] = 0.0
     return(y)
   
@@ -345,6 +345,11 @@ same = (y_true == y_true_s).all()
 assert same, "True values differ"
 del y_true_s
 
+#Threshold
+y_true = applyThreshold(y_true, 1e-2)
+y_boxes = applyThreshold(y_boxes, 1e-2)
+y_singles = applyThreshold(y_singles, 1e-2)
+
 #Hist
 Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes_colwisebinscaled.png'), norm_type='colwisebinscaled')
 Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles_colwisebinscaled.png'),  norm_type='colwisebinscaled')
@@ -358,10 +363,7 @@ pdf(y_true, y_boxes, y_singles, y_boxes_q95, y_singles_q95, os.path.join(path_to
 diff(y_true, y_boxes, y_singles, os.path.join(path_to_storage, 'diff.png'))
 
 
-#Mean
-y_true = applyTreshold(y_true, 1e-2)
-y_boxes = applyTreshold(y_boxes, 1e-2)
-y_singles = applyTreshold(y_singles, 1e-2)
+
 
 met = computeMeanMetrics(y_true, y_boxes)
 print(met)
