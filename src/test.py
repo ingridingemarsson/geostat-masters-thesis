@@ -143,10 +143,14 @@ color_grid = "#e9e9e9"
 ###
 
 def Hist2D(y_true, y_pred, filename, norm_type=None):
-    bins = np.logspace(-2, 2, 50)
+    bins = np.logspace(-2, 3, 100)# 81)
+    
+    print('max y_true', np.max(y_true))
     
     freqs, _, _ = np.histogram2d(y_true, y_pred, bins=bins)
     freqs[freqs==0.0] = np.nan
+    vmax = None
+    extend = None
 
     if norm_type==None:
         freqs_normed = freqs
@@ -157,6 +161,9 @@ def Hist2D(y_true, y_pred, filename, norm_type=None):
                 freqs_normed[col_ind, :] = np.array([np.nan] * freqs.shape[1])
             else:
                 freqs_normed[col_ind, :] = freqs[col_ind, :] / np.nansum(freqs[col_ind, :])
+        vmax=np.percentile(freqs_normed[np.isnan(freqs_normed)==False], 99)
+        extend = 'max'
+        print(vmax)
     elif norm_type=='colwisebinscaled':
         freqs_normed = freqs
         for col_ind in range(freqs.shape[0]):
@@ -167,19 +174,19 @@ def Hist2D(y_true, y_pred, filename, norm_type=None):
                 freqs_normed[col_ind, :] = freqs[col_ind, :]/np.nansum(freqs[col_ind, :])*nonempty_fraq        
 
     f, ax = plt.subplots(figsize=(8,8))
-    m = ax.pcolormesh(bins, bins, freqs_normed.T, cmap=newcmp)
-    ax.set_xlim([1e-2, 1e2])
-    ax.set_ylim([1e-2, 1e2])
+    m = ax.pcolormesh(bins, bins, freqs_normed.T, cmap=newcmp, vmax=vmax)
+    ax.set_xlim([1e-2, 1e3])
+    ax.set_ylim([1e-2, 1e3])
 
     ax.set_xscale("log")
     ax.set_yscale("log")
-    ax.set_xlabel("Reference rain rate, gauges (mm)")
-    ax.set_ylabel("Predicted rain rate (mm)")
+    ax.set_xlabel("Reference rain rate (mm/h)")
+    ax.set_ylabel("Predicted rain rate (mm/h)")
     ax.plot(bins, bins, c="grey", ls="--")
     ax.grid(True,which="both",ls="--",c=color_grid)
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.07)
-    plt.colorbar(m, cax=cax)
+    plt.colorbar(m, cax=cax, extend=extend)
     
     plt.tight_layout()
     plt.savefig(filename)
@@ -205,7 +212,7 @@ def pdf(y_true, y_b, y_s, q_b, q_s, filename):
     ax.hist(y_s, label='MLP posterior mean', bins=bins, histtype='step', color=color_mlp) 
     ax.hist(q_s, label='MLP 95th quantile', bins=bins, histtype='step', color=color_mlp, linestyle='dotted') 
     ax.hist(y_true, label='Reference', bins=bins, alpha=0.4, color=color_gauges)
-    ax.set_ylabel("Log scaled frequency")
+    ax.set_ylabel("Frequency")
     ax.set_xlabel("Rain rate (mm/h)")
     ax.set_yscale("log")
     ax.legend()
@@ -221,8 +228,8 @@ def diff(y_true, y_b, y_s, filename):
     ax.set_yscale("log")
     ax.hist(np.subtract(y_true, y_b), alpha=0.6, bins=bins, color=color_cnn, label='CNN')
     ax.hist(np.subtract(y_true, y_s), alpha=1, bins=bins, color=color_mlp, label='MLP', histtype='step')
-    ax.set_ylabel('Logged counts')
-    ax.set_xlabel('Rain difference (mm)')
+    ax.set_ylabel('Frequency')
+    ax.set_xlabel('Difference rain rate (mm/h)')
     ax.axvline(x=0.0, color='grey', alpha=0.5, linestyle='dashed')
     ax.grid(True,which="both",ls="--",c='lightgray')  
     ax.legend()
