@@ -92,14 +92,14 @@ threshold_val = 1e-1
 
 #plot settings
 big = cm.get_cmap('magma', 512)
-newcmp = ListedColormap(big(np.linspace(0.05, 0.95, 256)))
+newcmp = ListedColormap(big(np.linspace(0.1, 0.9, 256)))
 plt.style.use('seaborn-whitegrid')
 matplotlib.rcParams['mathtext.fontset'] = 'cm'
 matplotlib.rcParams['font.family'] = 'STIXGeneral'
 
-SMALL_SIZE = 12 #8
-MEDIUM_SIZE = 14 #10
-BIGGER_SIZE = 16 #12
+SMALL_SIZE = 16 #8
+MEDIUM_SIZE = 18 #10
+BIGGER_SIZE = 20 #12
 matplotlib.rc('font', size=SMALL_SIZE)          # controls default text sizes
 matplotlib.rc('axes', titlesize=SMALL_SIZE)     # fontsize of the axes title
 matplotlib.rc('axes', labelsize=MEDIUM_SIZE)    # fontsize of the x and y labels
@@ -214,7 +214,8 @@ def calibrationPlot(cal, filename):
     ax.grid(True,which="both",ls="--",c=color_grid)
     ax.set_xlabel("True quantiles")
     ax.set_ylabel("Observed quantiles")
-    plt.savefig(filename)
+    plt.tight_layout()
+    plt.savefig(filename, bbox_inches='tight')
 
     
 def Hist2D(y_true, y_pred, filename, norm_type=None):
@@ -229,8 +230,10 @@ def Hist2D(y_true, y_pred, filename, norm_type=None):
 
     if norm_type==None:
         freqs_normed = freqs
+        colorbar_label = 'Frequency'
     elif norm_type=='colwise':
         freqs_normed = freqs
+        colorbar_label = 'Frequency normalized columnwise'
         for col_ind in range(freqs.shape[0]):
             if np.isnan(freqs[col_ind, :]).all():
                 freqs_normed[col_ind, :] = np.array([np.nan] * freqs.shape[1])
@@ -253,10 +256,10 @@ def Hist2D(y_true, y_pred, filename, norm_type=None):
     ax.grid(True,which="both",ls="--",c=color_grid)
     divider = make_axes_locatable(ax)
     cax = divider.append_axes("right", size="5%", pad=0.07)
-    plt.colorbar(m, cax=cax, extend=extend)
-    
+    plt.colorbar(m, cax=cax, extend=extend, label=colorbar_label)
+    ax.set_aspect('equal')
     plt.tight_layout()
-    plt.savefig(filename)
+    plt.savefig(filename, bbox_inches='tight')
     
     
 def pdf(y_true, y_b, y_s, q_b, q_s, filename):
@@ -273,7 +276,8 @@ def pdf(y_true, y_b, y_s, q_b, q_s, filename):
     ax.set_yscale("log")
     ax.grid(True,which="both",ls="--",c=color_grid)  
     ax.legend()
-    plt.savefig(filename)
+    plt.tight_layout()
+    plt.savefig(filename, bbox_inches='tight')
     
     
 def diff(y_true, y_b, y_s, filename):
@@ -289,7 +293,8 @@ def diff(y_true, y_b, y_s, filename):
     ax.set_yscale("log")
     ax.grid(True,which="both",ls="--",c=color_grid)  
     ax.legend()
-    plt.savefig(filename)
+    plt.tight_layout()
+    plt.savefig(filename, bbox_inches='tight')
     
     
 #def applyThreshold(y, th):
@@ -307,13 +312,13 @@ def computeMeanMetrics(y_true, y_mean):
     
 def computeMeanMetricsIntervals(y_true, y_pred, filename):
     
-    intervals = [0.0, 1e-2, 1e0, 1e1, 1e3]
+    intervals = [0.0, 1e-1, 1e0, 1e1, 1e3]
     metrics = []
     
     metrics_row = []
     metrics_row.append(0.0)
     metrics_row.append(1e3)
-    metrics_row.append(len(y_true))
+    metrics_row.append(1.0)
     metrics_row.extend(computeMeanMetrics(y_true, y_pred))
     metrics.append(metrics_row)    
     
@@ -378,7 +383,7 @@ def FalsePlots(y, p, r, threshold, filenames):
     #ax.set_title('Distribution of non-zero predicted rain corresponding to no rain reference values')
     ax.legend()
     plt.tight_layout()
-    plt.savefig(filenames[0])
+    plt.savefig(filenames[0], bbox_inches='tight')
 
     yp = y[p<=threshold]
     yr = y[r<=threshold]
@@ -393,7 +398,7 @@ def FalsePlots(y, p, r, threshold, filenames):
     #ax.set_title('Distribution of non-zero reference values corresponding to no rain predictions')
     ax.legend()
     plt.tight_layout()
-    plt.savefig(filenames[1])    
+    plt.savefig(filenames[1], bbox_inches='tight')
 
 
     
