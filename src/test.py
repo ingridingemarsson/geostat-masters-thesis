@@ -136,11 +136,12 @@ color_cnn ='#72196d'
 color_mlp = '#327a4f'
 color_neutral = '#990909'
 color_grid = "#e9e9e9"
+color_reference = '#64a6a1'
 
 ###
 
 def Hist2D(y_true, y_pred, filename, norm_type=None):
-    bins = np.logspace(-1, 2, 50)# 81)
+    bins = np.logspace(-1, 2, 80)# 81)
     
     print('max y_true', np.max(y_true))
     
@@ -158,7 +159,7 @@ def Hist2D(y_true, y_pred, filename, norm_type=None):
                 freqs_normed[col_ind, :] = np.array([np.nan] * freqs.shape[1])
             else:
                 freqs_normed[col_ind, :] = freqs[col_ind, :] / np.nansum(freqs[col_ind, :])
-        vmax=np.percentile(freqs_normed[np.isnan(freqs_normed)==False], 95)
+        vmax=np.percentile(freqs_normed[np.isnan(freqs_normed)==False], 99)
         extend = 'max'
         print(vmax)
 
@@ -201,7 +202,7 @@ def pdf(y_true, y_b, y_s, q_b, q_s, filename):
     ax.hist(q_b, label='CNN 95th quantile', bins=bins, histtype='step', color=color_cnn, linestyle='dotted') 
     ax.hist(y_s, label='MLP posterior mean', bins=bins, histtype='step', color=color_mlp) 
     ax.hist(q_s, label='MLP 95th quantile', bins=bins, histtype='step', color=color_mlp, linestyle='dotted') 
-    ax.hist(y_true, label='Reference', bins=bins, alpha=0.4, color=color_gauges)
+    ax.hist(y_true, label='Reference', bins=bins, alpha=0.4, color=color_reference)
     ax.set_ylabel("Frequency")
     ax.set_xlabel("Rain rate (mm/h)")
     ax.set_yscale("log")
