@@ -115,6 +115,10 @@ color_neutral = '#990909'
 color_grid = "#e9e9e9"
 color_reference = '#64a6a1'
 
+#alpha
+alpha_cnn_hist = 0.4
+alpha_reference_hist = 0.3
+
 # FUNCTIONS ####################################################################################################################
 
 #Data
@@ -196,7 +200,7 @@ def pred(model, mod_type, filename):
         writer.writerow(header)
         
         # write multiple rows
-        writer.writerows([loss_c.mean(),  crps_c.mean(),  crps_c.median()])      
+        writer.writerows([loss_c.mean(),  crps_c.mean(),  np.median(crps_c)])      
     
     return(y_true_tot_c, y_mean_tot_c, y_q95_tot_c, cal/len(y_true_tot_c))
 
@@ -263,7 +267,7 @@ def pdf(y_true, y_b, y_s, q_b, q_s, filename):
     ax.hist(q_b, label='CNN 95th quantile', bins=bins, histtype='step', color=color_cnn, linestyle='dotted') 
     ax.hist(y_s, label='MLP posterior mean', bins=bins, histtype='step', color=color_mlp) 
     ax.hist(q_s, label='MLP 95th quantile', bins=bins, histtype='step', color=color_mlp, linestyle='dotted') 
-    ax.hist(y_true, label='Reference', bins=bins, alpha=0.4, color=color_reference)
+    ax.hist(y_true, label='Reference', bins=bins, alpha=alpha_reference_hist, color=color_reference)
     ax.set_ylabel("Frequency")
     ax.set_xlabel("Rain rate (mm/h)")
     ax.set_yscale("log")
@@ -277,8 +281,8 @@ def diff(y_true, y_b, y_s, filename):
     end = np.max([np.max(y_true-y_b), np.max(y_true-y_s)])
     bins = np.linspace(start,end,100)
     f, ax = plt.subplots(figsize=(12,8))
-    ax.hist(np.subtract(y_true, y_b), alpha=0.4, bins=bins, color=color_cnn, label='CNN')
-    ax.hist(np.subtract(y_true, y_s), alpha=1, bins=bins, color=color_mlp, label='MLP', histtype='step')
+    ax.hist(np.subtract(y_true, y_b), alpha=alpha_cnn_hist, bins=bins, color=color_cnn, label='CNN')
+    ax.hist(np.subtract(y_true, y_s), bins=bins, color=color_mlp, label='MLP', histtype='step')
     ax.set_ylabel('Frequency')
     ax.set_xlabel('Difference rain rate (mm/h)')
     ax.axvline(x=0.0, color='grey', alpha=0.5, linestyle='dashed')
@@ -366,8 +370,8 @@ def FalsePlots(y, p, r, threshold, filenames):
     pp = p[y<=threshold]
     rr = r[y<=threshold]
     fig, ax = plt.subplots(figsize=(12,8))
-    ax.hist(pp[pp>threshold], bins=bins, alpha=0.4, color=color_cnn, label='CNN')
-    ax.hist(rr[rr>threshold], bins=bins, alpha=1, color=color_mlp, histtype='step', label='MLP')
+    ax.hist(pp[pp>threshold], bins=bins, alpha=alpha_cnn_hist, color=color_cnn, label='CNN')
+    ax.hist(rr[rr>threshold], bins=bins, color=color_mlp, histtype='step', label='MLP')
     ax.set_yscale("log")
     ax.grid(True,which="both",ls="--",c=color_grid) 
     ax.set_ylabel('Frequency')
@@ -380,8 +384,8 @@ def FalsePlots(y, p, r, threshold, filenames):
     yp = y[p<=threshold]
     yr = y[r<=threshold]
     fig, ax = plt.subplots(figsize=(12,8))
-    ax.hist(yp[yp>threshold], bins=bins, alpha=0.4, color=color_cnn, label='CNN')
-    ax.hist(yr[yr>threshold], bins=bins, alpha=1, color=color_mlp, histtype='step', label='MLP')
+    ax.hist(yp[yp>threshold], bins=bins, alpha=alpha_cnn_hist, color=color_cnn, label='CNN')
+    ax.hist(yr[yr>threshold], bins=bins, color=color_mlp, histtype='step', label='MLP')
     ax.set_yscale("log")
     ax.grid(True,which="both",ls="--",c=color_grid) 
     #ax.set_ylim([5e-1, 1e4])
