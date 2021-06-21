@@ -409,11 +409,11 @@ test_dataset, test_data = importData(BATCH_SIZE, path_to_test_data_files, path_t
 
 #Boxes
 y_true, y_boxes, y_boxes_q95, cal = pred(xception, 'boxes', os.path.join(path_to_storage,'pred_metrics_boxes.csv'))
-calibrationPlot(cal, 'calibration_boxes.png')
+calibrationPlot(cal, os.path.join(path_to_storage, 'calibration_boxes.png'))
 
 #Singles
 y_true_s, y_singles, y_singles_q95, cal = pred(mlp, 'singles', os.path.join(path_to_storage,'pred_metrics_singles.csv'))
-calibrationPlot(cal, 'calibration_singles.png')
+calibrationPlot(cal, os.path.join(path_to_storage,'calibration_singles.png'))
 
 same = (y_true == y_true_s).all()
 assert same, "True values differ"
