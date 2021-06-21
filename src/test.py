@@ -89,6 +89,7 @@ path_to_test_data_files = os.path.join(path_to_test_data,'npy_files')
 keys=("box", "label")
 quantiles = np.linspace(0.01, 0.99, 99)
 threshold_val = 1e-1
+plot_type = '.pdf'
 
 #plot settings
 big = cm.get_cmap('magma', 512)
@@ -271,10 +272,10 @@ def pdf(y_true, y_b, y_s, q_b, q_s, filename):
     ax.hist(y_s, label='MLP posterior mean', bins=bins, histtype='step', color=color_mlp) 
     ax.hist(q_s, label='MLP 95th quantile', bins=bins, histtype='step', color=color_mlp, linestyle='dotted') 
     ax.hist(y_true, label='Reference', bins=bins, alpha=alpha_reference_hist, color=color_reference)
-    ax.set_ylabel("Frequency")
-    ax.set_xlabel("Rain rate (mm/h)")
     ax.set_yscale("log")
     ax.grid(True,which="both",ls="--",c=color_grid)  
+    ax.set_ylabel("Frequency")
+    ax.set_xlabel("Reference rain rate (mm/h)")
     ax.legend()
     plt.tight_layout()
     plt.savefig(filename, bbox_inches='tight')
@@ -287,20 +288,15 @@ def diff(y_true, y_b, y_s, filename):
     f, ax = plt.subplots(figsize=(12,8))
     ax.hist(np.subtract(y_true, y_b), alpha=alpha_cnn_hist, bins=bins, color=color_cnn, label='CNN')
     ax.hist(np.subtract(y_true, y_s), bins=bins, color=color_mlp, label='MLP', histtype='step')
+    ax.set_yscale("log")
+    ax.grid(True,which="both",ls="--",c=color_grid)  
     ax.set_ylabel('Frequency')
     ax.set_xlabel('Difference rain rate (mm/h)')
     ax.axvline(x=0.0, color='grey', alpha=0.5, linestyle='dashed')
-    ax.set_yscale("log")
-    ax.grid(True,which="both",ls="--",c=color_grid)  
     ax.legend()
     plt.tight_layout()
     plt.savefig(filename, bbox_inches='tight')
     
-    
-#def applyThreshold(y, th):
-#    y[y<th] = 0.0
-#    return(y)
-  
 
 def computeMeanMetrics(y_true, y_mean):
     bias = np.mean(np.subtract(y_true, y_mean))
@@ -409,11 +405,11 @@ test_dataset, test_data = importData(BATCH_SIZE, path_to_test_data_files, path_t
 
 #Boxes
 y_true, y_boxes, y_boxes_q95, cal = pred(xception, 'boxes', os.path.join(path_to_storage,'pred_metrics_boxes.csv'))
-calibrationPlot(cal, os.path.join(path_to_storage, 'calibration_boxes.png'))
+calibrationPlot(cal, os.path.join(path_to_storage, 'calibration_boxes'+plot_type))
 
 #Singles
 y_true_s, y_singles, y_singles_q95, cal = pred(mlp, 'singles', os.path.join(path_to_storage,'pred_metrics_singles.csv'))
-calibrationPlot(cal, os.path.join(path_to_storage,'calibration_singles.png'))
+calibrationPlot(cal, os.path.join(path_to_storage,'calibration_singles'+plot_type))
 
 same = (y_true == y_true_s).all()
 assert same, "True values differ"
@@ -429,15 +425,15 @@ Classification(y_true, y_boxes, threshold_val, os.path.join(path_to_storage,'cla
 Classification(y_true, y_singles, threshold_val, os.path.join(path_to_storage,'classification_singles.csv'))
 
 #Hist
-Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes_colwise.png'), norm_type='colwise')
-Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles_colwise.png'),  norm_type='colwise')
-Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes.png'))
-Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles.png'))
+Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes_colwise'+plot_type), norm_type='colwise')
+Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles_colwise'+plot_type),  norm_type='colwise')
+Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes'+plot_type))
+Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles'+plot_type))
 
 #Common
-pdf(y_true, y_boxes, y_singles, y_boxes_q95, y_singles_q95, os.path.join(path_to_storage, 'pdf.png'))
-diff(y_true, y_boxes, y_singles, os.path.join(path_to_storage, 'diff.png'))
-FalsePlots(y_true, y_boxes, y_singles, threshold_val, [os.path.join(path_to_storage, 'FalsePositives.png'),  os.path.join(path_to_storage, 'FalseNegatives.png')])
+pdf(y_true, y_boxes, y_singles, y_boxes_q95, y_singles_q95, os.path.join(path_to_storage, 'pdf'+plot_type))
+diff(y_true, y_boxes, y_singles, os.path.join(path_to_storage, 'diff'+plot_type))
+FalsePlots(y_true, y_boxes, y_singles, threshold_val, [os.path.join(path_to_storage, 'FalsePositives'+plot_type),  os.path.join(path_to_storage, 'FalseNegatives'+plot_type)])
 
 #Scalar metrics
 computeMeanMetricsIntervals(y_true, y_boxes, os.path.join(path_to_storage,'metrics_boxes_intervals.csv'))
