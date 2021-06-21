@@ -132,18 +132,15 @@ matplotlib.rc('legend', fontsize=SMALL_SIZE)    # legend fontsize
 matplotlib.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 #colors
-color_HE_corr = '#ec6726'
-color_HE ='#d1b126'
 color_cnn ='#72196d'
 color_mlp = '#327a4f'
-color_gauges = '#64a6a1'
 color_neutral = '#990909'
 color_grid = "#e9e9e9"
 
 ###
 
 def Hist2D(y_true, y_pred, filename, norm_type=None):
-    bins = np.logspace(-2, 3, 100)# 81)
+    bins = np.logspace(-1, 2, 50)# 81)
     
     print('max y_true', np.max(y_true))
     
@@ -161,22 +158,14 @@ def Hist2D(y_true, y_pred, filename, norm_type=None):
                 freqs_normed[col_ind, :] = np.array([np.nan] * freqs.shape[1])
             else:
                 freqs_normed[col_ind, :] = freqs[col_ind, :] / np.nansum(freqs[col_ind, :])
-        vmax=np.percentile(freqs_normed[np.isnan(freqs_normed)==False], 99)
+        vmax=np.percentile(freqs_normed[np.isnan(freqs_normed)==False], 95)
         extend = 'max'
         print(vmax)
-    elif norm_type=='colwisebinscaled':
-        freqs_normed = freqs
-        for col_ind in range(freqs.shape[0]):
-            if np.isnan(freqs[col_ind, :]).all():
-                freqs_normed[col_ind, :] = np.array([np.nan] * freqs.shape[1])
-            else:
-                nonempty_fraq = (np.isnan(freqs[col_ind, :])==False).sum()/len(np.isnan(freqs[col_ind, :]))
-                freqs_normed[col_ind, :] = freqs[col_ind, :]/np.nansum(freqs[col_ind, :])*nonempty_fraq        
 
     f, ax = plt.subplots(figsize=(8,8))
     m = ax.pcolormesh(bins, bins, freqs_normed.T, cmap=newcmp, vmax=vmax)
-    ax.set_xlim([1e-2, 1e3])
-    ax.set_ylim([1e-2, 1e3])
+    ax.set_xlim([1e-1, 1e2])
+    ax.set_ylim([1e-1, 1e2])
 
     ax.set_xscale("log")
     ax.set_yscale("log")
@@ -215,6 +204,7 @@ def pdf(y_true, y_b, y_s, q_b, q_s, filename):
     ax.set_ylabel("Frequency")
     ax.set_xlabel("Rain rate (mm/h)")
     ax.set_yscale("log")
+    ax.grid(True,which="both",ls="--",c=color_grid)  
     ax.legend()
     plt.savefig(filename)
     
@@ -226,12 +216,12 @@ def diff(y_true, y_b, y_s, filename):
     print(bins)
     f, ax = plt.subplots(figsize=(12,8))
     ax.set_yscale("log")
-    ax.hist(np.subtract(y_true, y_b), alpha=0.6, bins=bins, color=color_cnn, label='CNN')
+    ax.hist(np.subtract(y_true, y_b), alpha=0.4, bins=bins, color=color_cnn, label='CNN')
     ax.hist(np.subtract(y_true, y_s), alpha=1, bins=bins, color=color_mlp, label='MLP', histtype='step')
     ax.set_ylabel('Frequency')
     ax.set_xlabel('Difference rain rate (mm/h)')
     ax.axvline(x=0.0, color='grey', alpha=0.5, linestyle='dashed')
-    ax.grid(True,which="both",ls="--",c='lightgray')  
+    ax.grid(True,which="both",ls="--",c=color_grid)  
     ax.legend()
     plt.savefig(filename)
     
@@ -328,6 +318,59 @@ def computeMeanMetricsIntervals(y_true, y_pred):
     print(metrics)
     
     
+def Classification(y,p):
+
+    TP = (p[y>0.0]>0.0).sum() #Is rain, predict rain
+    TN = (p[y==0.0]==0.0).sum() #Is no rain, predict no rain
+    FP = (p[y==0.0]>0.0).sum() #Is no rain, predict rain
+    FN = (p[y>0.0]==0.0).sum() #Is rain, predict no rain
+    
+    print('TP, Is rain, predict rain:', TP)
+    print('TN, Is no rain, predict no rain:', TN)
+    print('FP, Is no rain, predict rain:', FP)
+    print('FN, Is rain, predict no rain:', FN)
+    
+    FPR = FP/(FP+TN)
+    print('FPR:',FPR)
+    FNR = FN/(FN+TP)
+    print('FNR:', FNR)
+    
+def FalsePlots(y,p,r, filenames):
+    bins=np.linspace(0,100,100)
+    pp = p[y==0.0]
+    rr = r[y==0.0]
+    fig, ax = plt.subplots(figsize=(12,8))
+    ax.hist(pp[pp>0.0], bins=bins, alpha=0.4, color=color_cnn, label='CNN')
+    ax.hist(rr[rr>0.0], bins=bins, alpha=1, color=color_mlp, histtype='step', label='MLP')
+    ax.set_yscale("log")
+    ax.grid(True,which="both",ls="--",c=color_grid) 
+    #ax.set_ylim([5e-1, 1e4])
+    ax.set_ylabel('Frequency')
+    ax.set_xlabel('Predicted rain rate (mm/h)')
+    #ax.set_title('Distribution of non-zero predicted rain corresponding to no rain reference values')
+    ax.legend()
+    plt.tight_layout()
+    #plt.savefig('../plots/thesis/nonzero_pred_no_true_gauge.pdf', bbox_inches='tight')
+    plt.savefig(filenames[0])
+
+
+    yp = y[p==0.0]
+    yr = y[r==0.0]
+    fig, ax = plt.subplots(figsize=(12,8))
+    ax.hist(yp[yp>0.0], bins=bins, alpha=0.4, color=color_cnn, label='CNN')
+    ax.hist(yr[yr>0.0], bins=bins, alpha=1, color=color_mlp, histtype='step', label='MLP')
+    ax.set_yscale("log")
+    ax.grid(True,which="both",ls="--",c=color_grid) 
+    #ax.set_ylim([5e-1, 1e4])
+    ax.set_ylabel('Frequency')
+    ax.set_xlabel('Reference rain rate (mm/h)')
+    #ax.set_title('Distribution of non-zero reference values corresponding to no rain predictions')
+    ax.legend()
+    plt.tight_layout()
+    #plt.savefig('../plots/thesis/zero_pred_true_gauge.pdf', bbox_inches='tight')
+    plt.savefig(filenames[1])
+
+    
 #COMPUTE
 #Boxes
 print('boxes')
@@ -346,13 +389,18 @@ assert same, "True values differ"
 del y_true_s
 
 #Threshold
-y_true = applyThreshold(y_true, 1e-2)
-y_boxes = applyThreshold(y_boxes, 1e-2)
-y_singles = applyThreshold(y_singles, 1e-2)
+threshold_val = 1e-1
+y_true = applyThreshold(y_true, threshold_val)
+y_boxes = applyThreshold(y_boxes, threshold_val)
+y_singles = applyThreshold(y_singles, threshold_val)
+
+#Classification
+print('boxes classification')
+Classification(y_true,y_boxes)
+print('singles classification')
+Classification(y_true,y_singles)
 
 #Hist
-Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes_colwisebinscaled.png'), norm_type='colwisebinscaled')
-Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles_colwisebinscaled.png'),  norm_type='colwisebinscaled')
 Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes_colwise.png'), norm_type='colwise')
 Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles_colwise.png'),  norm_type='colwise')
 Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes.png'))
@@ -361,7 +409,7 @@ Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles.png'))
 #Common
 pdf(y_true, y_boxes, y_singles, y_boxes_q95, y_singles_q95, os.path.join(path_to_storage, 'pdf.png'))
 diff(y_true, y_boxes, y_singles, os.path.join(path_to_storage, 'diff.png'))
-
+FalsePlots(y_true,y_boxes,y_singles, [os.path.join(path_to_storage, 'FalsePositives.png'),  os.path.join(path_to_storage, 'FalseNegatives.png')])
 
 
 
