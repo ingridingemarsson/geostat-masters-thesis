@@ -297,26 +297,25 @@ def diff(y_true, y_b, y_s, filename):
 #    return(y)
   
 
-def computeMeanMetrics(y_true, y_mean, filename):
+def computeMeanMetrics(y_true, y_mean):
     bias = np.mean(np.subtract(y_true, y_mean))
     mae = np.mean(np.abs(np.subtract(y_true, y_mean)))
     mse = np.mean(np.square(np.subtract(y_true, y_mean)))
     
-    header = ['bias', 'mae', 'mse']
-    with open(filename, 'w', encoding='UTF8', newline='') as f:
-        writer = csv.writer(f)
-
-        # write the header
-        writer.writerow(header)
-
-        # write multiple rows
-        writer.writerows([[bias, mae, mse]])    
+    return([bias, mae, mse])
     
     
 def computeMeanMetricsIntervals(y_true, y_pred, filename):
     
-    intervals = [0, 1e-1, 1e0, 1e1, 1e3]
+    intervals = [0.0, 1e-2, 1e0, 1e1, 1e3]
     metrics = []
+    
+    metrics_row = []
+    metrics_row.append(0.0)
+    metrics_row.append(1e3)
+    metrics_row.append(len(y_true))
+    metrics_row.extend(computeMeanMetrics(y_true, y_pred))
+    metrics.append(metrics_row)    
     
     for i in range(len(intervals)-1):
         interval_mask = (y_true >= intervals[i]) & (y_true < intervals[i+1])
@@ -325,7 +324,7 @@ def computeMeanMetricsIntervals(y_true, y_pred, filename):
         metrics_row.append(intervals[i+1])
         
         metrics_row.append(len(y_true[interval_mask])/len(y_true))
-        metrics_row.append(computeMeanMetrics(y_true[interval_mask], y_pred[interval_mask]))
+        metrics_row.extend(computeMeanMetrics(y_true[interval_mask], y_pred[interval_mask]))
         metrics.append(metrics_row)          
 
     header = ['start', 'end', 'fraction', 'bias', 'mae', 'mse']
@@ -436,10 +435,7 @@ diff(y_true, y_boxes, y_singles, os.path.join(path_to_storage, 'diff.png'))
 FalsePlots(y_true, y_boxes, y_singles, threshold_val, [os.path.join(path_to_storage, 'FalsePositives.png'),  os.path.join(path_to_storage, 'FalseNegatives.png')])
 
 #Scalar metrics
-computeMeanMetrics(y_true, y_boxes, os.path.join(path_to_storage,'metrics_boxes.csv'))
 computeMeanMetricsIntervals(y_true, y_boxes, os.path.join(path_to_storage,'metrics_boxes_intervals.csv'))
-
-computeMeanMetrics(y_true, y_singles, os.path.join(path_to_storage,'metrics_singles.csv'))
 computeMeanMetricsIntervals(y_true, y_singles, os.path.join(path_to_storage,'metrics_singles_intervals.csv'))
 
 print('done')
