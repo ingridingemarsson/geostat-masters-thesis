@@ -200,7 +200,7 @@ def pred(model, mod_type, filename):
         writer.writerow(header)
         
         # write multiple rows
-        writer.writerows([loss_c.mean(),  crps_c.mean(),  np.median(crps_c)])      
+        writer.writerows([[loss_c.mean(),  crps_c.mean(),  np.median(crps_c)]])      
     
     return(y_true_tot_c, y_mean_tot_c, y_q95_tot_c, cal/len(y_true_tot_c))
 
@@ -310,7 +310,7 @@ def computeMeanMetrics(y_true, y_mean, filename):
         writer.writerow(header)
 
         # write multiple rows
-        writer.writerows([bias, mae, mse])    
+        writer.writerows([[bias, mae, mse]])    
     
     
 def computeMeanMetricsIntervals(y_true, y_pred, filename):
@@ -362,7 +362,7 @@ def Classification(y, p, threshold, filename):
         writer.writerow(header)
         
         # write multiple rows
-        writer.writerows([TP, TN, FP, FN, FPR, FNR]) 
+        writer.writerows([[TP, TN, FP, FN, FPR, FNR]]) 
     
     
 def FalsePlots(y, p, r, threshold, filenames):
