@@ -262,6 +262,50 @@ def Hist2D(y_true, y_pred, filename, norm_type=None):
     plt.tight_layout()
     plt.savefig(filename, bbox_inches='tight')
     
+def hist2DMedian(y_true, y_pred, filename):
+    bins = np.logspace(-1, 2, 80)# 81)
+    #print(bins)
+    freqs, _, _ = np.histogram2d(y_true, y_pred, bins=bins)
+    freqs[freqs==0.0] = np.nan
+    
+    median = []
+    q75 = []
+    q25 = []
+    for col_ind in range(freqs.shape[0]):
+        if np.isnan(freqs[col_ind, :]).all():
+            median.append(np.nan)
+            q75.append(np.nan)
+            q25.append(np.nan)
+        else:
+            amedian = np.nanmedian(freqs[col_ind, :])
+            aabs = np.abs(freqs[col_ind, :].T-amedian).T
+            idx = np.nanargmin(aabs)
+            median.append(idx)
+            
+            aq75 = np.nanpercentile(freqs[col_ind, :], 75, interpolation='nearest')
+            aabs = np.abs(freqs[col_ind, :].T-aq75).T
+            idx = np.nanargmin(aabs)
+            q75.append(idx)
+                        
+            aq25 = np.nanpercentile(freqs[col_ind, :], 25, interpolation='nearest')
+            aabs = np.abs(freqs[col_ind, :].T-aq25).T
+            idx = np.nanargmin(aabs)
+            q25.append(idx)
+            
+    #print(median)
+    fig, ax = plt.subplots(figsize=(6,6))
+    ax.set_yscale("log")
+    ax.set_xscale("log")
+    #print(~np.isnan(median))
+    ax.plot(bins[:-1][~np.isnan(median)], np.array(median)[~np.isnan(median)])
+    ax.fill_between(bins[:-1][~np.isnan(q25)], 
+                     np.array(q25)[~np.isnan(q25)], np.array(q75)[~np.isnan(q75)],
+                    alpha=0.5)
+    ax.plot(bins, bins, c="grey", ls="--")
+    ax.grid(True,which="both",ls="--",c=color_grid)
+    
+    plt.tight_layout()
+    plt.savefig(filename, bbox_inches='tight')
     
 def pdf(y_true, y_b, y_s, q_b, q_s, filename):
     end = np.max([np.max(y_true), np.max(y_b), np.max(y_s)])
@@ -424,6 +468,9 @@ del y_true_s
 #y_boxes = applyThreshold(y_boxes, threshold_val)
 #y_singles = applyThreshold(y_singles, threshold_val)
 
+hist2DMedian(y_true, y_boxes, os.path.join(path_to_storage, '2Dhistmedian_boxes'+plot_type))
+hist2DMedian(y_true, y_singles, os.path.join(path_to_storage, '2Dhistmedian_singles'+plot_type))
+'''
 #Classification
 Classification(y_true, y_boxes, threshold_val, os.path.join(path_to_storage,'classification_boxes.csv'))
 Classification(y_true, y_singles, threshold_val, os.path.join(path_to_storage,'classification_singles.csv'))
@@ -442,7 +489,7 @@ diff(y_true, y_boxes, y_singles, os.path.join(path_to_storage, 'diff'+plot_type)
 #Scalar metrics
 computeMeanMetricsIntervals(y_true, y_boxes, os.path.join(path_to_storage,'metrics_boxes_intervals.csv'))
 computeMeanMetricsIntervals(y_true, y_singles, os.path.join(path_to_storage,'metrics_singles_intervals.csv'))
-
+'''
 print('done')
 
 
