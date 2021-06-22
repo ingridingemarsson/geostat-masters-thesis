@@ -271,7 +271,7 @@ def pdf(y_true, y_b, y_s, q_b, q_s, filename):
     ax.hist(q_b, label='CNN 95th quantile', bins=bins, histtype='step', color=color_cnn, linestyle='dotted') 
     ax.hist(y_s, label='MLP posterior mean', bins=bins, histtype='step', color=color_mlp) 
     ax.hist(q_s, label='MLP 95th quantile', bins=bins, histtype='step', color=color_mlp, linestyle='dotted') 
-    ax.hist(y_true, label='Reference', bins=bins, alpha=alpha_reference_hist, color=color_reference)
+    ax.hist(y_true, label='Reference', bins=bins, alpha=alpha_reference_hist, color=color_reference, linewidth=0.0, rasterized=True)
     ax.set_yscale("log")
     ax.grid(True,which="both",ls="--",c=color_grid)  
     ax.minorticks_on()
@@ -287,14 +287,14 @@ def diff(y_true, y_b, y_s, filename):
     end = np.max([np.max(y_true-y_b), np.max(y_true-y_s)])
     bins = np.linspace(start,end,100)
     f, ax = plt.subplots(figsize=(12,8))
-    ax.hist(np.subtract(y_true, y_b), alpha=alpha_cnn_hist, bins=bins, color=color_cnn, label='CNN')
+    ax.hist(np.subtract(y_true, y_b), alpha=alpha_cnn_hist, bins=bins, color=color_cnn, label='CNN', linewidth=0.0, rasterized=True)
     ax.hist(np.subtract(y_true, y_s), bins=bins, color=color_mlp, label='MLP', histtype='step')
+    ax.axvline(x=0.0, color='grey', alpha=0.5, linestyle='dashed')
     ax.set_yscale("log")
     ax.grid(True,which="both",ls="--",c=color_grid)  
     ax.minorticks_on()
     ax.set_ylabel('Frequency')
     ax.set_xlabel('Difference rain rate (mm/h)')
-    ax.axvline(x=0.0, color='grey', alpha=0.5, linestyle='dashed')
     ax.legend()
     plt.tight_layout()
     plt.savefig(filename, bbox_inches='tight')
@@ -372,7 +372,7 @@ def FalsePlots(y, p, r, threshold, filenames):
     pp = p[y<=threshold]
     rr = r[y<=threshold]
     fig, ax = plt.subplots(figsize=(12,8))
-    ax.hist(pp[pp>threshold], bins=bins, alpha=alpha_cnn_hist, color=color_cnn, label='CNN')
+    ax.hist(pp[pp>threshold], bins=bins, alpha=alpha_cnn_hist, color=color_cnn, label='CNN', linewidth=0.0, rasterized=True)
     ax.hist(rr[rr>threshold], bins=bins, color=color_mlp, histtype='step', label='MLP')
     ax.set_yscale("log")
     ax.grid(True,which="both",ls="--",c=color_grid) 
@@ -386,7 +386,7 @@ def FalsePlots(y, p, r, threshold, filenames):
     yp = y[p<=threshold]
     yr = y[r<=threshold]
     fig, ax = plt.subplots(figsize=(12,8))
-    ax.hist(yp[yp>threshold], bins=bins, alpha=alpha_cnn_hist, color=color_cnn, label='CNN')
+    ax.hist(yp[yp>threshold], bins=bins, alpha=alpha_cnn_hist, color=color_cnn, label='CNN', linewidth=0.0, rasterized=True)
     ax.hist(yr[yr>threshold], bins=bins, color=color_mlp, histtype='step', label='MLP')
     ax.set_yscale("log")
     ax.grid(True,which="both",ls="--",c=color_grid) 
@@ -433,9 +433,9 @@ Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes'+plot_type))
 Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles'+plot_type))
 
 #Common
+FalsePlots(y_true, y_boxes, y_singles, threshold_val, [os.path.join(path_to_storage, 'FalsePositives'+plot_type),  os.path.join(path_to_storage, 'FalseNegatives'+plot_type)])
 pdf(y_true, y_boxes, y_singles, y_boxes_q95, y_singles_q95, os.path.join(path_to_storage, 'pdf'+plot_type))
 diff(y_true, y_boxes, y_singles, os.path.join(path_to_storage, 'diff'+plot_type))
-FalsePlots(y_true, y_boxes, y_singles, threshold_val, [os.path.join(path_to_storage, 'FalsePositives'+plot_type),  os.path.join(path_to_storage, 'FalseNegatives'+plot_type)])
 
 #Scalar metrics
 computeMeanMetricsIntervals(y_true, y_boxes, os.path.join(path_to_storage,'metrics_boxes_intervals.csv'))
