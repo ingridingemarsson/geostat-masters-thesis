@@ -245,7 +245,7 @@ def Hist2D(y_true, y_pred, filename, norm_type=None):
         #print(vmax)
 
     f, ax = plt.subplots(figsize=(8,8))
-    m = ax.pcolormesh(bins, bins, freqs_normed.T, cmap=newcmp, vmax=vmax)
+    m = ax.pcolormesh(bins, bins, freqs_normed.T, cmap=newcmp, vmax=vmax, linewidth=0.0, rasterized=True)
     ax.set_xlim([1e-1, 1e2])
     ax.set_ylim([1e-1, 1e2])
 
@@ -274,6 +274,7 @@ def pdf(y_true, y_b, y_s, q_b, q_s, filename):
     ax.hist(y_true, label='Reference', bins=bins, alpha=alpha_reference_hist, color=color_reference)
     ax.set_yscale("log")
     ax.grid(True,which="both",ls="--",c=color_grid)  
+    ax.minorticks_on()
     ax.set_ylabel("Frequency")
     ax.set_xlabel("Reference rain rate (mm/h)")
     ax.legend()
@@ -290,6 +291,7 @@ def diff(y_true, y_b, y_s, filename):
     ax.hist(np.subtract(y_true, y_s), bins=bins, color=color_mlp, label='MLP', histtype='step')
     ax.set_yscale("log")
     ax.grid(True,which="both",ls="--",c=color_grid)  
+    ax.minorticks_on()
     ax.set_ylabel('Frequency')
     ax.set_xlabel('Difference rain rate (mm/h)')
     ax.axvline(x=0.0, color='grey', alpha=0.5, linestyle='dashed')
