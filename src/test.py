@@ -209,7 +209,7 @@ def pred(model, mod_type, filename):
 #Visualization
 def calibrationPlot(cal, filename):
         
-    f, ax = plt.subplots(figsize=(8, 8))
+    f, ax = plt.subplots(figsize=(6,6))
     ax.plot(quantiles, cal, color=color_neutral)
     ax.plot(quantiles, quantiles, c="grey", ls="--")
     ax.grid(True,which="both",ls="--",c=color_grid)
@@ -244,7 +244,7 @@ def Hist2D(y_true, y_pred, filename, norm_type=None):
         extend = 'max'
         #print(vmax)
 
-    f, ax = plt.subplots(figsize=(8,8))
+    f, ax = plt.subplots(figsize=(6,6))
     m = ax.pcolormesh(bins, bins, freqs_normed.T, cmap=newcmp, vmax=vmax, linewidth=0.0, rasterized=True)
     ax.set_xlim([1e-1, 1e2])
     ax.set_ylim([1e-1, 1e2])
@@ -266,15 +266,16 @@ def Hist2D(y_true, y_pred, filename, norm_type=None):
 def pdf(y_true, y_b, y_s, q_b, q_s, filename):
     end = np.max([np.max(y_true), np.max(y_b), np.max(y_s)])
     bins = np.linspace(0,end,100)
-    f, ax = plt.subplots(figsize=(12, 8))
+    f, ax = plt.subplots(figsize=(9,6))
     ax.hist(y_b, label='CNN posterior mean', bins=bins, histtype='step', color=color_cnn) 
     ax.hist(q_b, label='CNN 95th quantile', bins=bins, histtype='step', color=color_cnn, linestyle='dotted') 
     ax.hist(y_s, label='MLP posterior mean', bins=bins, histtype='step', color=color_mlp) 
     ax.hist(q_s, label='MLP 95th quantile', bins=bins, histtype='step', color=color_mlp, linestyle='dotted') 
     ax.hist(y_true, label='Reference', bins=bins, alpha=alpha_reference_hist, color=color_reference, linewidth=0.0, rasterized=True)
     ax.set_yscale("log")
-    ax.grid(True,which="both",ls="--",c=color_grid)  
-    ax.minorticks_on()
+    ax.grid(b=True, which='major', color=color_grid, linestyle='--')
+    ax.grid(b=True, which='minor', color=color_grid, linestyle='--')
+    ax.minorticks_on()  
     ax.set_ylabel("Frequency")
     ax.set_xlabel("Reference rain rate (mm/h)")
     ax.legend()
@@ -286,13 +287,14 @@ def diff(y_true, y_b, y_s, filename):
     start = np.min([np.min(y_true-y_b), np.min(y_true-y_s)])
     end = np.max([np.max(y_true-y_b), np.max(y_true-y_s)])
     bins = np.linspace(start,end,100)
-    f, ax = plt.subplots(figsize=(12,8))
+    f, ax = plt.subplots(figsize=(9,6))
     ax.hist(np.subtract(y_true, y_b), alpha=alpha_cnn_hist, bins=bins, color=color_cnn, label='CNN', linewidth=0.0, rasterized=True)
     ax.hist(np.subtract(y_true, y_s), bins=bins, color=color_mlp, label='MLP', histtype='step')
     ax.axvline(x=0.0, color='grey', alpha=0.5, linestyle='dashed')
     ax.set_yscale("log")
-    ax.grid(True,which="both",ls="--",c=color_grid)  
-    ax.minorticks_on()
+    ax.grid(b=True, which='major', color=color_grid, linestyle='--')
+    ax.grid(b=True, which='minor', color=color_grid, linestyle='--')
+    ax.minorticks_on()  
     ax.set_ylabel('Frequency')
     ax.set_xlabel('Difference rain rate (mm/h)')
     ax.legend()
@@ -371,7 +373,7 @@ def FalsePlots(y, p, r, threshold, filenames):
     bins=np.linspace(0,100,100)
     pp = p[y<=threshold]
     rr = r[y<=threshold]
-    fig, ax = plt.subplots(figsize=(12,8))
+    fig, ax = plt.subplots(figsize=(6,6))
     ax.hist(pp[pp>threshold], bins=bins, alpha=alpha_cnn_hist, color=color_cnn, label='CNN', linewidth=0.0, rasterized=True)
     ax.hist(rr[rr>threshold], bins=bins, color=color_mlp, histtype='step', label='MLP')
     ax.set_yscale("log")
@@ -385,7 +387,7 @@ def FalsePlots(y, p, r, threshold, filenames):
 
     yp = y[p<=threshold]
     yr = y[r<=threshold]
-    fig, ax = plt.subplots(figsize=(12,8))
+    fig, ax = plt.subplots(figsize=(6,6))
     ax.hist(yp[yp>threshold], bins=bins, alpha=alpha_cnn_hist, color=color_cnn, label='CNN', linewidth=0.0, rasterized=True)
     ax.hist(yr[yr>threshold], bins=bins, color=color_mlp, histtype='step', label='MLP')
     ax.set_yscale("log")
