@@ -286,26 +286,28 @@ def pdf(y_true, y_b, y_s, q_b, q_s, filename):
 def diff(y_true, y_b, y_s, filename):
     start = np.min([np.min(y_true-y_b), np.min(y_true-y_s)])
     end = np.max([np.max(y_true-y_b), np.max(y_true-y_s)])
-    bins = np.linspace(start,end,100)
+    N = 100
+    binsize = (end-start)/N
+    bins = np.linspace(start,end,N)
     f, ax = plt.subplots(figsize=(9,6))
-    ax.hist(np.subtract(y_true, y_b), alpha=alpha_cnn_hist, bins=bins, color=color_cnn, label='CNN', linewidth=0.0, rasterized=True)
-    ax.hist(np.subtract(y_true, y_s), bins=bins, color=color_mlp, label='MLP', histtype='step')
+    ax.hist(np.subtract(y_b, y_true), alpha=alpha_cnn_hist, bins=bins, color=color_cnn, label='CNN', linewidth=0.0, rasterized=True)
+    ax.hist(np.subtract(y_s, y_true), bins=bins, color=color_mlp, label='MLP', histtype='step')
     ax.axvline(x=0.0, color='grey', alpha=0.5, linestyle='dashed')
     ax.set_yscale("log")
     ax.grid(b=True, which='major', color=color_grid, linestyle='--')
     ax.grid(b=True, which='minor', color=color_grid, linestyle='--')
     ax.minorticks_on()  
     ax.set_ylabel('Frequency')
-    ax.set_xlabel('Precipitation rate difference, reference minus predicted  (mm/h)')
+    ax.set_xlabel('Precipitation rate error (mm/h)')
     ax.legend()
     plt.tight_layout()
     plt.savefig(filename, bbox_inches='tight')
     
 
 def computeMeanMetrics(y_true, y_mean):
-    bias = np.mean(np.subtract(y_true, y_mean))
-    mae = np.mean(np.abs(np.subtract(y_true, y_mean)))
-    mse = np.mean(np.square(np.subtract(y_true, y_mean)))
+    bias = np.mean(np.subtract(y_mean, y_true))
+    mae = np.mean(np.abs(np.subtract(y_mean, y_true)))
+    mse = np.mean(np.square(np.subtract(y_mean, y_true)))
     
     return([bias, mae, mse])
     
