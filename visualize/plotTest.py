@@ -15,7 +15,7 @@ import plotTestSetup as setup
 def plotFalse(data_dict, bins, main_var, var_list, ty='FP', threshold=1e-1, crop_at=10.1, filename=None, quantity='gauges'):
 
     histtype=['bar']+['step']*(len(var_list)-1)
-    alpha = [setup.variable_dict[var_list[0]]['alpha']]+[1]*(len(var_list)-1)
+    alpha = [setup.variable_dict[var_list[0]]['alpha']]+[0.7]*(len(var_list)-1)
 
     fig, ax = plt.subplots(ncols=2, figsize=setup.figsize_two_cols, sharey=True)
 
@@ -81,7 +81,7 @@ def plotFalse(data_dict, bins, main_var, var_list, ty='FP', threshold=1e-1, crop
 def plotError(data_dict, bins, main_var, var_list, crop_at=[-10.1,10.1], filename=None, quantity='gauges'):
 
     histtype=['bar']+['step']*(len(var_list)-1)
-    alpha = [setup.variable_dict[var_list[0]]['alpha']]+[1]*(len(var_list)-1)
+    alpha = [setup.variable_dict[var_list[0]]['alpha']]+[0.7]*(len(var_list)-1)
 
     fig, ax = plt.subplots(ncols=2, figsize=setup.figsize_two_cols, sharey=True)
 
@@ -90,9 +90,10 @@ def plotError(data_dict, bins, main_var, var_list, crop_at=[-10.1,10.1], filenam
         for i in range(len(other_vars)):
             ax[axnum].hist(
                 np.subtract(data_dict[other_vars[i]], data_dict[main_var]),
-                histtype=histtype[i], bins=bins, alpha=alpha[i],
+                histtype=histtype[i], bins=bins,
                 label=setup.variable_dict[other_vars[i]]['label'], 
                 color=setup.variable_dict[other_vars[i]]['color'], 
+                alpha=alpha[i],
                 linewidth=1.2)
 
         ax[axnum].set_yscale("log")
@@ -151,6 +152,7 @@ def plotDistribution(data_dict, bins, main_var, var_list, crop_at=10.1, filename
                 histtype=histtype, bins=bins, 
                 label=setup.variable_dict[other_vars[i]]['label'], 
                 color=setup.variable_dict[other_vars[i]]['color'], 
+                alpha=0.7,
                 linestyle=linestyles[i],
                 linewidth=1.2)
 
