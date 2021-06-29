@@ -186,7 +186,7 @@ def plotDistribution(data_dict, bins, main_var, var_list, crop_at=10.1, filename
         
         
         
-def hist2D(data_dict, y_true, y_preds, norm_type=None, quantity='gauges'):
+def hist2D(data_dict, y_true, y_preds, norm_type=None, quantity='gauges', filename=None):
     fig, ax = plt.subplots(ncols=len(y_preds), figsize=setup.figsize_two_cols, sharey=True)
     
     y_true = data_dict[y_true]
@@ -242,4 +242,6 @@ def hist2D(data_dict, y_true, y_preds, norm_type=None, quantity='gauges'):
         
     fig.subplots_adjust(wspace=0.08)
     fig.colorbar(m, ax=ax, fraction=0.023, pad=0.021, extend=extend).set_label(label=colorbar_label, size=18)
-
+    
+    if filename!=None:
+        plt.savefig(filename, bbox_inches='tight')
