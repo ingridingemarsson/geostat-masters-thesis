@@ -322,7 +322,7 @@ num_of_bins = int(np.round((end-start)/binsize)+1)
 bins = np.linspace(start,end,num_of_bins)
 
 var_list = ['mlp_posterior_mean', 'xception_posterior_mean', 'mlp_Q0.95', 'xception_Q0.95']
-plotDistribution(data_dict, bins, 'gpm', var_list, quantity=quantity,  linestyles=['solid', 'solid', 'dotted', 'dotted'], filename=os.path.join(path_to_storage,'gpm_pdf.csv'))
+plotDistribution(data_dict, bins, 'gpm', var_list, quantity=quantity,  linestyles=['solid', 'solid', 'dotted', 'dotted'], filename=os.path.join(path_to_storage,'gpm_pdf.pdf'))
 
 #plotFalse, plotError, plotDistribution, hist2D
 
