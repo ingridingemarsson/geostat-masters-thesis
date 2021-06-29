@@ -316,7 +316,7 @@ data_dict['xception_Q0.95'] = y_boxes_q95
 
 
 start = 0.0
-end = np.around(np.max(y_pred),1)
+end = np.around(np.max(y_true),1)
 binsize = 0.1
 num_of_bins = int(np.round((end-start)/binsize)+1)
 bins = np.linspace(start,end,num_of_bins)
