@@ -160,7 +160,7 @@ def plotDistribution(data_dict, bins, main_var, var_list, crop_at=10.1, filename
         ax[axnum].set_title(title)
 
     rangeSuplotDists(data_dict, bins, main_var, var_list, axnum=0, title="Whole range")
-    subs2 = list(bins).index(crop_at)+1
+    subs2 = np.argmin(np.abs(bins-crop_at))+1
     rangeSuplotDists(data_dict, bins[:subs2],  main_var, var_list, 
                      axnum=1, title='Range below '+str(round(bins[subs2-1],1)) + ' mm')
 
