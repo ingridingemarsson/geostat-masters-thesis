@@ -18,10 +18,6 @@ from quantnn.qrnn import QRNN
 from quantnn.models.pytorch.xception import XceptionFpn
 import quantnn.quantiles as qq
 
-import sys
-sys.path.append('../visualize')
-import plotTestSetup as setup
-from plotTest import plotFalse, plotError, plotDistribution, hist2D
 from load_data import GOESRETRIEVALSDataset, Mask, RandomSmallVals, RandomCrop, Standardize, ToTensor
 
 
@@ -221,6 +217,91 @@ def calibrationPlot(cal, filename):
     ax.set_ylabel("Observed quantiles")
     plt.tight_layout()
     plt.savefig(filename, bbox_inches='tight')
+
+    
+def Hist2D(y_true, y_pred, filename, norm_type=None):
+    bins = np.logspace(-1, 2, 80)# 81)
+    
+    #print('max y_true', np.max(y_true))
+    
+    freqs, _, _ = np.histogram2d(y_true, y_pred, bins=bins)
+    freqs[freqs==0.0] = np.nan
+    vmax = None
+    extend = 'neither'
+
+    if norm_type==None:
+        freqs_normed = freqs
+        colorbar_label = 'Frequency'
+    elif norm_type=='colwise':
+        freqs_normed = freqs
+        colorbar_label = 'Frequency normalized columnwise'
+        for col_ind in range(freqs.shape[0]):
+            if np.isnan(freqs[col_ind, :]).all():
+                freqs_normed[col_ind, :] = np.array([np.nan] * freqs.shape[1])
+            else:
+                freqs_normed[col_ind, :] = freqs[col_ind, :] / np.nansum(freqs[col_ind, :])
+        vmax=np.percentile(freqs_normed[np.isnan(freqs_normed)==False], 99)
+        extend = 'max'
+        #print(vmax)
+
+    f, ax = plt.subplots(figsize=(6,6))
+    m = ax.pcolormesh(bins, bins, freqs_normed.T, cmap=newcmp, vmax=vmax, linewidth=0.0, rasterized=True)
+    ax.set_xlim([1e-1, 1e2])
+    ax.set_ylim([1e-1, 1e2])
+
+    ax.set_xscale("log")
+    ax.set_yscale("log")
+    ax.set_xlabel("Reference precipitation rate (mm/h)")
+    ax.set_ylabel("Predicted precipitation rate (mm/h)")
+    ax.plot(bins, bins, c="grey", ls="--")
+    ax.grid(True,which="both",ls="--",c=color_grid)
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="5%", pad=0.07)
+    plt.colorbar(m, cax=cax, extend=extend, label=colorbar_label)
+    ax.set_aspect('equal')
+    plt.tight_layout()
+    plt.savefig(filename, bbox_inches='tight')
+    
+    
+def pdf(y_true, y_b, y_s, q_b, q_s, filename):
+    end = np.max([np.max(y_true), np.max(y_b), np.max(y_s)])
+    bins = np.linspace(0,end,100)
+    f, ax = plt.subplots(figsize=(9,6))
+    ax.hist(y_b, label='CNN posterior mean', bins=bins, histtype='step', color=color_cnn) 
+    ax.hist(q_b, label='CNN 95th quantile', bins=bins, histtype='step', color=color_cnn, linestyle='dotted') 
+    ax.hist(y_s, label='MLP posterior mean', bins=bins, histtype='step', color=color_mlp) 
+    ax.hist(q_s, label='MLP 95th quantile', bins=bins, histtype='step', color=color_mlp, linestyle='dotted') 
+    ax.hist(y_true, label='Reference', bins=bins, alpha=alpha_reference_hist, color=color_reference, linewidth=0.0, rasterized=True)
+    ax.set_yscale("log")
+    ax.grid(b=True, which='major', color=color_grid, linestyle='--')
+    ax.grid(b=True, which='minor', color=color_grid, linestyle='--')
+    ax.minorticks_on()  
+    ax.set_ylabel("Frequency")
+    ax.set_xlabel("Reference precipitation rate (mm/h)")
+    ax.legend()
+    plt.tight_layout()
+    plt.savefig(filename, bbox_inches='tight')
+    
+    
+def diff(y_true, y_b, y_s, filename):
+    start = np.min([np.min(y_true-y_b), np.min(y_true-y_s)])
+    end = np.max([np.max(y_true-y_b), np.max(y_true-y_s)])
+    N = 100
+    binsize = (end-start)/N
+    bins = np.linspace(start,end,N)
+    f, ax = plt.subplots(figsize=(9,6))
+    ax.hist(np.subtract(y_b, y_true), alpha=alpha_cnn_hist, bins=bins, color=color_cnn, label='CNN', linewidth=0.0, rasterized=True)
+    ax.hist(np.subtract(y_s, y_true), bins=bins, color=color_mlp, label='MLP', histtype='step')
+    ax.axvline(x=0.0, color='grey', alpha=0.5, linestyle='dashed')
+    ax.set_yscale("log")
+    ax.grid(b=True, which='major', color=color_grid, linestyle='--')
+    ax.grid(b=True, which='minor', color=color_grid, linestyle='--')
+    ax.minorticks_on()  
+    ax.set_ylabel('Frequency')
+    ax.set_xlabel('Precipitation rate error (mm/h)')
+    ax.legend()
+    plt.tight_layout()
+    plt.savefig(filename, bbox_inches='tight')
     
 
 def computeMeanMetrics(y_true, y_mean):
@@ -289,7 +370,39 @@ def Classification(y, p, threshold, filename):
         # write multiple rows
         writer.writerows([[TP, TN, FP, FN, FPR, FNR]]) 
     
-   
+    
+def FalsePlots(y, p, r, threshold, filenames):
+    bins=np.linspace(0,100,100)
+    pp = p[y<=threshold]
+    rr = r[y<=threshold]
+    fig, ax = plt.subplots(figsize=(6,6))
+    ax.hist(pp[pp>threshold], bins=bins, alpha=alpha_cnn_hist, color=color_cnn, label='CNN', linewidth=0.0, rasterized=True)
+    ax.hist(rr[rr>threshold], bins=bins, color=color_mlp, histtype='step', label='MLP')
+    ax.set_yscale("log")
+    ax.grid(True,which="both",ls="--",c=color_grid) 
+    ax.set_ylabel('Frequency')
+    ax.set_xlabel('Predicted precipitation rate (mm/h)')
+    #ax.set_title('Distribution of non-zero predicted rain corresponding to no rain reference values')
+    ax.legend()
+    plt.tight_layout()
+    plt.savefig(filenames[0], bbox_inches='tight')
+
+    yp = y[p<=threshold]
+    yr = y[r<=threshold]
+    fig, ax = plt.subplots(figsize=(6,6))
+    ax.hist(yp[yp>threshold], bins=bins, alpha=alpha_cnn_hist, color=color_cnn, label='CNN', linewidth=0.0, rasterized=True)
+    ax.hist(yr[yr>threshold], bins=bins, color=color_mlp, histtype='step', label='MLP')
+    ax.set_yscale("log")
+    ax.grid(True,which="both",ls="--",c=color_grid) 
+    #ax.set_ylim([5e-1, 1e4])
+    ax.set_ylabel('Frequency')
+    ax.set_xlabel('Reference precipitation rate (mm/h)')
+    #ax.set_title('Distribution of non-zero reference values corresponding to no rain predictions')
+    ax.legend()
+    plt.tight_layout()
+    plt.savefig(filenames[1], bbox_inches='tight')
+
+
     
 # COMPUTATION ##################################################################################################################
 
@@ -308,18 +421,27 @@ same = (y_true == y_true_s).all()
 assert same, "True values differ"
 del y_true_s
 
-quantity = 'precipitation rate (mm)'
-data_dict = {}
-data_dict['gpm'] = y_true
-data_dict['xception_posterior_mean'] = y_boxes
-data_dict['mlp_posterior_mean'] = y_singles
-data_dict['mlp_Q0.95'] = y_singles_q95
-data_dict['xception_Q0.95'] = y_boxes_q95
+#Threshold
+#y_true = applyThreshold(y_true, threshold_val)
+#y_boxes = applyThreshold(y_boxes, threshold_val)
+#y_singles = applyThreshold(y_singles, threshold_val)
 
-var_list = ['mlp_posterior_mean', 'xception_posterior_mean', 'mlp_Q0.95', 'xception_Q0.95']
-plotDistribution(data_dict, bins, 'gpm', var_list, quantity=quantity, filename=os.path.join(path_to_storage,'gpm_pdf.csv'))
 
-#plotFalse, plotError, plotDistribution, hist2D
+
+#Classification
+Classification(y_true, y_boxes, threshold_val, os.path.join(path_to_storage,'classification_boxes.csv'))
+Classification(y_true, y_singles, threshold_val, os.path.join(path_to_storage,'classification_singles.csv'))
+
+#Hist
+Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes_colwise'+plot_type), norm_type='colwise')
+Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles_colwise'+plot_type),  norm_type='colwise')
+Hist2D(y_true, y_boxes, os.path.join(path_to_storage, '2Dhist_boxes'+plot_type))
+Hist2D(y_true, y_singles, os.path.join(path_to_storage, '2Dhist_singles'+plot_type))
+
+#Common
+FalsePlots(y_true, y_boxes, y_singles, threshold_val, [os.path.join(path_to_storage, 'FalsePositives'+plot_type),  os.path.join(path_to_storage, 'FalseNegatives'+plot_type)])
+pdf(y_true, y_boxes, y_singles, y_boxes_q95, y_singles_q95, os.path.join(path_to_storage, 'pdf'+plot_type))
+diff(y_true, y_boxes, y_singles, os.path.join(path_to_storage, 'diff'+plot_type))
 
 #Scalar metrics
 computeMeanMetricsIntervals(y_true, y_boxes, os.path.join(path_to_storage,'metrics_boxes_intervals.csv'))
