@@ -126,10 +126,12 @@ def plotError(data_dict, bins, main_var, var_list, crop_at=[-10.1,10.1], filenam
         
         
         
-def plotDistribution(data_dict, bins, main_var, var_list, crop_at=10.1, filename=None, quantity='gauges'):
+def plotDistribution(data_dict, bins, main_var, var_list, crop_at=10.1, filename=None, quantity='gauges', linestyles=None):
 
     histtype='step'
     fig, ax = plt.subplots(ncols=2, figsize=setup.figsize_two_cols, sharey=True)
+    if (linestyles == None) & (len(var_list)>0):
+        linestyles = ['solid']*len(var_list)
 
     def rangeSuplotDists(data_dict, bins, main_var, other_vars, axnum=0, title="Whole range"):
 
@@ -149,6 +151,7 @@ def plotDistribution(data_dict, bins, main_var, var_list, crop_at=10.1, filename
                 histtype=histtype, bins=bins, 
                 label=setup.variable_dict[other_vars[i]]['label'], 
                 color=setup.variable_dict[other_vars[i]]['color'], 
+                linestyle=linestyles[i],
                 linewidth=1.2)
 
         ax[axnum].set_yscale("log")
