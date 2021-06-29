@@ -324,13 +324,18 @@ bins = np.linspace(start,end,num_of_bins)
 var_list = ['mlp_posterior_mean', 'xception_posterior_mean', 'mlp_Q0.95', 'xception_Q0.95']
 plotDistribution(data_dict, bins, 'gpm', var_list, quantity=quantity,  linestyles=['solid', 'solid', 'dotted', 'dotted'], filename=os.path.join(path_to_storage,'gpm_pdf.pdf'))
 
-var_list = ['mlp_posterior_mean', 'xception_posterior_mean',]
+var_list = ['xception_posterior_mean', 'mlp_posterior_mean']
+start = 0.0
+end = 100.0
+binsize = 0.1
+num_of_bins = int(np.round((end-start)/binsize)+1)
+bins = np.linspace(start,end,num_of_bins)
 plotFalse(data_dict, bins, 'gpm', var_list, ty='FP', threshold=1e-1, crop_at=10.1, filename=os.path.join(path_to_storage,'gpm_FP.pdf'), quantity=quantity)
 plotFalse(data_dict, bins, 'gpm', var_list, ty='FN', threshold=1e-1, crop_at=10.1, filename=os.path.join(path_to_storage,'gpm_FN.pdf'), quantity=quantity)
 
 
-start = -60.0
-end = 250.0
+start = -250.0
+end = 60.0
 binsize = 0.1
 num_of_bins = int(np.round((end-start)/binsize)+1)
 bins = np.linspace(start,end,num_of_bins)
