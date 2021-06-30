@@ -98,7 +98,7 @@ def plotError(data_dict, bins, main_var, var_list, crop_at=[-10.1,10.1], filenam
 
         ax[axnum].set_yscale("log")
         ax[axnum].grid(True, which="both", ls="--", c=setup.color_grid)
-        ax[axnum].set_xlabel(quantity.capitalize())
+        ax[axnum].set_xlabel('Error' + quantity)
         ax[axnum].set_title(title)
 
     rangeSuplotErr(data_dict, bins, main_var, var_list, axnum=0, title="Whole range")
