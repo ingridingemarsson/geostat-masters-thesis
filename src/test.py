@@ -306,7 +306,7 @@ same = (y_true == y_true_s).all()
 assert same, "True values differ"
 del y_true_s
 
-quantity = 'precipitation rate (mm)'
+quantity = 'precipitation rate (mm/h)'
 data_dict = {}
 data_dict['gpm'] = y_true
 data_dict['xception_posterior_mean'] = y_boxes
