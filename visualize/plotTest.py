@@ -51,12 +51,12 @@ def plotFalse(data_dict, bins, main_var, var_list, ty='FP', threshold=1e-1, crop
         rangeSubplotFP(data_dict, bins, main_var, var_list, axnum=0, title="Whole range")
         subs2 = np.argmin(np.abs(bins-crop_at))+1
         rangeSubplotFP(data_dict, bins[:subs2],  main_var, var_list, 
-                         axnum=1, title='Range below '+str(round(bins[subs2-1],1)) + ' mm')
+                         axnum=1, title='Low range')#Range below '+str(round(bins[subs2-1],1)) + ' mm')
     elif ty == 'FN':
         rangeSubplotFN(data_dict, bins, main_var, var_list, axnum=0, title="Whole range")
         subs2 = np.argmin(np.abs(bins-crop_at))+1
         rangeSubplotFN(data_dict, bins[:subs2],  main_var, var_list, 
-                         axnum=1, title='Range below '+str(round(bins[subs2-1],1)) + ' mm')        
+                         axnum=1, title='Low range')#'Range below '+str(round(bins[subs2-1],1)) + ' mm')        
 
     ax[0].set_ylabel('Frequency')
     plt.setp(ax[0].spines.values(), color='black')
@@ -105,7 +105,7 @@ def plotError(data_dict, bins, main_var, var_list, crop_at=[-10.1,10.1], filenam
     subs1 = np.argmin(np.abs(bins-crop_at[0]))
     subs2 = np.argmin(np.abs(bins-crop_at[1]))+1
     rangeSuplotErr(data_dict, bins[subs1:subs2],  main_var, var_list, 
-                     axnum=1, title='Range from ' +str(round(bins[subs1],1))+' to '+str(round(bins[subs2-1],1)) + ' mm')
+                     axnum=1, title='Mid range')#'Range from ' +str(round(bins[subs1],1))+' to '+str(round(bins[subs2-1],1)) + ' mm')
 
     ax[0].set_ylabel('Frequency')
     plt.setp(ax[0].spines.values(), color='black')
@@ -164,7 +164,7 @@ def plotDistribution(data_dict, bins, main_var, var_list, crop_at=10.1, filename
     rangeSuplotDists(data_dict, bins, main_var, var_list, axnum=0, title="Whole range")
     subs2 = np.argmin(np.abs(bins-crop_at))+1
     rangeSuplotDists(data_dict, bins[:subs2],  main_var, var_list, 
-                     axnum=1, title='Range below '+str(round(bins[subs2-1],1)) + ' mm')
+                     axnum=1, title='Low range')#'Range below '+str(round(bins[subs2-1],1)) + ' mm')
 
     ax[0].set_ylabel('Frequency')
     plt.setp(ax[0].spines.values(), color='black')

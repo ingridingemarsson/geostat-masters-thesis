@@ -51,8 +51,10 @@ linkfile = args.linkfile[:-4]+'/'
 parentdir = args.filepath + linkfile
 storeagedir = 'images/'+linkfile
 
+filetype="pdf"
+
 if not Path(storeagedir).exists():
-	os.mkdir(storeagedir)
+	os.makedirs(storeagedir)
 
 for subdir in [f.name for f in os.scandir(parentdir) if f.is_dir()]:
 	if not Path(storeagedir+subdir).exists():
@@ -72,12 +74,12 @@ for subdir in [f.name for f in os.scandir(parentdir) if f.is_dir()]:
 					# This is a warning regarding loss of projection information when converting to a PROJ string
 					with warnings.catch_warnings():
 						warnings.simplefilter('ignore')
-						region_plot([dataset], 'C'+str(channel).zfill(2), storeagedir + subdir +'/'+ filename[:-3] + str('C'+str(channel).zfill(2))+'af.png',
+						region_plot([dataset], 'C'+str(channel).zfill(2), storeagedir + subdir +'/'+ filename[:-3] + str('C'+str(channel).zfill(2))+'af.'+filetype,
 							plot_dataset_funs.region_corners, number_of_pixels, plot_dataset_funs.area_def)
 						
 				with warnings.catch_warnings():
 					warnings.simplefilter('ignore')
-					region_plot([dataset], 'gpm_precipitation', storeagedir + subdir +'/'+ filename[:-3] + 'gpm'+'af.png', 
+					region_plot([dataset], 'gpm_precipitation', storeagedir + subdir +'/'+ filename[:-3] + 'gpm'+'af.'+filetype, 
 						plot_dataset_funs.region_corners, number_of_pixels, plot_dataset_funs.area_def)
 
 			for channel in channels:
@@ -85,14 +87,14 @@ for subdir in [f.name for f in os.scandir(parentdir) if f.is_dir()]:
 				# This is a warning regarding loss of projection information when converting to a PROJ string
 				with warnings.catch_warnings():
 					warnings.simplefilter('ignore')
-					region_plot(datasets, 'C'+str(channel).zfill(2), storeagedir + subdir +'/'+ str('C'+str(channel).zfill(2))+'af.png',
+					region_plot(datasets, 'C'+str(channel).zfill(2), storeagedir + subdir +'/'+ str('C'+str(channel).zfill(2))+'af.'+filetype,
 						plot_dataset_funs.region_corners, number_of_pixels, plot_dataset_funs.area_def)
-					region_plot_overlay(datasets, 'C'+str(channel).zfill(2), storeagedir + subdir +'/'+ str('C'+str(channel).zfill(2))+'overlay_af.png',
+					region_plot_overlay(datasets, 'C'+str(channel).zfill(2), storeagedir + subdir +'/'+ str('C'+str(channel).zfill(2))+'overlay_af.'+filetype,
 						plot_dataset_funs.region_corners, number_of_pixels, plot_dataset_funs.area_def)                    
 					
 			with warnings.catch_warnings():
 				warnings.simplefilter('ignore')
-				region_plot(datasets, 'gpm_precipitation', storeagedir + subdir +'/'+ 'gpm'+'af.png', 
+				region_plot(datasets, 'gpm_precipitation', storeagedir + subdir +'/'+ 'gpm'+'af.'+filetype, 
 					plot_dataset_funs.region_corners, number_of_pixels, plot_dataset_funs.area_def)
 
 

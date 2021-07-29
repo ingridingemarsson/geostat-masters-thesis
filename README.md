@@ -44,9 +44,9 @@ Attributes:
 ### 
 
 <p float="left">
-<img src="plots/C08af.png" width="400">
-<img src="plots/C13af.png" width="400">
-<img src="plots/gpmaf.png" width="400">
+<img src="plots/GPMGOES-oS2018-12-23T21:52:57-c[8,9,10,11,13,14,15,16]-p256/C08af.png" width="400">
+<img src="plots/GPMGOES-oS2018-12-23T21:52:57-c[8,9,10,11,13,14,15,16]-p256/C13af.png" width="400">
+<img src="plots/GPMGOES-oS2018-12-23T21:52:57-c[8,9,10,11,13,14,15,16]-p256/gpmaf.png" width="400">
 </p>
 
 

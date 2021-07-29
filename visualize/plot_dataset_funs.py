@@ -13,7 +13,7 @@ import cartopy.io.shapereader as shpreader
 from shapely.geometry import Polygon, MultiPolygon
 from pyresample import geometry, load_area
 
-
+import plotTestSetup as setup
 
 def pars_dataset_filename(mystr):
 	#GPMGOES-oS2017-12-25T19:29:08-c[1,6,8,10,13]-p256-b1.nc
@@ -65,7 +65,7 @@ def initial_load(areas_filepath):
 
 
 	
-def region_plot(datasets, feature, filename, region_corners, number_of_pixels, area_def, COLOR_ALL_BUT_BRAZIL = False):
+def region_plot(datasets, feature, filename, region_corners, number_of_pixels, area_def, COLOR_ALL_BUT_BRAZIL=False, add_title=False):
 	'''
 	TODO
 	'''
@@ -105,7 +105,7 @@ def region_plot(datasets, feature, filename, region_corners, number_of_pixels, a
 			linewidth=0.5, edgecolor='orange', facecolor='none')
 		ax.add_patch(rect)
 		if (feature == 'gpm_precipitation'):
-			plt.imshow(np.isnan(datasets[i][feature]), transform=crs2, extent=crs2.bounds, origin='upper', cmap=plt.get_cmap('binary'), alpha = 0.1)
+			plt.imshow(np.isnan(datasets[i][feature]), transform=crs2, extent=crs2.bounds, origin='upper', cmap=plt.get_cmap('binary'), alpha = 0.3)
 			plt.imshow(datasets[i][feature], transform=crs2, extent=crs2.bounds, origin='upper', norm=precip_norm, cmap=plt.get_cmap('GnBu'))
 		else:
 			plt.imshow(datasets[i][feature], transform=crs2, extent=crs2.bounds, origin='upper', cmap=plt.get_cmap('inferno'), vmin=vmin, vmax=vmax)
@@ -141,11 +141,11 @@ def region_plot(datasets, feature, filename, region_corners, number_of_pixels, a
 	
 
 	ax.set_global()
-	if (len(datasets) < 5):
+	if ((len(datasets) < 5) and add_title):
 		ax.title.set_text(plot_title)
 	ax.set_xlabel('x')
 	ax.set_ylabel('y')
-	plt.savefig(filename)
+	plt.savefig(filename, bbox_inches='tight')
 	fig.clear()
 	plt.close(fig)
 	
@@ -196,7 +196,7 @@ def region_plot_overlay(datasets, feature, filename, region_corners, number_of_p
 	ax.title.set_text(plot_title)
 	ax.set_xlabel('x')
 	ax.set_ylabel('y')
-	plt.savefig(filename)
+	plt.savefig(filename, bbox_inches='tight')
 	fig.clear()
 	plt.close(fig)
 	
