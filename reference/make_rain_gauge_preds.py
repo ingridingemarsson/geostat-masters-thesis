@@ -141,22 +141,6 @@ def region_setup():
     return(region_ind_extent)
 
 
-'''
-def get_gauge_locations(path_to_rain_gauge_data, region_ind_extent):
-    region_corners_idx_low, __, __, region_corners_idy_low = region_ind_extent
-    lonlats = pd.read_pickle(os.path.join(path_to_rain_gauge_data,'rain_gauge_locs.pckl'))
-    colrows = []
-    for lon, lat in zip(lonlats['lon'], lonlats['lat']):
-        with warnings.catch_warnings():    
-            warnings.simplefilter('ignore')
-            col, row = area_def.lonlat2colrow(lon, lat)
-            colrows.append((col-region_corners_idx_low, row-region_corners_idy_low))
-
-    colrows = pd.DataFrame(colrows, columns = ['cols', 'rows'])
-
-    return(colrows)
-'''
-
 
 def getHoursList(start, end):
     delta = end - start
@@ -223,7 +207,7 @@ class RetrieveHour():
             datetimes = [self.goes_filename_extract_datetime(filename) for filename in filenames0]	
             self.datetimes = datetimes
 
-        def make_retrievals(self):
+        def make_retrievals(self, saveEach=False):
             retrievals = [self.Retrieve(datetime[0], datetime[1]) for datetime in self.datetimes]
             main_preds_list = []
             nans_at_loc_list = []
@@ -235,20 +219,26 @@ class RetrieveHour():
                 #retrieval.save_raw_data()
                 main_preds_xception = retrieval.make_prediction(xception, stats, 'boxes', split_nums=1)
                 main_preds_mlp = retrieval.make_prediction(mlp, stats, 'singles', split_nums=1)
-                main_preds_list.append(np.concatenate([main_preds_xception, main_preds_mlp]))     
+                main_preds_list.append(np.concatenate([main_preds_xception, main_preds_mlp]))  
+                
+                if(saveEach):
+                    print(nans_at_loc.shape)
+                    print(np.stack(main_preds_list)[-1].shape)
+                    preds = np.where(np.tile(nans_at_loc, (np.stack(main_preds_list)[-1].shape[0],1,1)), np.nan,
+                                     np.stack(main_preds_list)[-1])
+                    print(preds.shape)
+                    retrieval.save_each_pred(preds, retrieval.start.strftime('%Y%m%d%H%M%S'))
+                    print(retrieval.start.strftime('%Y%m%d%H%M%S'))
+                
                 retrieval.remove_files()
-                del retrieval		
-            print(nans_at_loc_list)
+                del retrieval
+                
             extract_nans_at_loc = np.stack(nans_at_loc_list).any(axis=0)
-            print(extract_nans_at_loc)
-            print(extract_nans_at_loc.shape)
             extract_main_predictions_agg = np.mean(main_preds_list, axis=0)
-            extract_main_predictions_agg = np.where(np.tile(extract_nans_at_loc, (extract_main_predictions_agg.shape[0],1,1)), np.nan, extract_main_predictions_agg)
-            print(extract_main_predictions_agg)
+            extract_main_predictions_agg = np.where(np.tile(extract_nans_at_loc, 
+                                                            (extract_main_predictions_agg.shape[0],1,1)), np.nan, 
+                                                            extract_main_predictions_agg)
             self.extract_main_predictions_agg = extract_main_predictions_agg
-
-        #def save(self, filename, aggregated_predictions):
-        #    np.save(os.path.join(storage_path_final,filename), aggregated_predictions)
 
         def save_preds(self, filename):
             keys = ['posterior_mean']
@@ -429,15 +419,33 @@ class RetrieveHour():
                 res.extend([predictions[i] for i in q_ind_to_save]) 
                 return(np.stack(res))
                 #return(np.stack([y_mean, predictions[94], predictions[98]]))
+                
+            def save_each_pred(self, predictions, filename):
+                keys = ['posterior_mean']
+                keys.extend(['Q'+"{:0.2f}".format(quantiles[i]) for i in q_ind_to_save])   
+                mods = ['xception', 'mlp']
+                keys = [s+'_'+v for s in mods for v in keys]
+                values_list = []
+                for i in range(predictions.shape[0]):
+                    values_list.append((["y", "x"], predictions[i])) 
 
-            #def extract_rain_gauge_predictions(self):
-            #	extracted_predictions = np.zeros((len(colrows['cols']), len(quantiles)))
-            #	i=0
-            #	for col, row in zip(colrows['cols'], colrows['rows']):
-            #		extracted_predictions[i, :] = self.predictions[:, col, row]
-            #		i+=1
-            #	del self.predictions
-            #	return(extracted_predictions)
+                projcoords_x, projcoords_y  = area_def.get_proj_vectors()
+                area_extent = [projcoords_x[region_ind_extent[0]], projcoords_y[region_ind_extent[1]],
+                            projcoords_x[region_ind_extent[2]], projcoords_y[region_ind_extent[3]]]
+
+                data_vars_dict = dict(zip(keys, values_list))
+                dataset = xr.Dataset(
+                    data_vars = data_vars_dict, 
+                        attrs = dict(
+                            ind_extent = region_ind_extent,
+                            area_extent = area_extent,
+                            shape = [region_ind_extent[2]-region_ind_extent[0], region_ind_extent[1]-region_ind_extent[3]],
+                            start = str(self.start),
+                            end = str(self.end)))
+                dataset = dataset.astype(np.float32)
+                print(dataset)
+                dataset.to_netcdf(os.path.join(storage_path_final,filename+'.nc'))
+                dataset.close()             
 
             def remove_files(self):
 
@@ -448,18 +456,15 @@ class RetrieveHour():
 
 global region_ind_extent
 region_ind_extent = region_setup()
-#global colrows
-#colrows = get_gauge_locations(path_to_rain_gauge_data, region_ind_extent)
 
 
-#period_start = datetime.datetime(2020,3,3,5) 
-#period_end = datetime.datetime(2020,3,3,6) 
+period_start = datetime.datetime(2020,12,22,12) 
+period_end = datetime.datetime(2020,12,23,3) 
+saveEach=True
 
-#period_start = datetime.datetime(2020,12,args.day,18) 
-#period_end = period_start+datetime.timedelta(hours=6)
-
-period_start = datetime.datetime(2020,12,args.day,0) 
-period_end = period_start+datetime.timedelta(hours=24)
+#period_start = datetime.datetime(2020,12,args.day,0) 
+#period_end = period_start+datetime.timedelta(hours=24)
+#saveEach=False
 
 hourslist = getHoursList(period_start,period_end)
 retrieve_hours = [RetrieveHour(hourslist[h_ind],hourslist[h_ind+1]) for h_ind in range(len(hourslist)-1)]
@@ -467,9 +472,10 @@ retrieve_hours = [RetrieveHour(hourslist[h_ind],hourslist[h_ind+1]) for h_ind in
 for retrieve_hour in retrieve_hours: 
     start = time.time()
     retrieve_hour.get_datetimes_in_range()
-    retrieve_hour.make_retrievals()
-    print(retrieve_hour.hour_end.strftime('%Y%m%d%H')+'.npy')
-    retrieve_hour.save_preds(retrieve_hour.hour_end.strftime('%Y%m%d%H'))
+    retrieve_hour.make_retrievals(saveEach=saveEach)
+    if(not saveEach):
+        print(retrieve_hour.hour_end.strftime('%Y%m%d%H'))
+        retrieve_hour.save_preds(retrieve_hour.hour_end.strftime('%Y%m%d%H'))
     del retrieve_hour
     end = time.time()
     print(f"Retrieve hour time {end - start}")
