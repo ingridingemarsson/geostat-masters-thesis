@@ -324,7 +324,7 @@ bins = np.linspace(start,end,num_of_bins)
 var_list = ['mlp_posterior_mean', 'xception_posterior_mean', 'mlp_Q0.95', 'xception_Q0.95']
 plotDistribution(data_dict, bins, 'gpm', var_list, quantity=quantity,  linestyles=['solid', 'solid', 'dotted', 'dotted'], filename=os.path.join(path_to_storage,'gpm_pdf.pdf'))
 
-ROC(data_dict, 'gpm', ['xception_posterior_mean', 'mlp_posterior_mean'], linestyles=['solid', 'dotted'],
+ROC(data_dict, 'gpm', ['xception_posterior_mean', 'mlp_posterior_mean'], lims=[0.001, 2.0], nums=50, linestyles=['solid', 'dotted'],
     filename=os.path.join(path_to_storage,'gpm_ROC.pdf'))
 
 var_list = ['xception_posterior_mean', 'mlp_posterior_mean']

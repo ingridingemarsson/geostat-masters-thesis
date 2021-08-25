@@ -127,7 +127,7 @@ def plotError(data_dict, bins, main_var, var_list, crop_at=[-10.1,10.1], filenam
         
         
         
-def plotDistribution(data_dict, bins, main_var, var_list, crop_at=10.1, filename=None, quantity='gauges', linestyles=None):
+def plotDistribution(data_dict, bins, main_var, var_list, crop_at=10.1, filename=None, quantity='Precipitation (mm)', linestyles=None):
 
     histtype='step'
     fig, ax = plt.subplots(ncols=2, figsize=setup.figsize_two_cols, sharey=True)
@@ -247,14 +247,14 @@ def hist2D(data_dict, y_true, y_preds, norm_type=None, quantity='gauges', filena
         plt.savefig(filename, bbox_inches='tight')
         
         
-def ROC(data_dict, main_var, var_list, lims=[0,5], filename=None,  linestyles=None):
+def ROC(data_dict, main_var, var_list, lims=[0,5], nums=100, filename=None,  linestyles=None):
     
     def singleROC(y, p):
         TPRs = []
         FPRs = []
         #print(y)
         #print(p)
-        for t in np.linspace(lims[0],lims[1],1000):
+        for t in np.linspace(lims[0],lims[1],nums):
             #print(t)
 
             TP = (p[y>t]>t).sum() #Is rain, predict rain
@@ -272,6 +272,47 @@ def ROC(data_dict, main_var, var_list, lims=[0,5], filename=None,  linestyles=No
         
     for i in range(len(var_list)):
         TPR, FPR = singleROC(data_dict[main_var], data_dict[var_list[i]])
+
+        ax.plot(FPR, TPR, color=setup.variable_dict[var_list[i]]['color'],
+                       label=setup.variable_dict[var_list[i]]['label'], linestyle=linestyles[i])
+    ax.set_xlabel('False Positive Rate')
+    ax.set_ylabel('True Positive Rate')
+    ax.grid(True,which="both",ls="--",c=setup.color_grid) 
+    ax.set_title('ROC')
+    
+    fig.legend(loc="upper center", ncol=5, borderaxespad=-0.30)
+    plt.tight_layout()
+    
+    if filename!=None:
+        plt.savefig(filename, bbox_inches='tight')
+        
+        
+def ROC2(data_dict, main_var, var_list, lims=[0,5], nums=100, filename=None,  linestyles=None):
+    
+    def singleROC2(y, p):
+        TPRs = []
+        FPRs = []
+        #print(y)
+        #print(p)
+        t_fix = 1e-1
+        for t in np.linspace(lims[0],lims[1],nums):
+            #print(t)
+
+            TP = (p[y>t_fix]>t).sum() #Is rain, predict rain
+            TN = (p[y<=t_fix]<=t).sum() #Is no rain, predict no rain
+            FP = (p[y<=t_fix]>t).sum() #Is no rain, predict rain
+            FN = (p[y>t_fix]<=t).sum() #Is rain, predict no rain
+
+            TPRs.append(TP/(TP+FN))
+            FPRs.append(FP/(FP+TN))
+        return(TPRs, FPRs)
+
+    fig, ax = plt.subplots(figsize=setup.figsize_single_plot)
+    if (linestyles == None) & (len(var_list)>0):
+        linestyles = ['solid']*len(var_list)
+        
+    for i in range(len(var_list)):
+        TPR, FPR = singleROC2(data_dict[main_var], data_dict[var_list[i]])
 
         ax.plot(FPR, TPR, color=setup.variable_dict[var_list[i]]['color'],
                        label=setup.variable_dict[var_list[i]]['label'], linestyle=linestyles[i])

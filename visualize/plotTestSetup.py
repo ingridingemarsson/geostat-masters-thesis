@@ -34,7 +34,8 @@ variable_dict = {'HE_precip': {'color': '#d1b126', 'label': 'HE', 'alpha': 0.4},
                  'xception_posterior_mean': {'color': '#72196d','label': 'CNN posterior mean', 'alpha': 0.4},
                  'xception_Q0.95':  {'color': '#72196d','label': 'CNN 95th quantile', 'alpha': 0.4},
                  'gauge_precip': {'color': '#64a6a1', 'label': 'Gauges', 'alpha': 0.4},
-                 'gpm': {'color': '#64a6a1', 'label': 'Ground truth', 'alpha': 0.4}
+                 'gpm': {'color': '#64a6a1', 'label': 'GPM label', 'alpha': 0.4},
+                 'gpm_var': {'color': '#669aa6', 'label': 'GPM label', 'alpha': 0.4}
                 }
 
 #figure size
