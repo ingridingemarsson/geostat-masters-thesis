@@ -12,10 +12,13 @@ import plotTestSetup as setup
 
 
 
-def plotFalse(data_dict, bins, main_var, var_list, ty='FP', threshold=1e-1, crop_at=10.1, filename=None, quantity='gauges'):
+def plotFalse(data_dict, bins, main_var, var_list, ty='FP', threshold=1e-1, crop_at=10.1, filename=None, quantity='gauges', linestyles=None):
 
     histtype=['bar']+['step']*(len(var_list)-1)
     alpha = [setup.variable_dict[var_list[0]]['alpha']]+[0.7]*(len(var_list)-1)
+    
+    if (linestyles == None) & (len(var_list)>1):
+        linestyles = ['None']+['solid']*(len(var_list)-1)    
 
     fig, ax = plt.subplots(ncols=2, figsize=setup.figsize_two_cols, sharey=True)
 
@@ -25,7 +28,7 @@ def plotFalse(data_dict, bins, main_var, var_list, ty='FP', threshold=1e-1, crop
             ax[axnum].hist(pp[pp>threshold],
                        bins=bins,
                        color=setup.variable_dict[other_vars[i]]['color'],
-                       histtype=histtype[i], alpha=alpha[i],
+                       histtype=histtype[i], linestyle=linestyles[i], alpha=alpha[i],
                        label=setup.variable_dict[other_vars[i]]['label'])    
         ax[axnum].set_yscale("log")
         ax[axnum].grid(True,which="both",ls="--",c=setup.color_grid) 
@@ -39,7 +42,7 @@ def plotFalse(data_dict, bins, main_var, var_list, ty='FP', threshold=1e-1, crop
             ax[axnum].hist(yp[yp>threshold],
                        bins=bins,
                        color=setup.variable_dict[other_vars[i]]['color'],
-                       histtype=histtype[i], alpha=alpha[i],
+                       histtype=histtype[i],  linestyle=linestyles[i], alpha=alpha[i],
                        label=setup.variable_dict[other_vars[i]]['label'])    
         ax[axnum].set_yscale("log")
         ax[axnum].grid(True,which="both",ls="--",c=setup.color_grid) 
@@ -78,10 +81,14 @@ def plotFalse(data_dict, bins, main_var, var_list, ty='FP', threshold=1e-1, crop
         
         
         
-def plotError(data_dict, bins, main_var, var_list, crop_at=[-10.1,10.1], filename=None, quantity='gauges'):
+def plotError(data_dict, bins, main_var, var_list, crop_at=[-10.1,10.1], filename=None, quantity='gauges', linestyles=None):
 
     histtype=['bar']+['step']*(len(var_list)-1)
     alpha = [setup.variable_dict[var_list[0]]['alpha']]+[0.7]*(len(var_list)-1)
+    
+    if (linestyles == None) & (len(var_list)>1):
+        linestyles = ['None']+['solid']*(len(var_list)-1)
+    
 
     fig, ax = plt.subplots(ncols=2, figsize=setup.figsize_two_cols, sharey=True)
 
@@ -90,7 +97,7 @@ def plotError(data_dict, bins, main_var, var_list, crop_at=[-10.1,10.1], filenam
         for i in range(len(other_vars)):
             ax[axnum].hist(
                 np.subtract(data_dict[other_vars[i]], data_dict[main_var]),
-                histtype=histtype[i], bins=bins,
+                histtype=histtype[i], linestyle=linestyles[i], bins=bins,
                 label=setup.variable_dict[other_vars[i]]['label'], 
                 color=setup.variable_dict[other_vars[i]]['color'], 
                 alpha=alpha[i],
