@@ -134,7 +134,7 @@ def plotError(data_dict, bins, main_var, var_list, crop_at=[-10.1,10.1], filenam
         
         
         
-def plotDistribution(data_dict, bins, main_var, var_list, crop_at=10.1, filename=None, quantity='Precipitation (mm)', linestyles=None):
+def plotDistribution(data_dict, bins, main_var, var_list, crop_at=10.1, bins2=[], filename=None, quantity='Precipitation (mm)', linestyles=None):
 
     histtype='step'
     fig, ax = plt.subplots(ncols=2, figsize=setup.figsize_two_cols, sharey=True)
@@ -170,7 +170,11 @@ def plotDistribution(data_dict, bins, main_var, var_list, crop_at=10.1, filename
 
     rangeSuplotDists(data_dict, bins, main_var, var_list, axnum=0, title="Whole range")
     subs2 = np.argmin(np.abs(bins-crop_at))+1
-    rangeSuplotDists(data_dict, bins[:subs2],  main_var, var_list, 
+    
+    if len(bins2)==0:
+        bins2 = bins[:subs2]
+        
+    rangeSuplotDists(data_dict, bins2,  main_var, var_list, 
                      axnum=1, title='Low range')#'Range below '+str(round(bins[subs2-1],1)) + ' mm')
 
     ax[0].set_ylabel('Frequency')
@@ -271,6 +275,7 @@ def ROC(data_dict, main_var, var_list, lims=[0,5], nums=100, filename=None,  lin
 
             TPRs.append(TP/(TP+FN))
             FPRs.append(FP/(FP+TN))
+            #print(TPRs[-1], FPRs[-1])
         return(TPRs, FPRs)
 
     fig, ax = plt.subplots(figsize=setup.figsize_single_plot)
@@ -281,11 +286,16 @@ def ROC(data_dict, main_var, var_list, lims=[0,5], nums=100, filename=None,  lin
         TPR, FPR = singleROC(data_dict[main_var], data_dict[var_list[i]])
 
         ax.plot(FPR, TPR, color=setup.variable_dict[var_list[i]]['color'],
-                       label=setup.variable_dict[var_list[i]]['label'], linestyle=linestyles[i])
+                       label=setup.variable_dict[var_list[i]]['label'],
+                       linestyle=linestyles[i],
+                       linewidth=1.5)
     ax.set_xlabel('False Positive Rate')
     ax.set_ylabel('True Positive Rate')
+    ax.set_xlim(-0.05,1.05)
+    ax.set_ylim(-0.05,1.05)
+    ax.set_aspect(1.0/ax.get_data_ratio(), adjustable='box')
     ax.grid(True,which="both",ls="--",c=setup.color_grid) 
-    ax.set_title('ROC')
+    #ax.set_title('ROC')
     
     fig.legend(loc="upper center", ncol=5, borderaxespad=-0.30)
     plt.tight_layout()
@@ -326,7 +336,7 @@ def ROC2(data_dict, main_var, var_list, lims=[0,5], nums=100, filename=None,  li
     ax.set_xlabel('False Positive Rate')
     ax.set_ylabel('True Positive Rate')
     ax.grid(True,which="both",ls="--",c=setup.color_grid) 
-    ax.set_title('ROC')
+    #ax.set_title('ROC')
     
     fig.legend(loc="upper center", ncol=5, borderaxespad=-0.30)
     plt.tight_layout()
