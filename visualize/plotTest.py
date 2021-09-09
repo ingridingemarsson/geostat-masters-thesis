@@ -134,14 +134,14 @@ def plotError(data_dict, bins, main_var, var_list, crop_at=[-10.1,10.1], filenam
         
         
         
-def plotDistribution(data_dict, bins, main_var, var_list, crop_at=10.1, bins2=[], filename=None, quantity='Precipitation (mm)', linestyles=None):
+def plotDistribution(data_dict, bins, main_var, var_list, crop_at=10.1, bins2=[], filename=None, quantity='Precipitation (mm)', linestyles=None, density=False):
 
     histtype='step'
     fig, ax = plt.subplots(ncols=2, figsize=setup.figsize_two_cols, sharey=True)
     if (linestyles == None) & (len(var_list)>0):
         linestyles = ['solid']*len(var_list)
 
-    def rangeSuplotDists(data_dict, bins, main_var, other_vars, axnum=0, title="Whole range"):
+    def rangeSuplotDists(data_dict, bins, main_var, other_vars, density, axnum=0, title="Whole range"):
 
         ax[axnum].hist(
             data_dict[main_var], 
@@ -150,6 +150,7 @@ def plotDistribution(data_dict, bins, main_var, var_list, crop_at=10.1, bins2=[]
             alpha=setup.variable_dict[main_var]['alpha'], 
             label=setup.variable_dict[main_var]['label'],
             color=setup.variable_dict[main_var]['color'],
+            density=density,
             linewidth=0.0, 
             rasterized=True)
 
@@ -159,6 +160,7 @@ def plotDistribution(data_dict, bins, main_var, var_list, crop_at=10.1, bins2=[]
                 histtype=histtype, bins=bins, 
                 label=setup.variable_dict[other_vars[i]]['label'], 
                 color=setup.variable_dict[other_vars[i]]['color'], 
+                density=density,
                 alpha=0.7,
                 linestyle=linestyles[i],
                 linewidth=1.2)
@@ -168,13 +170,13 @@ def plotDistribution(data_dict, bins, main_var, var_list, crop_at=10.1, bins2=[]
         ax[axnum].set_xlabel(quantity.capitalize())
         ax[axnum].set_title(title)
 
-    rangeSuplotDists(data_dict, bins, main_var, var_list, axnum=0, title="Whole range")
+    rangeSuplotDists(data_dict, bins, main_var, var_list, density=density, axnum=0, title="Whole range")
     subs2 = np.argmin(np.abs(bins-crop_at))+1
     
     if len(bins2)==0:
         bins2 = bins[:subs2]
         
-    rangeSuplotDists(data_dict, bins2,  main_var, var_list, 
+    rangeSuplotDists(data_dict, bins2,  main_var, var_list, density=density,
                      axnum=1, title='Low range')#'Range below '+str(round(bins[subs2-1],1)) + ' mm')
 
     ax[0].set_ylabel('Frequency')
@@ -260,12 +262,12 @@ def hist2D(data_dict, y_true, y_preds, norm_type=None, quantity='gauges', filena
         
 def ROC(data_dict, main_var, var_list, lims=[0,5], nums=100, filename=None,  linestyles=None):
     
-    def singleROC(y, p):
+    def singleROC(y, p, thresholds):
         TPRs = []
         FPRs = []
         #print(y)
         #print(p)
-        for t in np.linspace(lims[0],lims[1],nums):
+        for t in thresholds:
             #print(t)
 
             TP = (p[y>t]>t).sum() #Is rain, predict rain
@@ -278,17 +280,22 @@ def ROC(data_dict, main_var, var_list, lims=[0,5], nums=100, filename=None,  lin
             #print(TPRs[-1], FPRs[-1])
         return(TPRs, FPRs)
 
+    thresholds = np.linspace(lims[0],lims[1],nums)
+    ind = int(np.argmin(np.abs(thresholds - 1e-1)))
+    print(thresholds[ind])
     fig, ax = plt.subplots(figsize=setup.figsize_single_plot)
     if (linestyles == None) & (len(var_list)>0):
         linestyles = ['solid']*len(var_list)
         
     for i in range(len(var_list)):
-        TPR, FPR = singleROC(data_dict[main_var], data_dict[var_list[i]])
+        TPR, FPR = singleROC(data_dict[main_var], data_dict[var_list[i]], thresholds)
 
         ax.plot(FPR, TPR, color=setup.variable_dict[var_list[i]]['color'],
                        label=setup.variable_dict[var_list[i]]['label'],
                        linestyle=linestyles[i],
-                       linewidth=1.5)
+                       linewidth=2)
+        ax.scatter(FPR[ind], TPR[ind], 
+                   facecolors='none', edgecolors=setup.variable_dict[var_list[i]]['color'])
     ax.set_xlabel('False Positive Rate')
     ax.set_ylabel('True Positive Rate')
     ax.set_xlim(-0.05,1.05)
@@ -343,3 +350,10 @@ def ROC2(data_dict, main_var, var_list, lims=[0,5], nums=100, filename=None,  li
     
     if filename!=None:
         plt.savefig(filename, bbox_inches='tight')
+
+def diffRatio(data_dict, main_var, var_list, low, high):
+    ratios = []
+    for i in range(len(var_list)):
+        diff = np.subtract(data_dict[var_list[i]], data_dict[main_var])
+        ratios.append(len(diff[(diff<high) & (diff > low)])/len(diff))
+    return(ratios)

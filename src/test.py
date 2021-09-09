@@ -19,7 +19,7 @@ from quantnn.models.pytorch.xception import XceptionFpn
 import quantnn.quantiles as qq
 
 import plotTestSetup as setup
-from plotTest import plotFalse, plotError, plotDistribution, hist2D, ROC
+from plotTest import plotFalse, plotError, plotDistribution, hist2D, ROC, ROC2
 from load_data import GOESRETRIEVALSDataset, Mask, RandomSmallVals, RandomCrop, Standardize, ToTensor
 
 
@@ -324,8 +324,11 @@ bins = np.linspace(start,end,num_of_bins)
 var_list = ['mlp_posterior_mean', 'xception_posterior_mean', 'mlp_Q0.95', 'xception_Q0.95']
 plotDistribution(data_dict, bins, 'gpm', var_list, quantity=quantity,  linestyles=['solid', 'solid', 'dotted', 'dotted'], filename=os.path.join(path_to_storage,'gpm_pdf.pdf'))
 
-ROC(data_dict, 'gpm', ['xception_posterior_mean', 'mlp_posterior_mean'], lims=[0.001, 2.0], nums=50, linestyles=['solid', 'dotted'],
+ROC(data_dict, 'gpm', ['xception_posterior_mean', 'mlp_posterior_mean'], lims=[1e-3, 0.19], nums=50, linestyles=['solid', 'dotted'],
     filename=os.path.join(path_to_storage,'gpm_ROC.pdf'))
+
+ROC2(data_dict, 'gpm', ['xception_posterior_mean', 'mlp_posterior_mean'], lims=[1e-3, 0.19], nums=50, linestyles=['solid', 'dotted'],
+    filename=os.path.join(path_to_storage,'gpm_ROC2.pdf'))
 
 var_list = ['xception_posterior_mean', 'mlp_posterior_mean']
 start = 0.0
@@ -336,6 +339,7 @@ bins = np.linspace(start,end,num_of_bins)
 plotFalse(data_dict, bins, 'gpm', var_list, ty='FP', threshold=1e-1, crop_at=10.1, filename=os.path.join(path_to_storage,'gpm_FP.pdf'), quantity=quantity)
 plotFalse(data_dict, bins, 'gpm', var_list, ty='FN', threshold=1e-1, crop_at=10.1, filename=os.path.join(path_to_storage,'gpm_FN.pdf'), quantity=quantity)
 
+diffRatio(data_dict, 'gauge_precip', var_list, -0.1, 0.1)
 
 start = -250.0
 end = 60.0
