@@ -19,7 +19,7 @@ from quantnn.models.pytorch.xception import XceptionFpn
 import quantnn.quantiles as qq
 
 import plotTestSetup as setup
-from plotTest import plotFalse, plotError, plotDistribution, hist2D, ROC, ROC2
+from plotTest import plotFalse, plotError, plotDistribution, hist2D, ROC, ROC2, diffRatio
 from load_data import GOESRETRIEVALSDataset, Mask, RandomSmallVals, RandomCrop, Standardize, ToTensor
 
 
@@ -327,7 +327,8 @@ plotDistribution(data_dict, bins, 'gpm', var_list, quantity=quantity,  linestyle
 ROC(data_dict, 'gpm', ['xception_posterior_mean', 'mlp_posterior_mean'], lims=[1e-3, 0.19], nums=50, linestyles=['solid', 'dotted'],
     filename=os.path.join(path_to_storage,'gpm_ROC.pdf'))
 
-ROC2(data_dict, 'gpm', ['xception_posterior_mean', 'mlp_posterior_mean'], lims=[1e-3, 0.19], nums=50, linestyles=['solid', 'dotted'],
+ROC2(data_dict, 'gpm', ['xception_posterior_mean', 'mlp_posterior_mean'], 
+     thresholds=np.concatenate([np.linspace(0.0,0.5,100), np.linspace(0.5,20,40)]), t_fix = 0.01, linestyles=['solid', 'dotted'],
     filename=os.path.join(path_to_storage,'gpm_ROC2.pdf'))
 
 var_list = ['xception_posterior_mean', 'mlp_posterior_mean']

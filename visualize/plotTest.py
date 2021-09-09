@@ -311,15 +311,13 @@ def ROC(data_dict, main_var, var_list, lims=[0,5], nums=100, filename=None,  lin
         plt.savefig(filename, bbox_inches='tight')
         
         
-def ROC2(data_dict, main_var, var_list, lims=[0,5], nums=100, filename=None,  linestyles=None):
-    
-    def singleROC2(y, p):
+def ROC2(data_dict, main_var, var_list, thresholds, t_fix=1e-1, scatter_ths=[1e-3, 0.19], filename=None,  linestyles=None):
+        
+    def singleROC2(y, p, thresholds):
         TPRs = []
         FPRs = []
-        #print(y)
-        #print(p)
-        t_fix = 1e-1
-        for t in np.linspace(lims[0],lims[1],nums):
+
+        for t in thresholds:
             #print(t)
 
             TP = (p[y>t_fix]>t).sum() #Is rain, predict rain
@@ -329,6 +327,7 @@ def ROC2(data_dict, main_var, var_list, lims=[0,5], nums=100, filename=None,  li
 
             TPRs.append(TP/(TP+FN))
             FPRs.append(FP/(FP+TN))
+            #print(TPRs[-1], FPRs[-1])
         return(TPRs, FPRs)
 
     fig, ax = plt.subplots(figsize=setup.figsize_single_plot)
@@ -336,12 +335,20 @@ def ROC2(data_dict, main_var, var_list, lims=[0,5], nums=100, filename=None,  li
         linestyles = ['solid']*len(var_list)
         
     for i in range(len(var_list)):
-        TPR, FPR = singleROC2(data_dict[main_var], data_dict[var_list[i]])
-
+        TPR, FPR = singleROC2(data_dict[main_var], data_dict[var_list[i]], thresholds)
         ax.plot(FPR, TPR, color=setup.variable_dict[var_list[i]]['color'],
-                       label=setup.variable_dict[var_list[i]]['label'], linestyle=linestyles[i])
+                       label=setup.variable_dict[var_list[i]]['label'],
+                       linestyle=linestyles[i],
+                       linewidth=2)
+        
+        TPR, FPR = singleROC2(data_dict[main_var], data_dict[var_list[i]], scatter_ths)
+        ax.scatter(FPR, TPR, facecolors='none', edgecolors=setup.variable_dict[var_list[i]]['color'])
+        
     ax.set_xlabel('False Positive Rate')
     ax.set_ylabel('True Positive Rate')
+    ax.set_xlim(-0.05,1.05)
+    ax.set_ylim(-0.05,1.05)
+    ax.set_aspect(1.0/ax.get_data_ratio(), adjustable='box')
     ax.grid(True,which="both",ls="--",c=setup.color_grid) 
     #ax.set_title('ROC')
     
@@ -350,6 +357,7 @@ def ROC2(data_dict, main_var, var_list, lims=[0,5], nums=100, filename=None,  li
     
     if filename!=None:
         plt.savefig(filename, bbox_inches='tight')
+
 
 def diffRatio(data_dict, main_var, var_list, low, high):
     ratios = []
