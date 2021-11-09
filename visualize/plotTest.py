@@ -199,11 +199,10 @@ def plotDistribution(data_dict, bins, main_var, var_list, crop_at=10.1, bins2=[]
         
         
         
-def hist2D(data_dict, y_true, y_preds, norm_type=None, quantity='gauges', filename=None):
+def hist2D(data_dict, y_true, y_preds, norm_type=None, quantity='gauges', filename=None, bins = np.logspace(-1, 2, 51)):
     fig, ax = plt.subplots(ncols=len(y_preds), figsize=setup.figsize_two_cols, sharey=True)
     
     y_true = data_dict[y_true]
-    bins = np.logspace(-1, 2, 51)
     
     old_vmax = 0
     freqs_list = []
@@ -220,6 +219,7 @@ def hist2D(data_dict, y_true, y_preds, norm_type=None, quantity='gauges', filena
             colorbar_label = 'Frequency'
             vmax = np.max([old_vmax,np.nanmax(freqs)])
             old_vmax = vmax
+            #vmax=np.max([old_vmax, np.percentile(freqs_normed[np.isnan(freqs_normed)==False], 10)])
         elif norm_type=='colwise':
             freqs_normed = freqs
             colorbar_label = 'Frequency, normalized columnwise'
