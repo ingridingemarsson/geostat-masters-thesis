@@ -324,11 +324,8 @@ bins = np.linspace(start,end,num_of_bins)
 var_list = ['mlp_posterior_mean', 'xception_posterior_mean', 'mlp_Q0.95', 'xception_Q0.95']
 plotDistribution(data_dict, bins, 'gpm', var_list, quantity=quantity,  linestyles=['solid', 'solid', 'dotted', 'dotted'], filename=os.path.join(path_to_storage,'gpm_pdf.pdf'))
 
-ROC(data_dict, 'gpm', ['xception_posterior_mean', 'mlp_posterior_mean'], lims=[1e-3, 0.19], nums=50, linestyles=['solid', 'dotted'],
-    filename=os.path.join(path_to_storage,'gpm_ROC.pdf'))
-
 ROC2(data_dict, 'gpm', ['xception_posterior_mean', 'mlp_posterior_mean'], 
-     thresholds=np.concatenate([np.linspace(0.0,0.5,100), np.linspace(0.5,20,40)]), t_fix=1e-2, scatter_ths = [], linestyles=['solid', 'dotted'],
+     thresholds=np.concatenate([np.linspace(0.0,0.5,100), np.linspace(0.5,20,40)]), t_fix=1e-2, scatter_ths = [1e-1], linestyles=['solid', 'dotted'],
     filename=os.path.join(path_to_storage,'gpm_ROC2.pdf'))
 
 var_list = ['xception_posterior_mean', 'mlp_posterior_mean']
@@ -339,8 +336,6 @@ num_of_bins = int(np.round((end-start)/binsize)+1)
 bins = np.linspace(start,end,num_of_bins)
 plotFalse(data_dict, bins, 'gpm', var_list, ty='FP', threshold=1e-2, crop_at=10.1, filename=os.path.join(path_to_storage,'gpm_FP.pdf'), quantity=quantity)
 plotFalse(data_dict, bins, 'gpm', var_list, ty='FN', threshold=1e-2, crop_at=10.1, filename=os.path.join(path_to_storage,'gpm_FN.pdf'), quantity=quantity)
-
-diffRatio(data_dict, 'gpm', var_list, -0.1, 0.1)
 
 start = -250.0
 end = 60.0
